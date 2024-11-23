@@ -1,0 +1,16 @@
+{
+  "name": "space",
+  "version": "0.1.0",
+  "description": "Space game.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "serve": "dev-server"
+  },
+  "keywords": [],
+  "author": "speedydelete",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "three": "^0.170.0"
+  }
+}
