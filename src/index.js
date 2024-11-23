@@ -21,7 +21,7 @@ const objects = [
                 radius: 6378127,
                 flattening: 0.003352810681182319,
                 orbit: {
-                    ap: 1520975970,
+                    ap: 152097597000,
                     pe: 147098450000,
                     sma: 149598023000,
                     inc: 7.155,
@@ -37,7 +37,7 @@ const objects = [
 
 const config = {
     G: 6.6743e-11,
-    unitSize: 6371000,
+    luminosityConstant: 3.2065e+30,
     rootObject: 'sun',
     startObject: 'earth',
 }
@@ -108,10 +108,10 @@ const renderer = new three.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 const scene = new three.Scene();
-const camera = new three.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.001, 1000000);
+const camera = new three.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.001, 100000000000000000);
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.minDistance = 0;
-controls.maxDistance = 1000000;
+controls.minDistance = 0.0000001;
+controls.maxDistance = 100000000;
 controls.keys = {
     LEFT: 'ArrowLeft',
     UP: 'ArrowUp',
@@ -128,7 +128,7 @@ scene.add(ambientLight);
 function addObject(object, root = true) {
     let pos = [0, 0, 0];
     if (!(root)) {
-        pos[2] = object.orbit.ap/config.unitSize;
+        pos[2] = object.orbit.ap;
     }
     let material;
     if (object.texture) {
@@ -139,11 +139,13 @@ function addObject(object, root = true) {
         material.emissive = new three.Color().setRGB(Math.floor(object.color / 65536)/255, Math.floor((object.color % 65536) / 256)/255, Math.floor(object.color % 256)/255);
         material.emissiveIntensity = 2;
     }
-    const geometry = new three.SphereGeometry(object.radius/config.unitSize, 128, 128);
+    const geometry = new three.SphereGeometry(object.radius, 512, 512);
     const mesh = new three.Mesh(geometry, material);
     mesh.position.set(...pos);
     if (object.type == 'star') {
-        const light = new three.PointLight(0xffffff, 2);
+        const light = new three.PointLight(0xffffff);
+        console.log(config.luminosityConstant / 10**(0.4 * object.mag));
+        light.power = config.luminosityConstant / 10**(0.4 * object.mag);
         mesh.add(light);
     }
     scene.add(mesh);
