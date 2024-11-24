@@ -4,8 +4,11 @@ const config = {
     luminosityConstant: 3.2065e+30,
     rootObject: 'sun',
     startObject: 'earth',
+    rotateInterval: 0.1,
 }
 
 export {
     config,
 }
+
+export default config;

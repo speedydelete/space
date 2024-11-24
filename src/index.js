@@ -1,11 +1,13 @@
 
 import * as three from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import config from './config.js';
 import {loadObjects} from './object_loader.js';
+import * as updaters from './updaters.js';
 
 let searchInfo = [];
 
-let timeWarp = 1;
+let timeWarp = 864;
 
 const renderer = new three.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -26,8 +28,9 @@ controls.listenToKeyEvents(window);
 const ambientLight = new three.AmbientLight(0xffffff, 0.2);
 scene.add(ambientLight);
 
-function animate() {
+function animate(objects) {
     controls.update();
+    updaters.rotateObjects(objects, timeWarp / 60);
     renderer.render(scene, camera);
 }
 

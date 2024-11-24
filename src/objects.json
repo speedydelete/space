@@ -16,11 +16,13 @@
                 "texture": "https://i.ibb.co/F7Wgjj1/2k-earth-daymap.jpg",
                 "radius": 6378127,
                 "flattening": 0.003352810681182319,
+                "rotationPeriod": 86164.10035200001,
                 "orbit": {
                     "ap": 152097597000,
                     "pe": 147098450000,
                     "sma": 149598023000,
                     "ecc": 0.0167086,
+                    "period": 31558149.7635456,
                     "inc": 7.155,
                     "lan": -11.26064,
                     "aop": 114.20783,
@@ -33,11 +35,13 @@
                         "texture": "https://s3-us-west-2.amazonaws.com/s.cdpn.io/17271/lroc_color_poles_1k.jpg",
                         "radius": 1738100,
                         "flattening": 0.0012,
+                        "rotationPeriod": 2360591.5104,
                         "orbit": {
                             "ap": 405400000,
                             "pe": 362600000,
                             "sma": 384399000,
                             "ecc": 0.0549,
+                            "period": 2360591.5104,
                             "inc": 5.145,
                             "lan": 0,
                             "aop": 0
