@@ -2,58 +2,9 @@
 import * as three from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-// const objects = [
-//     {
-//         "name": "sun",
-//         "type": "star",
-//         "color": "0xfff5ec",
-//         "texture": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Solarsystemscope_texture_2k_sun.jpg/800px-Solarsystemscope_texture_2k_sun.jpg",
-//         "mag": 4.83,
-//         "radius": 695700000,
-//         "flattening": 0.00005,
-//         "mass": 1.9985e30,
-//         "rotationPeriod": 2164320,
-//         "children": [
-//             {
-//                 "name": "earth",
-//                 "type": "planet",
-//                 "texture": "https://i.ibb.co/F7Wgjj1/2k-earth-daymap.jpg",
-//                 "radius": 6378127,
-//                 "flattening": 0.003352810681182319,
-//                 "orbit": {
-//                     "ap": 152097597000,
-//                     "pe": 147098450000,
-//                     "sma": 149598023000,
-//                     "ecc": 0.0167086,
-//                     "inc": 7.155,
-//                     "lan": -11.26064,
-//                     "aop": 114.20783,
-//                     "top": "2023-1-4"
-//                 },
-//                 "children": [
-//                     {
-//                         "name": "moon",
-//                         "type": "planet",
-//                         "texture": "https://s3-us-west-2.amazonaws.com/s.cdpn.io/17271/lroc_color_poles_1k.jpg",
-//                         "radius": 1738100,
-//                         "flattening": 0.0012,
-//                         "orbit": {
-//                             "ap": 405400000,
-//                             "pe": 362600000,
-//                             "sma": 384399000,
-//                             "ecc": 0.0549,
-//                             "inc": 5.145,
-//                             "lan": 0,
-//                             "aop": 0
-//                         }
-//                     }
-//                 ]
-//             }
-//         ]
-//     }
-// ]
-
 let searchInfo = [];
+
+let timeWarp = 1;
 
 const config = {
     G: 6.6743e-11,
@@ -61,68 +12,6 @@ const config = {
     rootObject: 'sun',
     startObject: 'earth',
 }
-
-function rotateVector(vec, angle, axis) {
-    const [x, y, z] = vec;
-    const cosA = Math.cos(angle);
-    const sinA = Math.sin(angle);
-    if (axis === 'x') {
-        return [
-            x,
-            y * cosA - z * sinA,
-            y * sinA + z * cosA
-        ];
-    } else if (axis === 'y') {
-        return [
-            x * cosA + z * sinA,
-            y,
-            -x * sinA + z * cosA
-        ];
-    } else if (axis === 'z') {
-        return [
-            x * cosA - y * sinA,
-            x * sinA + y * cosA,
-            z
-        ];
-    }
-    return vec;
-}
-
-function getAnomalies(object, parent, time, tol=1e-6) {
-    const ecc = object.orbit.ecc;
-    const meanA = config.G*(object.mass + parent.mass)*((time.getTime() - object.orbit.top.getTime())/1000);
-    let eccA = meanA;
-    let delta;
-    do {
-        delta = eccA - ecc * Math.sin(eccA) - meanA;
-        eccA -= delta / (1 - ecc * Math.cos(eccA));
-    } while (Math.abs(delta) > tol);
-    const trueA = 2 * Math.atan2(
-        Math.sqrt(1 + ecc) * Math.sin(eccA / 2),
-        Math.sqrt(1 - ecc) * Math.cos(eccA / 2)
-    );
-    return {
-        mean: meanA,
-        ecc: eccA,
-        true: trueA,
-    };
-}
-
-function getRadius(orbit, anomalies) {
-    return (orbit.sma * (1 - orbit.ecc**2))/(1 + orbit.ecc*Math.cos(anomalies.mean));
-}
-
-function getPosition(object, parent, time, tol=1e-6) {
-    const anomalies = getAnomalies(object, parent, time, tol);
-    const radius = getRadius(object.orbit, anomalies);
-    let vec = [radius * Math.cos(anomalies.true), radius * Math.sin(anomalies.true), 0];
-    vec = rotateVector(vec, -object.orbit.pe, 'z');
-    vec = rotateVector(vec, -object.orbit.inc, 'x');
-    vec = rotateVector(vec, -object.orbit.lan, 'z');
-    return vec;
-}
-
-let timeWarp = 1;
 
 const renderer = new three.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
