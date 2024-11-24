@@ -1,7 +1,57 @@
 
 import * as three from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
-import objects from './objects.json';
+
+// const objects = [
+//     {
+//         "name": "sun",
+//         "type": "star",
+//         "color": "0xfff5ec",
+//         "texture": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Solarsystemscope_texture_2k_sun.jpg/800px-Solarsystemscope_texture_2k_sun.jpg",
+//         "mag": 4.83,
+//         "radius": 695700000,
+//         "flattening": 0.00005,
+//         "mass": 1.9985e30,
+//         "rotationPeriod": 2164320,
+//         "children": [
+//             {
+//                 "name": "earth",
+//                 "type": "planet",
+//                 "texture": "https://i.ibb.co/F7Wgjj1/2k-earth-daymap.jpg",
+//                 "radius": 6378127,
+//                 "flattening": 0.003352810681182319,
+//                 "orbit": {
+//                     "ap": 152097597000,
+//                     "pe": 147098450000,
+//                     "sma": 149598023000,
+//                     "ecc": 0.0167086,
+//                     "inc": 7.155,
+//                     "lan": -11.26064,
+//                     "aop": 114.20783,
+//                     "top": "2023-1-4"
+//                 },
+//                 "children": [
+//                     {
+//                         "name": "moon",
+//                         "type": "planet",
+//                         "texture": "https://s3-us-west-2.amazonaws.com/s.cdpn.io/17271/lroc_color_poles_1k.jpg",
+//                         "radius": 1738100,
+//                         "flattening": 0.0012,
+//                         "orbit": {
+//                             "ap": 405400000,
+//                             "pe": 362600000,
+//                             "sma": 384399000,
+//                             "ecc": 0.0549,
+//                             "inc": 5.145,
+//                             "lan": 0,
+//                             "aop": 0
+//                         }
+//                     }
+//                 ]
+//             }
+//         ]
+//     }
+// ]
 
 let searchInfo = [];
 
@@ -137,16 +187,16 @@ function addObject(object, pos = [0, 0, 0], root = true) {
     return object;
 }
 
-for (let i = 0; i < objects.length; i++) {
-    objects[i] = addObject(objects[i]);
-}
-
 function animate() {
     controls.update();
     renderer.render(scene, camera);
 }
 
-window.addEventListener('load', function() {
+window.addEventListener('load', async function() {
+    const objects = await (await fetch('objects.json')).json();
+    for (let i = 0; i < objects.length; i++) {
+        objects[i] = addObject(objects[i]);
+    }    
     controls.target.copy(objects[0].children[0].mesh.position);
     controls.update();
     renderer.setAnimationLoop(animate);
