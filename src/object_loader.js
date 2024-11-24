@@ -1,7 +1,10 @@
 
 import * as three from 'three';
+import {config} from './config.js';
 
-function addObject(object, pos = [0, 0, 0], root = true) {
+const textureLoader = new three.TextureLoader();
+
+function addObject(object, scene, pos = [0, 0, 0], root = true) {
     if (typeof object.color == 'string') object.color = parseInt(object.color);
     if (!(root)) {
         pos[2] += object.orbit.ap;
@@ -32,16 +35,16 @@ function addObject(object, pos = [0, 0, 0], root = true) {
     object.mesh = mesh;
     if (object.children) {
         for (let i = 0; i < object.children.length; i++) {
-            object.children[i] = addObject(object.children[i], pos.slice(), false);
+            object.children[i] = addObject(object.children[i], scene, pos.slice(), false);
         }
     }
     return object;
 }
 
-async function loadObjects() {
+async function loadObjects(scene) {
     const objects = await (await fetch('objects.json')).json();
     for (let i = 0; i < objects.length; i++) {
-        objects[i] = addObject(objects[i]);
+        objects[i] = addObject(objects[i], scene);
     }
     return objects;
 }

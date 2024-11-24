@@ -1,4 +1,6 @@
 
+import {config} from './config.js'
+
 function rotateVector(vec, angle, axis) {
     const [x, y, z] = vec;
     const cosA = Math.cos(angle);

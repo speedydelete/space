@@ -1,18 +1,11 @@
 
 import * as three from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
-import {loadObjects} from './object_loader';
+import {loadObjects} from './object_loader.js';
 
 let searchInfo = [];
 
 let timeWarp = 1;
-
-const config = {
-    G: 6.6743e-11,
-    luminosityConstant: 3.2065e+30,
-    rootObject: 'sun',
-    startObject: 'earth',
-}
 
 const renderer = new three.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -33,15 +26,13 @@ controls.listenToKeyEvents(window);
 const ambientLight = new three.AmbientLight(0xffffff, 0.2);
 scene.add(ambientLight);
 
-const textureLoader = new three.TextureLoader();
-
 function animate() {
     controls.update();
     renderer.render(scene, camera);
 }
 
 window.addEventListener('load', async function() {
-    const objects = await loadObjects();
+    const objects = await loadObjects(scene);
     controls.target.copy(objects[0].children[0].mesh.position);
     controls.update();
     renderer.setAnimationLoop(animate);
