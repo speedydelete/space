@@ -1,6 +1,6 @@
 
 import * as three from 'three';
-import {OrbitControls} from 'three/addons';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
 const objects = [
     {
@@ -29,11 +29,31 @@ const objects = [
                     aop: 114.20783,
                     top: new Date(2023, 1, 4),
                 },
-                children: [],
+                children: [
+                    {
+                        name: 'moon',
+                        type: 'planet',
+                        texture: 'https://s3-us-west-2.amazonaws.com/s.cdpn.io/17271/lroc_color_poles_1k.jpg',
+                        radius: 1738100,
+                        flattening: 0.0012,
+                        orbit: {
+                            ap: 405400000,
+                            pe: 362600000,
+                            sma: 384399000,
+                            ecc: 0.0549,
+                            inc: 5.145,
+                            lan: 0,
+                            aop: 0,
+                        },
+                        children: [],
+                    }
+                ],
             },
         ],
     },
 ];
+
+let searchInfo = [];
 
 const config = {
     G: 6.6743e-11,
@@ -107,11 +127,14 @@ let timeWarp = 1;
 const renderer = new three.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
+
 const scene = new three.Scene();
-const camera = new three.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.001, 100000000000000000);
+
+const camera = new three.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.000000001, 100000000000000);
+
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.minDistance = 0.0000001;
-controls.maxDistance = 100000000;
+controls.minDistance = 0.0000000000001;
+controls.maxDistance = 1000000000000000;
 controls.keys = {
     LEFT: 'ArrowLeft',
     UP: 'ArrowUp',
@@ -125,17 +148,19 @@ controls.listenToKeyEvents(window);
 const ambientLight = new three.AmbientLight(0xffffff, 0.2);
 scene.add(ambientLight);
 
-function addObject(object, root = true) {
-    let pos = [0, 0, 0];
+const textureLoader = new three.TextureLoader();
+
+function addObject(object, pos = [0, 0, 0], root = true) {
+    if (typeof object.color == 'string') object.color = parseInt(object.color);
     if (!(root)) {
-        pos[2] = object.orbit.ap;
+        pos[2] += object.orbit.ap;
     }
     let material;
     if (object.texture) {
         material = new three.MeshStandardMaterial({map: textureLoader.load(object.texture)});
-        material.emissiveMap = textureLoader.load(object.texture);
     }
     if (object.type == 'star') {
+        material.emissiveMap = textureLoader.load(object.texture);
         material.emissive = new three.Color().setRGB(Math.floor(object.color / 65536)/255, Math.floor((object.color % 65536) / 256)/255, Math.floor(object.color % 256)/255);
         material.emissiveIntensity = 2;
     }
@@ -144,19 +169,18 @@ function addObject(object, root = true) {
     mesh.position.set(...pos);
     if (object.type == 'star') {
         const light = new three.PointLight(0xffffff);
-        console.log(config.luminosityConstant / 10**(0.4 * object.mag));
         light.power = config.luminosityConstant / 10**(0.4 * object.mag);
+        light.power /= 20000; // hotfix
         mesh.add(light);
     }
     scene.add(mesh);
     object.mesh = mesh;
     for (let i = 0; i < object.children.length; i++) {
-        object.children[i] = addObject(object.children[i], false);
+        object.children[i] = addObject(object.children[i], pos.slice(), false);
     }
     return object;
 }
 
-const textureLoader = new three.TextureLoader();
 for (let i = 0; i < objects.length; i++) {
     objects[i] = addObject(objects[i]);
 }
