@@ -1,57 +1,7 @@
 
 import * as three from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
-
-const objects = [
-    {
-        name: 'sun',
-        type: 'star',
-        color: 0xfff5ec,
-        texture: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Solarsystemscope_texture_2k_sun.jpg/800px-Solarsystemscope_texture_2k_sun.jpg',
-        mag: 4.83,
-        radius: 695700000,
-        flattening: 0.00005,
-        mass: 1.9985e30,
-        rotationPeriod: 2164320,
-        children: [
-            {
-                name: 'earth',
-                type: 'planet',
-                texture: 'https://i.ibb.co/F7Wgjj1/2k-earth-daymap.jpg',
-                radius: 6378127,
-                flattening: 0.003352810681182319,
-                orbit: {
-                    ap: 152097597000,
-                    pe: 147098450000,
-                    sma: 149598023000,
-                    inc: 7.155,
-                    lan: -11.26064,
-                    aop: 114.20783,
-                    top: new Date(2023, 1, 4),
-                },
-                children: [
-                    {
-                        name: 'moon',
-                        type: 'planet',
-                        texture: 'https://s3-us-west-2.amazonaws.com/s.cdpn.io/17271/lroc_color_poles_1k.jpg',
-                        radius: 1738100,
-                        flattening: 0.0012,
-                        orbit: {
-                            ap: 405400000,
-                            pe: 362600000,
-                            sma: 384399000,
-                            ecc: 0.0549,
-                            inc: 5.145,
-                            lan: 0,
-                            aop: 0,
-                        },
-                        children: [],
-                    }
-                ],
-            },
-        ],
-    },
-];
+import objects from './objects.json';
 
 let searchInfo = [];
 
@@ -161,22 +111,28 @@ function addObject(object, pos = [0, 0, 0], root = true) {
     }
     if (object.type == 'star') {
         material.emissiveMap = textureLoader.load(object.texture);
-        material.emissive = new three.Color().setRGB(Math.floor(object.color / 65536)/255, Math.floor((object.color % 65536) / 256)/255, Math.floor(object.color % 256)/255);
+        material.emissive = new three.Color().setRGB(
+            Math.floor(object.color / 65536)/255,
+            Math.floor((object.color % 65536) / 256)/255,
+            Math.floor(object.color % 256)/256
+        );
         material.emissiveIntensity = 2;
     }
     const geometry = new three.SphereGeometry(object.radius, 512, 512);
     const mesh = new three.Mesh(geometry, material);
     mesh.position.set(...pos);
     if (object.type == 'star') {
-        const light = new three.PointLight(0xffffff);
+        const light = new three.PointLight(object.color);
         light.power = config.luminosityConstant / 10**(0.4 * object.mag);
         light.power /= 20000; // hotfix
         mesh.add(light);
     }
     scene.add(mesh);
     object.mesh = mesh;
-    for (let i = 0; i < object.children.length; i++) {
-        object.children[i] = addObject(object.children[i], pos.slice(), false);
+    if (object.children) {
+        for (let i = 0; i < object.children.length; i++) {
+            object.children[i] = addObject(object.children[i], pos.slice(), false);
+        }
     }
     return object;
 }
