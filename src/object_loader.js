@@ -4,6 +4,14 @@ import {config} from './config.js';
 
 const textureLoader = new three.TextureLoader();
 
+function getObjectCount(objects) {
+    let children = 0;
+    for (const object of objects) {
+        if (object.children) children += getObjectCount(object.children);
+    }
+    return objects.length + children;
+}
+
 function addObject(object, scene, pos = [0, 0, 0], root = true) {
     if (typeof object.color == 'string') object.color = parseInt(object.color);
     if (!(root)) {
@@ -50,5 +58,6 @@ async function loadObjects(scene) {
 }
 
 export {
+    getObjectCount,
     loadObjects,
 }

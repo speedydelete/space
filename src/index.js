@@ -1,9 +1,11 @@
 
 import * as three from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
-import config from './config.js';
-import {loadObjects} from './object_loader.js';
+import {formatLength} from './units.js';
+import {getObjectCount, loadObjects} from './object_loader.js';
 import * as updaters from './updaters.js';
+
+const debugElt = document.getElementById('debug-info');
 
 let searchInfo = [];
 
@@ -28,9 +30,26 @@ controls.listenToKeyEvents(window);
 const ambientLight = new three.AmbientLight(0xffffff, 0.2);
 scene.add(ambientLight);
 
+let frames = 0;
+let prevTime = performance.now();
+let fps = 60;
+
 function animate(objects) {
+    frames++;
+    const time = performance.now();
+    if ( time >= prevTime + 1000 ) {
+    	fps = Math.round((frames * 1000)/( time - prevTime));
+        frames = 0;
+        prevTime = time;
+        debugElt.innerText = `FPS: ${fps}
+        X: ${formatLength(camera.position.x)}
+        Y: ${formatLength(camera.position.y)}
+        Z: ${formatLength(camera.position.z)}
+        Time Warp: ${timeWarp} sec/sec
+        Objects: ${getObjectCount(objects)}`;
+    }
     controls.update();
-    updaters.rotateObjects(objects, timeWarp / 60);
+    if (fps != 0) updaters.rotateObjects(objects, timeWarp / fps);
     renderer.render(scene, camera);
 }
 
@@ -38,5 +57,5 @@ window.addEventListener('load', async function() {
     const objects = await loadObjects(scene);
     controls.target.copy(objects[0].children[0].mesh.position);
     controls.update();
-    renderer.setAnimationLoop(animate);
+    renderer.setAnimationLoop(() => animate(objects));
 });
