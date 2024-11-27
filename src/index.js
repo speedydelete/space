@@ -1,6 +1,6 @@
 
 import * as three from 'three';
-import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import {formatLength} from './units.js';
 import {getObjectCount, loadObjects} from './object_loader.js';
 import * as updaters from './updaters.js';
@@ -34,11 +34,11 @@ let frames = 0;
 let prevTime = performance.now();
 let fps = 60;
 
-// window.addEventListener('resize', () => {
-//     camera.aspect = window.innerWidth / window.innerHeight;
-//     camera.updateProjectionMatrix();
-//     renderer.setSize(window.innerWidth, window.innerHeight);
-// });
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
 
 camera.position.z = 5;
 
