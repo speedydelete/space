@@ -16,6 +16,7 @@
                 "texture": "https://i.ibb.co/F7Wgjj1/2k-earth-daymap.jpg",
                 "radius": 6378127,
                 "flattening": 0.003352810681182319,
+                "mass": 5.972168e24,
                 "rotationPeriod": 86164.10035200001,
                 "orbit": {
                     "ap": 152097597000,
@@ -26,7 +27,7 @@
                     "inc": 7.155,
                     "lan": -11.26064,
                     "aop": 114.20783,
-                    "top": "2023-1-4"
+                    "top": "2023-01-04"
                 },
                 "children": [
                     {
@@ -35,6 +36,7 @@
                         "texture": "https://s3-us-west-2.amazonaws.com/s.cdpn.io/17271/lroc_color_poles_1k.jpg",
                         "radius": 1738100,
                         "flattening": 0.0012,
+                        "mass": 7.346e22,
                         "rotationPeriod": 2360591.5104,
                         "orbit": {
                             "ap": 405400000,
@@ -44,7 +46,8 @@
                             "period": 2360591.5104,
                             "inc": 5.145,
                             "lan": 0,
-                            "aop": 0
+                            "aop": 0,
+                            "top": "2024-11-27"
                         }
                     }
                 ]

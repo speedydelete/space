@@ -29,7 +29,7 @@ function rotateVector(vec, angle, axis) {
 
 function getAnomalies(object, parent, time, tol=1e-6) {
     const ecc = object.orbit.ecc;
-    const meanA = config.G*(object.mass + parent.mass)*((time.getTime() - object.orbit.top.getTime())/1000);
+    const meanA = Math.abs(time.getTime() - new Date(object.orbit.top).getTime())/1000/object.orbit.period;
     let eccA = meanA;
     let delta;
     do {
@@ -48,21 +48,21 @@ function getAnomalies(object, parent, time, tol=1e-6) {
 }
 
 function getRadius(orbit, anomalies) {
-    return (orbit.sma * (1 - orbit.ecc**2))/(1 + orbit.ecc*Math.cos(anomalies.mean));
+    return (orbit.sma * (1 - orbit.ecc**2))/(1 + orbit.ecc*Math.cos(anomalies.true));
 }
 
 function getPosition(object, parent, time, tol=1e-6) {
     const anomalies = getAnomalies(object, parent, time, tol);
     const radius = getRadius(object.orbit, anomalies);
     let vec = [radius * Math.cos(anomalies.true), radius * Math.sin(anomalies.true), 0];
-    vec = rotateVector(vec, -object.orbit.pe, 'z');
-    vec = rotateVector(vec, -object.orbit.inc, 'x');
-    vec = rotateVector(vec, -object.orbit.lan, 'z');
+    vec = rotateVector(vec, -object.orbit.lan*Math.PI/180, 'z');
+    vec = rotateVector(vec, -object.orbit.inc*Math.PI/180, 'x');
+    vec = rotateVector(vec, -object.orbit.aop*Math.PI/180, 'z');
+    // console.log(JSON.stringify({time: time, anomalies: anomalies, radius: radius, vec: vec}));
     return vec;
 }
 
 export {
-    rotateVector,
     getAnomalies,
     getRadius,
     getPosition,

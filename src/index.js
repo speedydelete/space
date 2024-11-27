@@ -12,6 +12,8 @@ let searchInfo = [];
 
 let timeWarp = 864;
 
+let currentTime = new Date('2023-01-04');
+
 const renderer = new three.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
@@ -22,7 +24,7 @@ const camera = new three.PerspectiveCamera(75, window.innerWidth / window.innerH
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.minDistance = 0.0000000000001;
-controls.maxDistance = 1000000000000000;
+controls.maxDistance = 100000000;
 controls.keys = {LEFT: 'ArrowLeft', UP: 'ArrowUp', RIGHT: 'ArrowRight', BOTTOM: 'ArrowDown'}
 controls.keyPanSpeed = 2;
 controls.update();
@@ -41,9 +43,10 @@ window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-camera.position.z = 5;
+let done = false;
 
 function animate(objects) {
+    if (document.hidden) return;
     frames++;
     const time = performance.now();
     if ( time >= prevTime + 1000 ) {
@@ -54,15 +57,22 @@ function animate(objects) {
         X: ${formatLength(camera.position.x)}
         Y: ${formatLength(camera.position.y)}
         Z: ${formatLength(camera.position.z)}
-        Time Warp: ${timeWarp} sec/sec
+        Time Warp: ${timeWarp} s/s
         Objects: ${getObjectCount(objects)}`;
     }
+    currentTime.setTime(currentTime.getTime() + 1000 * timeWarp / fps);
     controls.update();
-    if (fps != 0) updaters.rotateObjects(objects, timeWarp / fps);
+    if (fps != 0) {
+        updaters.rotateObjects(objects, timeWarp / fps);
+        updaters.moveObjects(objects, currentTime);
+    }
+    if (!done) {
+        controls.target.copy(objects[0].children[0].mesh.position);
+        done = true;
+    }
     renderer.render(scene, camera);
 }
 
 const objects = await loadObjects(scene);
-controls.target.copy(objects[0].children[0].mesh.position);
 controls.update();
 renderer.setAnimationLoop(() => animate(objects));
