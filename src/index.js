@@ -1,6 +1,7 @@
 
 import * as three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
+import config from './config.js';
 import {formatLength} from './units.js';
 import {getObjectCount, loadObjects} from './object_loader.js';
 import * as updaters from './updaters.js';
@@ -64,5 +65,4 @@ function animate(objects) {
 const objects = await loadObjects(scene);
 controls.target.copy(objects[0].children[0].mesh.position);
 controls.update();
-// requestAnimationFrame(() => animate(objects));
-setInterval(animate, 30, objects);
+renderer.setAnimationLoop(() => animate(objects));
