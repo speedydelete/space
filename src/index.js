@@ -24,7 +24,7 @@ const camera = new three.PerspectiveCamera(75, window.innerWidth / window.innerH
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.minDistance = 0.0000000000001;
-controls.maxDistance = 100000000;
+controls.maxDistance = 100000000000000;
 controls.keys = {LEFT: 'ArrowLeft', UP: 'ArrowUp', RIGHT: 'ArrowRight', BOTTOM: 'ArrowDown'}
 controls.keyPanSpeed = 2;
 controls.update();
