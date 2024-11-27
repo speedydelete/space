@@ -1,4 +1,3 @@
-
 import * as three from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {formatLength} from './units.js';
@@ -34,6 +33,14 @@ let frames = 0;
 let prevTime = performance.now();
 let fps = 60;
 
+// window.addEventListener('resize', () => {
+//     camera.aspect = window.innerWidth / window.innerHeight;
+//     camera.updateProjectionMatrix();
+//     renderer.setSize(window.innerWidth, window.innerHeight);
+// });
+
+camera.position.z = 5;
+
 function animate(objects) {
     frames++;
     const time = performance.now();
@@ -53,9 +60,8 @@ function animate(objects) {
     renderer.render(scene, camera);
 }
 
-window.addEventListener('load', async function() {
-    const objects = await loadObjects(scene);
-    controls.target.copy(objects[0].children[0].mesh.position);
-    controls.update();
-    renderer.setAnimationLoop(() => animate(objects));
-});
+const objects = await loadObjects(scene);
+controls.target.copy(objects[0].children[0].mesh.position);
+controls.update();
+// requestAnimationFrame(() => animate(objects));
+setInterval(animate, 30, objects);

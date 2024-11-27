@@ -6,6 +6,10 @@
         <title>Space</title>
         <style>
 
+* {
+    user-select: none;
+}
+
 body {
     margin: 0;
     overflow: hidden;
@@ -26,19 +30,10 @@ canvas {
 }
 
         </style>
-        <!-- <script>onerror=(a,b,c,d,e)=>{if(document.readyState=="complete"){document.querySelectorAll("body *").forEach((x)=>x.remove());let f=document.createElement("pre");f.style.marginLeft="15px";f.style.color="red";f.innerText=e.stack.toString();document.body.innerHTML=f.outerHTML;}else{alert(e.stack.toString());};i=setInterval(()=>null,0);for(let j=1;j<=i;j++){clearInterval(j);}};onunhandledrejection=(e)=>{onerror(null,null,null,null,e.reason);};</script> -->
+        <script src="../wrecked/client.js"></script>
     </head>
     <body>
         <div id="debug-info"></div>
-        <script type="importmap">
-            {
-                "imports": {
-                    "three": "/node_modules/three/build/three.module.min.js",
-                    "three/addons/": "/node_modules/three/examples/jsm/",
-                    "fuse.js": "/node_modules/fuse.js/dist/fuse.min.mjs"
-                }
-            }
-        </script>
         <script type="module" src="index.js"></script>
     </body>
 </html>
