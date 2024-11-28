@@ -1,4 +1,5 @@
 
+import {config} from './config.js';
 import {getPosition} from './orbits.js';
 
 function rotateObjects(objects, timeWarp) {
@@ -11,7 +12,7 @@ function rotateObjects(objects, timeWarp) {
 function moveObjects(objects, time, parent = null) {
     for (const object of objects) {
         if (parent !== null) {
-            const [z, x, y] = getPosition(object, parent, time);
+            const [z, x, y] = getPosition(object, time);
             const [px, py, pz] = parent.mesh.position;
             object.mesh.position.set(px + x, py + y, pz + z);
         }

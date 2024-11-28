@@ -12,11 +12,8 @@ function getObjectCount(objects) {
     return objects.length + children;
 }
 
-function addObject(object, scene, pos = [0, 0, 0], root = true) {
+function addObject(object, scene, pos = [0, 0, 0]) {
     if (typeof object.color == 'string') object.color = parseInt(object.color);
-    if (!(root)) {
-        pos[2] += object.orbit.ap;
-    }
     let material;
     if (object.texture) {
         material = new three.MeshStandardMaterial({map: textureLoader.load(object.texture)});
@@ -30,15 +27,16 @@ function addObject(object, scene, pos = [0, 0, 0], root = true) {
         );
         material.emissiveIntensity = 2;
     }
-    const geometry = new three.SphereGeometry(object.radius, 512, 512);
+    const geometry = new three.SphereGeometry(object.radius/config.unitSize, 512, 512);
     const mesh = new three.Mesh(geometry, material);
     mesh.position.set(...pos);
     if (object.type == 'star') {
         const light = new three.PointLight(object.color);
-        light.power = config.luminosityConstant / 10**(0.4 * object.mag);
-        light.power /= 20000; // hotfix
+        light.power = config.luminosityConstant / 10**(0.4 * object.mag) / config.unitSize**2;
+        light.power = 0;
         mesh.add(light);
     }
+    mesh.visible = true;
     scene.add(mesh);
     object.mesh = mesh;
     if (object.children) {
@@ -57,7 +55,20 @@ async function loadObjects(scene) {
     return objects;
 }
 
+function getObjectMap(objects, name = '') {
+    let out = {};
+    for (const object of objects) {
+        const key = (name ? name + '.' : '') + object.name;
+        out[key] = object;
+        object.key = key;
+        object.mesh.name = key;
+        if (object.children) out = {...out, ...getObjectMap(object.children, key)};
+    }
+    return out;
+}
+
 export {
     getObjectCount,
     loadObjects,
+    getObjectMap,
 }
