@@ -1,7 +1,6 @@
 
 import * as three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
-import config from './config.js';
 import {formatLength} from './units.js';
 import {getObjectCount, loadObjects} from './object_loader.js';
 import * as updaters from './updaters.js';
