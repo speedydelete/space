@@ -10,7 +10,7 @@ const debugElt = document.getElementById('debug-info');
 
 let currentTime = new Date('2023-01-04');
 let target = 'sun.earth';
-let timeWarp = 864;
+let timeWarp = 1;
 
 const renderer = new three.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -55,10 +55,10 @@ window.addEventListener('click', function(event) {
 });
 
 function animate(objects) {
-    if (document.hidden) return;
+    if (document.hidden || document.visibilityState == 'hidden') return;
     frames++;
     const time = performance.now();
-    if ( time >= prevTime + 1000 ) {
+    if (time >= prevTime + 1000) {
     	fps = Math.round((frames * 1000)/( time - prevTime));
         frames = 0;
         prevTime = time;
@@ -76,8 +76,13 @@ function animate(objects) {
     currentTime.setTime(currentTime.getTime() + 1000 * timeWarp / fps);
     if (fps != 0) {
         updaters.rotateObjects(objects, timeWarp / fps);
+        const [oldX, oldY, oldZ] = objectMap[target].mesh.position;
         updaters.moveObjects(objects, currentTime);
         controls.target.copy(objectMap[target].mesh.position);
+        const [newX, newY, newZ] = objectMap[target].mesh.position;
+        camera.position.x += newX - oldX;
+        camera.position.y += newY - oldY;
+        camera.position.z += newZ - oldZ;
     }
     camera.updateProjectionMatrix();
     controls.update();
