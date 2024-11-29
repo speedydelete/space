@@ -36,9 +36,8 @@ function addObject(object, scene, pos = [0, 0, 0]) {
     mesh.position.set(...pos);
     if (object.type == 'star') {
         const light = new three.PointLight(object.color);
-        light.power = config.luminosityConstant / 10**(0.4 * object.mag) / config.unitSize**2;
+        light.power = config.luminosityConstant / 10**(0.4 * object.mag) / config.unitSize**2 / 20000;
         console.log(light.power);
-        light.power = 0;
         mesh.add(light);
     }
     mesh.visible = true;
