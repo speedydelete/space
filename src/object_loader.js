@@ -18,7 +18,7 @@ function addObject(object, scene, pos = [0, 0, 0]) {
     if (object.texture) {
         material = new three.MeshStandardMaterial({map: textureLoader.load(object.texture)});
         material.opacity = 1;
-        material.transparent = false;
+        material.transparent = true;
     }
     if (object.type == 'star') {
         material.emissiveMap = textureLoader.load(object.texture);
@@ -32,7 +32,7 @@ function addObject(object, scene, pos = [0, 0, 0]) {
     const geometry = new three.SphereGeometry(object.radius/config.unitSize, 512, 512);
     const mesh = new three.Mesh(geometry, material);
     mesh.opacity = 1;
-    mesh.transparent = false;
+    mesh.transparent = true;
     mesh.position.set(...pos);
     if (object.type == 'star') {
         const light = new three.PointLight(object.color);
