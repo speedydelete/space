@@ -2,13 +2,15 @@
 import * as three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import {config} from './config.js';
-import {formatLength} from './units.js';
+import {formatTime, formatLength} from './units.js';
 import {getObjectCount, loadObjects, getObjectMap} from './object_loader.js';
 import * as updaters from './updaters.js';
 
+const {unitSize} = config;
+
 const debugElt = document.getElementById('debug-info');
 
-let currentTime = new Date('2023-01-04');
+let time = new Date('2023-01-04');
 let target = 'sun.earth';
 let timeWarp = 1;
 
@@ -31,10 +33,6 @@ controls.listenToKeyEvents(window);
 const ambientLight = new three.AmbientLight(0xffffff, 0.2);
 scene.add(ambientLight);
 
-let frames = 0;
-let prevTime = performance.now();
-let fps = 60;
-
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
@@ -54,35 +52,52 @@ window.addEventListener('click', function(event) {
     }
 });
 
+window.addEventListener('keypress', function(event) {
+    if (event.key == ',') {
+        if (Math.log10(timeWarp) % 1 === 0) {
+            timeWarp /= 2;
+        } else {
+            timeWarp /= 5;
+        }
+    } else if (event.key == '.') {
+        if (Math.log10(timeWarp) % 1 === 0) {
+            timeWarp *= 5;
+        } else {
+            timeWarp *= 2;
+        }
+    }
+});
+
+
+let frames = 0;
+let prevRealTime = performance.now();
+let fps = 60;
+
 function animate(objects) {
     if (document.hidden || document.visibilityState == 'hidden') return;
     frames++;
-    const time = performance.now();
-    if (time >= prevTime + 1000) {
-    	fps = Math.round((frames * 1000)/( time - prevTime));
+    const realTime = performance.now();
+    if (realTime >= prevRealTime + 1000) {
+    	fps = Math.round((frames * 1000)/(realTime - prevRealTime));
         frames = 0;
-        prevTime = time;
-        debugElt.innerText = `FPS: ${fps}
-        CX: ${formatLength(camera.position.x*config.unitSize)}
-        CY: ${formatLength(camera.position.y*config.unitSize)}
-        CZ: ${formatLength(camera.position.z*config.unitSize)}
-        Target: ${target}
-        TX: ${formatLength(objectMap[target].mesh.position.x*config.unitSize)}
-        TY: ${formatLength(objectMap[target].mesh.position.y*config.unitSize)}
-        TZ: ${formatLength(objectMap[target].mesh.position.z*config.unitSize)}
-        Time Warp: ${timeWarp} s/s
-        Objects: ${getObjectCount(objects)}`;
+        prevRealTime = realTime;
     }
-    currentTime.setTime(currentTime.getTime() + 1000 * timeWarp / fps);
+    const [cx, cy, cz] = camera.position;
+    const [tx, ty, tz] = objectMap[target].mesh.position;
+    debugElt.innerText = `FPS: ${fps}
+    Camera: X: ${formatLength(cx*unitSize)}, Y: ${formatLength(cy*unitSize)}, Z: ${formatLength(cz*unitSize)}
+    Target: ID: ${target}, X: ${formatLength(tx*config.unitSize)}, Y: ${formatLength(ty*unitSize)}, Z: ${formatLength(tz*unitSize)}
+    Time Warp: ${timeWarp}x (${formatTime(timeWarp)}/s)
+    Objects: ${getObjectCount(objects)}`;
+    time.setTime(time.getTime() + 1000 * timeWarp / fps);
     if (fps != 0) {
         updaters.rotateObjects(objects, timeWarp / fps);
-        const [oldX, oldY, oldZ] = objectMap[target].mesh.position;
-        updaters.moveObjects(objects, currentTime);
+        updaters.moveObjects(objects, time);
         controls.target.copy(objectMap[target].mesh.position);
         const [newX, newY, newZ] = objectMap[target].mesh.position;
-        camera.position.x += newX - oldX;
-        camera.position.y += newY - oldY;
-        camera.position.z += newZ - oldZ;
+        camera.position.x += newX - tx;
+        camera.position.y += newY - ty;
+        camera.position.z += newZ - tz;
     }
     camera.updateProjectionMatrix();
     controls.update();
@@ -96,5 +111,5 @@ controls.update();
 renderer.setAnimationLoop(() => animate(objects));
 setTimeout(() => {
     const targetPos = objectMap[target].mesh.position;
-    camera.position.set(targetPos.x - objectMap[target].radius*2/config.unitSize, targetPos.y, targetPos.z);
+    camera.position.set(targetPos.x + objectMap[target].radius/config.unitSize*10, targetPos.y, targetPos.z);
 }, 1000);
