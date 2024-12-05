@@ -1,12 +1,10 @@
 
-type Time = number | undefined | string | Date | Value<Time>;
+type Time = number | undefined | string | Date;
 
-interface FixedValueCycle<T> {
+type FixedValueCycle<T> = {
     type: 'fixed',
     value: Value<T>,
-}
-
-type FixedValueCycle<T> = T;
+} | T;
 
 interface LinearValueCycle<T> {
     type: 'linear',
@@ -18,7 +16,7 @@ interface LinearValueCycle<T> {
 
 type MultiCycle<T> = ValueCycle<T>[];
 
-type ValueCycle<T> = FixedValue<T> | LinearValueCycle<T> | MultiCycle<T>;
+type ValueCycle<T> = FixedValueCycle<T> | LinearValueCycle<T> | MultiCycle<T>;
 
 type Value<T> = T | ValueCycle<T>;
 
@@ -45,7 +43,7 @@ interface Orbit {
 
 type ObjectType = 'star' | 'planet';
 
-class Object<T extends ObjectType = ObjectType> {
+class Object_<T extends ObjectType = ObjectType> {
     name: string;
     type: T;
     color?: Value<string | number>;
@@ -62,10 +60,8 @@ class Object<T extends ObjectType = ObjectType> {
     orbit?: Orbit;
     position?: Position;
     children?: Object[];
-    constructor(data: object = {}): void {
-        for (const [key, value] of data) {
-            this[key] = value;
-        }
+    constructor(data: object = {}) {
+        Object.entries(data).forEach(([key, value]) => {this[key] = value});
     }
 }
 
@@ -73,14 +69,14 @@ type FileType = 'regular' | 'directory' | 'link';
 
 class BaseFile {
     type: FileType;
-    constructor(type: FileType): void {
+    constructor(type: FileType) {
         this.type = type;
     }
 }
 
 class File extends BaseFile {
     data: string;
-    constructor(data: string): void {
+    constructor(data: string) {
         super('regular');
         this.data = data;
     }
@@ -88,7 +84,7 @@ class File extends BaseFile {
 
 class Directory<T extends {[key: string]: BaseFile} | BaseFile = {[key: string]: BaseFile}> extends BaseFile {
     files: {[key: string]: BaseFile};
-    constructor(files: (T extends {[key: string]: BaseFile} ? T : {[key: string]: T}) | {} = {}): void {
+    constructor(files: (T extends {[key: string]: BaseFile} ? T : {[key: string]: T}) | {} = {}) {
         super('directory');
         this.files = files;
     }
@@ -96,7 +92,7 @@ class Directory<T extends {[key: string]: BaseFile} | BaseFile = {[key: string]:
 
 class Link<T extends string = string> extends BaseFile {
     path: string;
-    constructor(path: T): void {
+    constructor(path: T) {
         super('link');
         this.path = path;
     }
@@ -132,7 +128,7 @@ class FileSystem extends Directory {
         sbin: Link<'/sbin'>;
         share: Directory;
         src: Directory;
-    }>,
+    }>;
     var: Directory<{
         cache: Directory;
         lib: Directory;
@@ -143,7 +139,7 @@ class FileSystem extends Directory {
         run: Directory;
         spool: Directory;
         tmp: Directory;
-    }>,
+    }>;
 }
 
 interface Settings {
@@ -167,7 +163,7 @@ export {
     Rotation,
     Orbit,
     ObjectType,
-    Object,
+    Object_,
     BaseFile,
     File,
     Directory,
