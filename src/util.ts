@@ -1,5 +1,5 @@
 
-import type {Time, Value, World} from './types.ts';
+import type {Time, Value} from './types.ts';
 
 function type(value: any): string {
     if (value === undefined) {
@@ -19,8 +19,6 @@ function type(value: any): string {
             return 'number';
         } else if (value instanceof String) {
             return 'string';
-        } else if (value instanceof BigInt) {
-            return 'bigint';
         } else {
             return 'object';
         }
