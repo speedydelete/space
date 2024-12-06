@@ -1,10 +1,12 @@
-alert('hi');
 
 import * as three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
+import type {Object} from './types.ts';
 import {formatTime, formatLength} from './util.ts';
 import {type World, defaultWorld} from './world.ts';
 import {getPosition} from './orbits.ts';
+
+const world: World = defaultWorld;
 
 const unitSize: number = 6371000; // settings.unitSize;
 
@@ -23,7 +25,7 @@ const scene: three.Scene = new three.Scene();
 
 const camera: three.PerspectiveCamera = new three.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.0000000000001, 100000000000000);
 
-const controls: three.OrbitControls = new OrbitControls(camera, renderer.domElement);
+const controls: OrbitControls = new OrbitControls(camera, renderer.domElement);
 controls.minDistance = 0.0000000000001;
 controls.maxDistance = 100000000000000;
 controls.keys = {LEFT: 'ArrowLeft', UP: 'ArrowUp', RIGHT: 'ArrowRight', BOTTOM: 'ArrowDown'}
@@ -46,7 +48,7 @@ window.addEventListener('click', function(event) {
     raycaster.setFromCamera(new three.Vector2(
         (event.clientX / window.innerWidth) * 2 - 1,
         -(event.clientY / window.innerHeight) * 2 + 1), camera);
-    const intersects: three.Object3D[] = raycaster.intersectObjects(Object.values(objectMap).map((x) => x.mesh));
+    const intersects = raycaster.intersectObjects(world.meshes);
     if (intersects.length > 0) {
         target = intersects[0].object.name;
         controls.target.copy(intersects[0].object.position);
@@ -71,44 +73,49 @@ window.addEventListener('keypress', function(event) {
     }
 });
 
-function loadObjects(world: World, dir: string = '/home/objects'): void {
+const textureLoader = new three.TextureLoader()
+
+function loadObjects(dir: string = '/home/objects'): void {
     for (const filename in world.ls(dir)) {
         const filepath = world.join(dir, filename);
         if (filename.endsWith('.object')) {
-            const object = world.readJSON(filepath);
-            let material;
+            const object: Object = world.readJSON(filepath);
+            let material = new three.MeshStandardMaterial();
             if (object.texture) {
-                material = new three.MeshStandardMaterial({map: textureLoader.load(object.texture)});
-                material.opacity = 1;
-                material.transparent = true;
+                material.map = textureLoader.load(object.texture);
             }
+            material.opacity = 1;
+            material.transparent = true;
             if (object.type == 'star') {
-                material.emissiveMap = textureLoader.load(object.texture);
+                if (material.map) material.emissiveMap = material.map;
                 let color = object.color;
-                if (type(color) == 'string') color = parseInt(color);
-                material.emissive = new three.Color().setRGB(
-                    Math.floor(object.color / 65536)/255,
-                    Math.floor((object.color % 65536) / 256)/255,
-                    Math.floor(object.color % 256)/256
-                );
-                material.emissiveIntensity = 2;
+                if (color) {
+                    if (typeof color == 'string') {
+                        color = parseInt(color);
+                    }
+                    material.emissive = new three.Color(
+                        Math.floor(color / 65536) / 256,
+                        Math.floor((color % 65536) / 256) / 256,
+                        (color % 256) / 256,
+                    );
+                    material.emissiveIntensity = 2;
+                }
             }
-            const geometry = new three.SphereGeometry(object.radius/settings.unitSize, 512, 512);
+            const geometry = new three.SphereGeometry(object.radius/unitSize, 512, 512);
             const mesh = new three.Mesh(geometry, material);
-            mesh.opacity = 1;
-            mesh.transparent = true;
-            mesh.position.set(...pos);
+            if (object.position) {
+
+            }
             if (object.type == 'star') {
                 const light = new three.PointLight(object.color);
-                light.power = settings.luminosityConstant / 10**(0.4 * object.mag) / settings.unitSize**2 / 20000;
+                light.power = world.config.lC / 10**(0.4 * object.mag) / unitSize**2 / 20000;
                 console.log(light.power);
                 mesh.add(light);
             }
             mesh.visible = true;
             scene.add(mesh);
-            object.mesh = meshl
         } else {
-            loadObjects(scene, filepath);
+            loadObjects(filepath);
         }
     }
 }
@@ -117,7 +124,7 @@ let frames: number = 0;
 let prevRealTime: number = performance.now();
 let fps: number = 60;
 
-function rotateObjects(objects: Object[]) {
+function rotateObjects() {
     for (const object of world.getAllObjects()) {
         if (object.rotation) object.mesh.rotation.y = (timeDiff(time, object.rotation.epoch)/object.rotation.period*Math.PI) % Math.PI;
         if (object.children) object.children = rotateObjects(object.children, time);
@@ -125,7 +132,7 @@ function rotateObjects(objects: Object[]) {
     return world;
 }
 
-function moveObjects(world: World, objects, time, parent = null) {
+function moveObjects(objects: Object[], time, parent = null) {
     for (const object of objects) {
         if (parent !== null) {
             const [z, x, y] = getPosition(object, time);
@@ -176,8 +183,8 @@ function animate(world: World): void {
     time.setTime(time.getTime() + 1000 * timeWarp / fps);
     if (fps != 0) {
         const objects = world.read('/home/objects');
-        updaters.rotateObjects(objects, time);
-        updaters.moveObjects(objects, time);
+        rotateObjects(world);
+        moveObjects(world);
         const [oldX, oldY, oldZ] = targetObj.mesh.position;
         controls.target.copy(targetObj.mesh.position);
         const [newX, newY, newZ] = targetObj.mesh.position;
@@ -190,7 +197,6 @@ function animate(world: World): void {
     renderer.render(scene, camera);
 }
 
-const world: World = defaultWorld;
 loadObjects(world);
 renderer.setAnimationLoop(() => animate(world));
 setTimeout(() => {

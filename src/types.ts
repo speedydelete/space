@@ -16,62 +16,94 @@ interface LinearValueCycle {
 
 type Value = FixedValueCycle | LinearValueCycle | Value[];
 
-type Position = [Value, Value, Value];
-
-interface Rotation {
-    x: Value,
-    y: Value,
-    z: Value,
-}
+type Position = [number, number, number];
 
 interface Orbit {
-    ap: Value,
-    pe: Value,
-    sma: Value,
-    ecc: Value,
-    period: Value,
-    inc: Value,
-    lan: Value,
-    aop: Value,
-    aopEpoch: Value,
-    top: Value,
+    ap: number,
+    pe: number,
+    sma: number,
+    ecc: number,
+    period: number,
+    inc: number,
+    lan: number,
+    aop: number,
+    aopEpoch: number,
+    top: number,
 }
 
 type ObjectType = 'star' | 'planet';
 
-class _Object<T extends ObjectType = ObjectType> {
+interface ObjectParameters {
     name: string;
-    type: T;
-    color?: Value | string;
-    texture?: string;
-    magnitude?: Value;
-    mass: Value;
-    radius: Value;
-    flattening: Value;
-    rotation?: Value;
-    tilt?: Value | {
-        value: Value;
-        epoch?: Value;
-    };
+    mass: number;
+    radius: number;
+    flattening: number;
     orbit?: Orbit;
     position?: Position;
+    rotation?: Value;
+    tilt?: number;
     children?: Object[];
-    constructor(data: object = {}) {
-        Object.entries(data).forEach(([key, value]) => {this[key] = value});
+}
+
+class _Object<T extends ObjectType = ObjectType> {
+    type: T;
+    name: string;
+    mass: number;
+    radius: number;
+    flattening: number;
+    rotation: Value = 0;
+    tilt: number = 0;
+    position: Position = [0, 0, 0];
+    orbit?: Orbit;
+    children: Object[] = [];
+    constructor(type: T, data: ObjectParameters) {
+        this.type = type;
+        this.name = data.name;
+        this.mass = data.mass;
+        this.radius = data.radius;
+        this.flattening = data.flattening;
+        this.orbit = data.orbit;
+        if (data.position) this.position = data.position;
+        if (data.children) this.children = data.children;
+    }
+    hasOrbit(): this is OrbitObject {
+        return this.orbit !== undefined;
     }
 }
 
 interface OrbitObject extends _Object {
     orbit: Orbit;
-    position: never;
 }
 
-interface PositionObject extends _Object {
-    orbit: never;
-    position: Position;
+type SpectralType = string;
+
+interface StarParameters extends ObjectParameters {
+    magnitude: number;
+    spectralType: SpectralType;
+    texture?: string;
 }
 
-type Object = OrbitObject | PositionObject;
+class Star extends _Object<'star'> {
+    magnitude: number = 0;
+    spectralType: SpectralType = '';
+    texture?: string;
+    constructor(data: StarParameters) {
+        super('star', data);
+    }
+}
+
+interface PlanetParameters extends ObjectParameters {
+    texture: string;
+}
+
+class Planet extends _Object<'planet'> {
+    texture: string;
+    constructor(data: PlanetParameters) {
+        super('planet', data);
+    }
+}
+
+type Object = _Object | Star | Planet;
 
 type FileType = 'regular' | 'directory' | 'link';
 
@@ -156,9 +188,9 @@ interface Settings {
 }
 
 interface Config {
-    G: Value,
-    c: Value,
-    lC: Value,
+    G: number,
+    c: number,
+    lC: number,
 }
 
 export {
@@ -167,13 +199,16 @@ export {
     LinearValueCycle,
     Value,
     Position,
-    Rotation,
     Orbit,
     ObjectType,
+    ObjectParameters,
+    StarParameters,
+    PlanetParameters,
     _Object,
-    OrbitObject,
-    PositionObject,
     Object,
+    OrbitObject,
+    Star,
+    Planet,
     BaseFile,
     File,
     Directory,

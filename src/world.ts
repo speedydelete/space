@@ -250,12 +250,27 @@ class World {
         return this.readJSON('/etc/time');
     }
     object(path: string): Object | undefined {
-        const data = this.read(this.join('/home/objects', path + '.object'));
+        const data = this.readJSON(this.join('/home/objects', path + '.object'));
         if (data === undefined) {
             return undefined;
         } else {
             return data.data;
         }
+    }
+    _allObjects(path: string = '/home/objects/'): {[key: string]: Object} {
+        let out = {};
+        for (const filename of this.ls(path)) {
+            const filepath = this.join(path, filename);
+            if (this.isDir(filepath)) {
+                out = {...out, ...this._allObjects(filepath)};
+            } else {
+                out[filepath.slice('/home/objects/'.length)] = this.readJSON(path);
+            }
+        }
+        return out;
+    }
+    get allObjects(): {[key: string]: Object} {
+        return this._allObjects();
     }
 }
 

@@ -1,7 +1,7 @@
 
-import type {Time, Orbit, Object} from './types.ts';
+import type {Time, Object, OrbitObject} from './types.ts';
 import {timeDiff} from './util.ts';
-import {type World, resolveValue} from './world.ts';
+import type {World} from './world.ts';
 
 type Position = [number, number, number];
 
@@ -31,20 +31,17 @@ function rotateVector(vec: Position, angle: number, axis: 'x' | 'y' | 'z'): Posi
     return vec;
 }
 
-function getAop(world: World, object: Object, time: Time): number {
+function getAop(world: World, object: OrbitObject, time: Time): number {
     const {sma, period, ecc, aopEpoch} = object.orbit;
-    const aopPeriod = 24 * Math.PI**3 * resolveValue(sma, world)**2 / resolveValue(period, world)**2 / resolveValue(world.config.c, world)**2 / (1 - resolveValue(ecc, world)**2);
-    return timeDiff(time, resolveValue(aopEpoch, world))/aopPeriod * 360;
+    const aopPeriod = 24 * Math.PI**3 * sma**2 / period**2 / world.config.c**2 / (1 - ecc**2);
+    return timeDiff(time, aopEpoch)/aopPeriod * 360;
 }
 
-type Anomalies = {mna: number, eca: number, tra: number};
-
-function getAnomalies(world: World, object: Object, tol: number = 1e-6): Anomalies {
-    const {top, period} = object.orbit;
-    const ecc = resolveValue(object.orbit.ecc, world);
-    const mna = Math.abs(timeDiff(world.time, resolveValue(top, world)))/resolveValue(period, world);
+function getAnomalies(world: World, object: OrbitObject, tol: number = 1e-6): {mna: number, eca: number, tra: number} {
+    const {ecc, period, top} = object.orbit;
+    const mna = Math.abs(timeDiff(world.time, top)) / period;
     let eca = mna;
-    let delta;
+    let delta: number;
     do {
         delta = eca - ecc * Math.sin(eca) - mna;
         eca -= delta / (1 - ecc * Math.cos(eca));
@@ -56,27 +53,27 @@ function getAnomalies(world: World, object: Object, tol: number = 1e-6): Anomali
     return {mna: mna, eca: eca, tra: tra};
 }
 
-function getRadius(world: World, orbit: Orbit, {tra}: Anomalies): number {
-    const ecc = resolveValue(orbit.ecc, world)
-    return (resolveValue(orbit.sma, world) * (1 - ecc**2))/(1 + ecc*Math.cos(tra));
+function getOrbitalRadius(object: OrbitObject, tra: number): number {
+    return (object.orbit.sma * (1 - object.orbit.ecc**2))/(1 + object.orbit.ecc*Math.cos(tra));
 }
 
-function getPosition(world: World, object: Object, time: Time, tol=1e-6): Position {
-    // if (object.orbit === undefined) {
-    //     return resolveValue(object.position, world);
-    // }
-    const anomalies = getAnomalies(world, object, tol);
-    const radius = getRadius(world, object.orbit, anomalies);
-    let vec: Position = [radius * Math.cos(anomalies.tra), radius * Math.sin(anomalies.tra), 0];
-    vec = rotateVector(vec, -object.orbit.lan*Math.PI/180, 'z');
-    vec = rotateVector(vec, -object.orbit.inc*Math.PI/180, 'x');
-    vec = rotateVector(vec, -object.orbit.aop*Math.PI/180, 'z');
-    return vec;
+function getPosition(world: World, object: Object, tol=1e-6): Position {
+    if (object.hasOrbit()) {
+        const {tra} = getAnomalies(world, object, tol);
+        const radius = getOrbitalRadius(object, tra);
+        let pos: Position = [radius * Math.cos(tra), radius * Math.sin(tra), 0];
+        pos = rotateVector(pos, -object.orbit.lan*Math.PI/180, 'z');
+        pos = rotateVector(pos, -object.orbit.inc*Math.PI/180, 'x');
+        pos = rotateVector(pos, -object.orbit.aop*Math.PI/180, 'z');
+        return pos;
+    } else {
+        return object.position;
+    }
 }
 
 export {
     getAop,
     getAnomalies,
-    getRadius,
+    getOrbitalRadius,
     getPosition,
 }
