@@ -27,8 +27,7 @@ interface Orbit {
     inc: number,
     lan: number,
     aop: number,
-    aopEpoch: number,
-    top: number,
+    top: Time,
 }
 
 type ObjectType = 'star' | 'planet';
@@ -93,14 +92,17 @@ class Star extends _Object<'star'> {
     texture?: string;
     constructor(data: StarParameters) {
         super('star', data);
+        this.magnitude = data.magnitude;
+        this.spectralType = data.spectralType;
+        this.texture = data.texture;
     }
-    get color(): string {
+    get color(): number {
         for (const [type, color] of Object.entries(spectralTypeColors)) {
             if ((new RegExp(type)).test(this.spectralType)) {
-                return color;
+                return parseInt(color.replace('#', '0x'));
             }
         }
-        return '#7f7f7f';
+        return 0x7f7f7f;
     }
 }
 
@@ -112,10 +114,26 @@ class Planet extends _Object<'planet'> {
     texture: string;
     constructor(data: PlanetParameters) {
         super('planet', data);
+        this.texture = data.texture;
     }
 }
 
 type Object_ = Star | Planet;
+
+const objectTypeMap = {
+    'star': Star,
+    'planet': Planet,
+}
+
+interface Config {
+    G: number,
+    c: number,
+    lC: number,
+}
+
+interface Settings {
+    unitSize: number,
+}
 
 type FileType = 'regular' | 'directory' | 'link';
 
@@ -128,9 +146,13 @@ class BaseFile {
 
 class File extends BaseFile {
     data: string;
-    constructor(data: string) {
+    constructor(data: string | Object_ | Config) {
         super('regular');
-        this.data = data;
+        if (typeof data == 'string') {
+            this.data = data;
+        } else {
+            this.data = JSON.stringify(data);
+        }
     }
 }
 
@@ -195,16 +217,6 @@ interface FileSystem {
     [key: string]: BaseFile;
 }
 
-interface Settings {
-    unitSize: number,
-}
-
-interface Config {
-    G: number,
-    c: number,
-    lC: number,
-}
-
 export {
     Time,
     FixedValueCycle,
@@ -228,4 +240,5 @@ export {
     FileSystem,
     Settings,
     Config,
+    objectTypeMap,
 }

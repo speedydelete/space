@@ -10,10 +10,6 @@ const world: World = defaultWorld;
 
 const unitSize: number = 6371000; // settings.unitSize;
 
-const leftInfoElt: HTMLElement | null = document.getElementById('left-info');
-const rightInfoElt: HTMLElement | null = document.getElementById('right-info');
-
-let time: Date = new Date();
 let target: string = 'sun/earth';
 let timeWarp: number = 1;
 
@@ -33,8 +29,7 @@ controls.keyPanSpeed = 2;
 controls.update();
 controls.listenToKeyEvents(window);
 
-const ambientLight = new three.AmbientLight(0xffffff, 0.2);
-scene.add(ambientLight);
+scene.add(new three.AmbientLight(0xffffff, 0.2));
 
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -76,7 +71,7 @@ window.addEventListener('keypress', function(event) {
 const textureLoader = new three.TextureLoader()
 
 function loadObjects(): void {
-    for (const path in world.lsobjall()) {
+    for (const path of world.lsobjall()) {
         const object = world.getobj(path);
         if (object === undefined) continue;
         let material = new three.MeshStandardMaterial();
@@ -87,15 +82,7 @@ function loadObjects(): void {
         material.transparent = true;
         if (object.type == 'star') {
             if (material.map) material.emissiveMap = material.map;
-            let color: string | number = object.color;
-            if (typeof color == 'string') {
-                color = parseInt(color);
-            }
-            material.emissive = new three.Color(
-                Math.floor(color / 65536) / 256,
-                Math.floor((color % 65536) / 256) / 256,
-                (color % 256) / 256,
-            );
+            material.emissive = new three.Color(object.color);
             material.emissiveIntensity = 2;
         }
         const geometry = new three.SphereGeometry(object.radius/unitSize, 512, 512);
@@ -104,7 +91,6 @@ function loadObjects(): void {
         if (object.type == 'star') {
             const light = new three.PointLight(object.color);
             light.power = world.config.lC / 10**(0.4 * object.magnitude) / unitSize**2 / 20000;
-            console.log(light.power);
             mesh.add(light);
         }
         mesh.visible = true;
@@ -123,18 +109,19 @@ function rotateObjects() {
     }
 }
 
-function moveObjects(basePath: string = '/', parent: null | three.Mesh = null) {
+function moveObjects(basePath: string = '') {
     for (const filename of world.lsobjall(basePath)) {
         const path = world.join(basePath, filename);
         const object = world.getobj(path);
-        if (object) {
-            const mesh = world.getObjectMesh(path);
-            if (mesh) {
-                let [z, x, y] = getPosition(world, object);
-                const [px, py, pz] = parent === null ? [0, 0, 0] : parent.position;
-                mesh.position.set(px + x, py + y, pz + z);
-                if (object.children) moveObjects(path, mesh);
+        const mesh = world.getObjectMesh(path);
+        if (object && mesh) {
+            let [z, x, y] = getPosition(world, object);
+            let [px, py, pz] = [0, 0, 0];
+            if (!path.match(/^\/[^\/]+$/)) {
+                const parentMesh = world.getObjectMesh(world.join(path, '..'));
+                if (parentMesh) [px, py, pz] = parentMesh.position;
             }
+            mesh.position.set(px + x/unitSize, py + y/unitSize, pz + z/unitSize);
         }
     }
 }
@@ -143,7 +130,10 @@ let frames: number = 0;
 let prevRealTime: number = performance.now();
 let fps: number = 60;
 
-function animate(world: World): void {
+const leftInfoElt: HTMLElement | null = document.getElementById('left-info');
+const rightInfoElt: HTMLElement | null = document.getElementById('right-info');
+
+function animate(): void {
     if (document.hidden || document.visibilityState == 'hidden') return;
     frames++;
     const realTime = performance.now();
@@ -164,7 +154,7 @@ function animate(world: World): void {
         Time Warp: ${timeWarp}x (${formatTime(timeWarp)}/s)`;
     }
     if (rightInfoElt && targetObj && mesh) {
-        rightInfoElt.innerText = `ID: ${target}
+        rightInfoElt.innerText = `Path: ${target}
         Name: ${targetObj.name}
         X: ${formatLength(mesh.position.x*unitSize)}
         Y: ${formatLength(mesh.position.y*unitSize)}
@@ -179,7 +169,9 @@ function animate(world: World): void {
         \tTime of Periapsis: ${targetObj.orbit.top}`
         : `No orbit, root object`);
     }
-    time.setTime(time.getTime() + 1000 * timeWarp / fps);
+    if (world.time) {
+        world.time = new Date(world.time.getTime() + 1000 * timeWarp / fps);
+    }
     if (fps != 0) {
         rotateObjects();
         moveObjects();
@@ -198,8 +190,11 @@ function animate(world: World): void {
 }
 
 loadObjects();
-renderer.setAnimationLoop(() => animate(world));
 setTimeout(() => {
-    const targetPos: three.Vector3 = world.lsobjall()[target].mesh.position;
-    camera.position.set(targetPos.x + world.lsobjall()[target].radius/unitSize*10, targetPos.y, targetPos.z);
+    const object = world.getobj(target);
+    const mesh = world.getObjectMesh(target);
+    if (object && mesh) {
+        camera.position.set(mesh.position.x + object.radius/unitSize*10, mesh.position.y, mesh.position.z);
+    }
 }, 1000);
+renderer.setAnimationLoop(animate);

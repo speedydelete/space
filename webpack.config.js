@@ -17,11 +17,16 @@ module.exports = {
         rules: [
             {
                 exclude: /node_modules/,
-                test: /(\.js|\.ts)$/,
+                test: /\.[jt]s$/,
                 loader: 'babel-loader',
                 options: {
                     presets: ['@babel/preset-env', '@babel/preset-typescript'],
                 },
+            },
+            {
+                exclude: /node_modules/,
+                test: /\.[jt]s$/,
+                use: ['source-map-loader'],
             },
             {
                 test: /\.css$/,

@@ -19,21 +19,31 @@ canvas {
     display: block;
 }
 
-#debug-info {
-    position: absolute;
-    top: 10px;
-    left: 10px;
+.info {
     font-size: 14px;
     font-family: 'Courier New', Courier, monospace;
     background-color: transparent;
     color: white;
 }
 
+#left-info {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+}
+
+#right-info {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
         </style>
         <!-- <script type="text/javascript" src="/wrecked/client.js" data-wrecked-no-grab="true"></script> -->
     </head>
     <body>
-        <div id="debug-info"></div>
+        <div id="left-info" class="info"></div>
+        <div id="right-info" class="info"></div>
         <!-- <script type="wrecked/typescript" src="index.ts"></script> -->
         <script type="text/javascript" src="main.js"></script>
     </body>
