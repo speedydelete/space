@@ -50,6 +50,9 @@ window.addEventListener('click', function(event) {
     }
 });
 
+const changelogElt = document.getElementById('changelog');
+let changelogShown = false;
+
 window.addEventListener('keypress', function(event) {
     if (event.key == ',') {
         if (Math.log10(timeWarp) % 1 === 0) {
@@ -65,6 +68,19 @@ window.addEventListener('keypress', function(event) {
         }
     } else if (event.key == '/') {
         timeWarp = 1;
+    } else if (event.key == 'c' && changelogElt) {
+        changelogShown = !changelogShown;
+        if (changelogShown) {
+            changelogElt.style.display = 'block';
+            document.body.removeChild(renderer.domElement);
+            if (leftInfoElt) leftInfoElt.style.display = 'none';
+            if (rightInfoElt) rightInfoElt.style.display = 'none';
+        } else {
+            changelogElt.style.display = 'none';
+            document.body.appendChild(renderer.domElement);
+            if (leftInfoElt) leftInfoElt.style.display = 'block';
+            if (rightInfoElt) rightInfoElt.style.display = 'block';
+        }
     }
 });
 
@@ -150,8 +166,11 @@ function animate(): void {
         Camera Y: ${formatLength(camera.position.y*unitSize)}
         Camera Z: ${formatLength(camera.position.z*unitSize)}
         Total Objects: ${world.lsobjall().length}
-        Time: ${new Date().toISOString()}
-        Time Warp: ${timeWarp}x (${formatTime(timeWarp)}/s)`;
+        Time: ${world.time?.toISOString()}
+        Time Warp: ${timeWarp}x (${formatTime(timeWarp)}/s)
+        Press C for changelog.
+        Use ,./ to control time warp.
+        Click on objects to select them.`;
     }
     if (rightInfoElt && targetObj && mesh) {
         rightInfoElt.innerText = `Path: ${target}
@@ -174,14 +193,16 @@ function animate(): void {
     }
     if (fps != 0) {
         rotateObjects();
-        moveObjects();
         if (mesh) {
             const [oldX, oldY, oldZ] = mesh.position;
+            moveObjects();
             controls.target.copy(mesh.position);
             const [newX, newY, newZ] = mesh.position;
             camera.position.x += newX - oldX;
             camera.position.y += newY - oldY;
             camera.position.z += newZ - oldZ;
+        } else {
+            moveObjects();
         }
     }
     camera.updateProjectionMatrix();

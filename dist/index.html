@@ -8,11 +8,14 @@
 
 * {
     user-select: none;
+    font-size: 14px;
+    font-family: 'Courier New', Courier, monospace;
 }
 
 body {
     margin: 0;
     overflow: hidden;
+    background-color: black;
 }
 
 canvas {
@@ -20,8 +23,6 @@ canvas {
 }
 
 .info {
-    font-size: 14px;
-    font-family: 'Courier New', Courier, monospace;
     background-color: transparent;
     color: white;
 }
@@ -38,11 +39,26 @@ canvas {
     right: 10px;
 }
 
+#changelog {
+    display: none;
+    padding: 10px;
+    color: white;
+}
+
         </style>
     </head>
     <body>
         <div id="left-info" class="info"></div>
         <div id="right-info" class="info"></div>
+        <div id="changelog">
+            v0.1.0: First release - 2024-12-06:
+            <ul>
+                <li>3D rendering of the Sun, Earth, and the Moon.</li>
+                <li>Shows a bunch of information on the screen.</li>
+                <li>Can be interacted with (panning, zooming, clicking) using the mouse.</li>
+                <li>Time warp controlled using comma, period, and slash keys.</li>
+            </ul>
+        </div>
         <script type="text/javascript" src="main.js"></script>
     </body>
 </html>
