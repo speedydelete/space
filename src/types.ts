@@ -77,6 +77,10 @@ interface OrbitObject extends _Object {
 
 type SpectralType = string;
 
+type SpectralTypeRegexLiteral = SpectralType;
+
+const spectralTypeColors: {[key: SpectralTypeRegexLiteral]: string} = (await (await fetch('./spectral_type_colors.json')).json());
+
 interface StarParameters extends ObjectParameters {
     magnitude: number;
     spectralType: SpectralType;
@@ -85,10 +89,18 @@ interface StarParameters extends ObjectParameters {
 
 class Star extends _Object<'star'> {
     magnitude: number = 0;
-    spectralType: SpectralType = '';
+    spectralType: SpectralType = '~';
     texture?: string;
     constructor(data: StarParameters) {
         super('star', data);
+    }
+    get color(): string {
+        for (const [type, color] of Object.entries(spectralTypeColors)) {
+            if ((new RegExp(type)).test(this.spectralType)) {
+                return color;
+            }
+        }
+        return '#7f7f7f';
     }
 }
 
@@ -103,7 +115,7 @@ class Planet extends _Object<'planet'> {
     }
 }
 
-type Object = _Object | Star | Planet;
+type Object = Star | Planet;
 
 type FileType = 'regular' | 'directory' | 'link';
 

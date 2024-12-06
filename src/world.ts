@@ -1,5 +1,6 @@
 
-import type {Time, BaseFile, Value, FileSystem} from './types.ts';
+import type {Mesh} from 'three';
+import type {Time, Object, Value, BaseFile, FileSystem} from './types.ts';
 import {File, Directory, Link, Config} from './types.ts';
 import {timeDiff} from './util.ts';
 
@@ -9,6 +10,7 @@ class World {
     files: FileSystem;
     rootDirectory: Directory<FileSystem>;
     dir: string;
+    objectMeshes: {[key: string]: Mesh};
     constructor(files: FileSystem) {
         this.files = files;
         this.rootDirectory = new Directory(files);
@@ -249,7 +251,7 @@ class World {
     get time(): Time {
         return this.readJSON('/etc/time');
     }
-    object(path: string): Object | undefined {
+    getobj(path: string): Object | undefined {
         const data = this.readJSON(this.join('/home/objects', path + '.object'));
         if (data === undefined) {
             return undefined;
@@ -257,20 +259,29 @@ class World {
             return data.data;
         }
     }
-    _allObjects(path: string = '/home/objects/'): {[key: string]: Object} {
-        let out = {};
-        for (const filename of this.ls(path)) {
+    setobj(path: string, object: Object): void {
+        this.writeJSON(this.join('/home/objects', path + '.object'), object);
+    }
+    lsobj(path: string = '/'): string[] {
+        return this.ls(this.join('/home/objects', path));
+    }
+    lsobjall(path = ''): string[] {
+        let out: string[] = [];
+        for (const filename of this.lsobj(path)) {
             const filepath = this.join(path, filename);
             if (this.isDir(filepath)) {
-                out = {...out, ...this._allObjects(filepath)};
+                out = out.concat(this.lsobjall(filepath));
             } else {
-                out[filepath.slice('/home/objects/'.length)] = this.readJSON(path);
+                out.push(filepath);
             }
         }
         return out;
     }
-    get allObjects(): {[key: string]: Object} {
-        return this._allObjects();
+    setObjectMesh(path: string, mesh: Mesh) {
+        this.objectMeshes[path] = mesh;
+    }
+    getObjectMesh(path: string): Mesh | undefined {
+        return this.objectMeshes[path];
     }
 }
 
