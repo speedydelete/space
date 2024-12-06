@@ -115,7 +115,7 @@ class Planet extends _Object<'planet'> {
     }
 }
 
-type Object = Star | Planet;
+type Object_ = Star | Planet;
 
 type FileType = 'regular' | 'directory' | 'link';
 
@@ -217,7 +217,7 @@ export {
     StarParameters,
     PlanetParameters,
     _Object,
-    Object,
+    Object_,
     OrbitObject,
     Star,
     Planet,

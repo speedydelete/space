@@ -1,7 +1,7 @@
 
 import * as three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
-import type {Object} from './types.ts';
+import type {Object_} from './types.ts';
 import {formatTime, formatLength} from './util.ts';
 import {type World, defaultWorld, resolveValue} from './world.ts';
 import {getPosition} from './orbits.ts';
@@ -152,7 +152,7 @@ function animate(world: World): void {
         frames = 0;
         prevRealTime = realTime;
     }
-    const targetObj: Object | undefined = world.getobj(target);
+    const targetObj: Object_ | undefined = world.getobj(target);
     const mesh: three.Mesh | undefined = world.getObjectMesh(target);
     if (leftInfoElt) {
         leftInfoElt.innerText = `FPS: ${fps}

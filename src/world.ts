@@ -1,6 +1,6 @@
 
 import type {Mesh} from 'three';
-import type {Time, Object, Value, BaseFile, FileSystem} from './types.ts';
+import type {Time, Object_, Value, BaseFile, FileSystem} from './types.ts';
 import {File, Directory, Link, Config} from './types.ts';
 import {timeDiff} from './util.ts';
 
@@ -251,7 +251,7 @@ class World {
     get time(): Time {
         return this.readJSON('/etc/time');
     }
-    getobj(path: string): Object | undefined {
+    getobj(path: string): Object_ | undefined {
         const data = this.readJSON(this.join('/home/objects', path + '.object'));
         if (data === undefined) {
             return undefined;
@@ -259,7 +259,7 @@ class World {
             return data.data;
         }
     }
-    setobj(path: string, object: Object): void {
+    setobj(path: string, object: Object_): void {
         this.writeJSON(this.join('/home/objects', path + '.object'), object);
     }
     lsobj(path: string = '/'): string[] {

@@ -1,5 +1,5 @@
 
-import type {Time, Object, OrbitObject} from './types.ts';
+import type {Time} from './types.ts';
 
 function type(value: any): string {
     if (value === undefined) {

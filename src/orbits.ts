@@ -1,5 +1,5 @@
 
-import type {Time, Object, OrbitObject} from './types.ts';
+import type {Time, Object_, OrbitObject} from './types.ts';
 import {timeDiff} from './util.ts';
 import type {World} from './world.ts';
 
@@ -57,7 +57,7 @@ function getOrbitalRadius(object: OrbitObject, tra: number): number {
     return (object.orbit.sma * (1 - object.orbit.ecc**2))/(1 + object.orbit.ecc*Math.cos(tra));
 }
 
-function getPosition(world: World, object: Object, tol=1e-6): Position {
+function getPosition(world: World, object: Object_, tol=1e-6): Position {
     if (object.hasOrbit()) {
         const {tra} = getAnomalies(world, object, tol);
         const radius = getOrbitalRadius(object, tra);
