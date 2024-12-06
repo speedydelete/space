@@ -2,14 +2,14 @@ alert('hi');
 
 import * as three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
-import {formatTime, formatLength} from './units.ts';
+import {formatTime, formatLength} from './util.ts';
 import {type World, defaultWorld} from './world.ts';
-import * as updaters from './updaters.ts';
+import {getPosition} from './orbits.ts';
 
-const unitSize: number = config.unitSize;
+const unitSize: number = 6371000; // settings.unitSize;
 
-const leftInfoElt: HTMLDivElement = document.getElementById('left-info');
-const rightInfoElt: HTMLDivElement = document.getElementById('right-info');
+const leftInfoElt: HTMLElement | null = document.getElementById('left-info');
+const rightInfoElt: HTMLElement | null = document.getElementById('right-info');
 
 let time: Date = new Date();
 let target: string = 'sun.earth';
@@ -117,10 +117,6 @@ let frames: number = 0;
 let prevRealTime: number = performance.now();
 let fps: number = 60;
 
-import type {World} from './world.ts';
-import {timeDiff} from './units.ts';
-import {getPosition} from './orbits.ts';
-
 function rotateObjects(objects: Object[]) {
     for (const object of world.getAllObjects()) {
         if (object.rotation) object.mesh.rotation.y = (timeDiff(time, object.rotation.epoch)/object.rotation.period*Math.PI) % Math.PI;
@@ -194,7 +190,7 @@ function animate(world: World): void {
     renderer.render(scene, camera);
 }
 
-const world: World = await getWorld();
+const world: World = defaultWorld;
 loadObjects(world);
 renderer.setAnimationLoop(() => animate(world));
 setTimeout(() => {

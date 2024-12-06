@@ -1,61 +1,57 @@
 
 type Time = number | undefined | string | Date;
 
-type FixedValueCycle<T> = {
+type FixedValueCycle = {
     type: 'fixed',
-    value: Value<T>,
-} | T;
+    value: Value,
+} | number;
 
-interface LinearValueCycle<T> {
+interface LinearValueCycle {
     type: 'linear',
-    min: Value<T>,
-    max: Value<T>,
-    period: Value<T>,
+    min: Value,
+    max: Value,
+    period: Value,
     epoch: Time,
 }
 
-type MultiCycle<T> = ValueCycle<T>[];
+type Value = FixedValueCycle | LinearValueCycle | Value[];
 
-type ValueCycle<T> = FixedValueCycle<T> | LinearValueCycle<T> | MultiCycle<T>;
-
-type Value<T> = T | ValueCycle<T>;
-
-type Position = [Value<number>, Value<number>, Value<number>];
+type Position = [Value, Value, Value];
 
 interface Rotation {
-    x: Value<number>,
-    y: Value<number>,
-    z: Value<number>,
+    x: Value,
+    y: Value,
+    z: Value,
 }
 
 interface Orbit {
-    ap: Value<number>,
-    pe: Value<number>,
-    sma: Value<number>,
-    ecc: Value<number>,
-    period: Value<number>,
-    inc: Value<number>,
-    lan: Value<number>,
-    aop: Value<number>,
-    aopEpoch: Value<number>,
-    top: Value<number>,
+    ap: Value,
+    pe: Value,
+    sma: Value,
+    ecc: Value,
+    period: Value,
+    inc: Value,
+    lan: Value,
+    aop: Value,
+    aopEpoch: Value,
+    top: Value,
 }
 
 type ObjectType = 'star' | 'planet';
 
-class Object_<T extends ObjectType = ObjectType> {
+class _Object<T extends ObjectType = ObjectType> {
     name: string;
     type: T;
-    color?: Value<string | number>;
+    color?: Value | string;
     texture?: string;
-    magnitude?: Value<number>;
-    mass: Value<number>;
-    radius: Value<number>;
-    flattening: Value<number>;
-    rotation?: Value<number>;
-    tilt?: Value<number> | {
-        value: Value<number>;
-        epoch?: Value<number>;
+    magnitude?: Value;
+    mass: Value;
+    radius: Value;
+    flattening: Value;
+    rotation?: Value;
+    tilt?: Value | {
+        value: Value;
+        epoch?: Value;
     };
     orbit?: Orbit;
     position?: Position;
@@ -64,6 +60,18 @@ class Object_<T extends ObjectType = ObjectType> {
         Object.entries(data).forEach(([key, value]) => {this[key] = value});
     }
 }
+
+interface OrbitObject extends _Object {
+    orbit: Orbit;
+    position: never;
+}
+
+interface PositionObject extends _Object {
+    orbit: never;
+    position: Position;
+}
+
+type Object = OrbitObject | PositionObject;
 
 type FileType = 'regular' | 'directory' | 'link';
 
@@ -98,7 +106,7 @@ class Link<T extends string = string> extends BaseFile {
     }
 }
 
-class FileSystem extends Directory {
+interface FileSystem {
     bin: Directory;
     boot: Directory;
     dev: Directory;
@@ -140,6 +148,7 @@ class FileSystem extends Directory {
         spool: Directory;
         tmp: Directory;
     }>;
+    [key: string]: BaseFile;
 }
 
 interface Settings {
@@ -147,23 +156,24 @@ interface Settings {
 }
 
 interface Config {
-    G: Value<number>,
-    c: Value<number>,
-    lC: Value<number>,
+    G: Value,
+    c: Value,
+    lC: Value,
 }
 
 export {
     Time,
     FixedValueCycle,
     LinearValueCycle,
-    MultiCycle,
-    ValueCycle,
     Value,
     Position,
     Rotation,
     Orbit,
     ObjectType,
-    Object_,
+    _Object,
+    OrbitObject,
+    PositionObject,
+    Object,
     BaseFile,
     File,
     Directory,

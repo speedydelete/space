@@ -3,13 +3,21 @@ import type {Time, Value} from './types.ts';
 
 function type(value: any): string {
     if (value === undefined) {
+        ((value): value is undefined => true)(value)
         return 'undefined';
     } else if (value === null) {
+        ((value): value is null => true)(value)
         return 'null';
     }
     const type = typeof value;
-    if (type == 'number' || type == 'string' || type == 'bigint' || type == 'symbol') {
-        return type;
+    if (type == 'number') {
+        return 'number';
+    } else if (type == 'string') {
+        return 'string';
+    } else if (type == 'bigint') {
+        return 'bigint';
+    } else if (type == 'symbol') {
+        return 'symbol';
     } else if (type == 'object') {
         if (value[Symbol.toStringTag]) {
             return value[Symbol.toStringTag];
@@ -36,7 +44,6 @@ function type(value: any): string {
 }
 
 function getTime(time?: Time): number {
-    time = resolveValue(time, time);
     if (typeof time == 'number') {
         return time;
     } else if (time === undefined) {
@@ -51,23 +58,6 @@ function getTime(time?: Time): number {
 function timeDiff(time1: Time, time2: Time): number {
     return getTime(time1) - getTime(time2);
 }
-
-function resolveValue<T>(value: Value<T>, time: Time): T {
-    if (Array.isArray(value)) {
-        return value.map((c) => resolveValue(c, time)).reduce(([x, y]) => x + y);
-    } else if (typeof value == 'object' && value.type) {
-        if (value.type == 'fixed') {
-            return resolveValue(value.value, time);
-        } else if (value.type == 'linear') {
-            return value.min + timeDiff(time, value.epoch)/value.period * value.max;
-        } else {
-            throw new TypeError(`Value type '${value.type}' is not recognized`)
-        }
-    } else {
-        throw new TypeError(`value '${value}' is invalid`);
-    }
-}
-
 
 const {abs} = Math;
 
@@ -97,7 +87,7 @@ function formatLength(value: number): string {
     } else if (abs(value) < 1e15) {
         return round(value/1.495978707e11, 4) + ' AU';
     } else {
-        return Math.round(value/9.4607e15, 4) + ' ly';
+        return round(value/9.4607e15, 4) + ' ly';
     }
 }
 
