@@ -331,7 +331,7 @@ const defaultWorld = new World({
                     rotation: {
                         type: 'linear',
                         min: 0,
-                        max: Math.PI*2,
+                        max: 360,
                         period: 2164320,
                         epoch: new Date(2023, 1, 1, 9, 10),
                     },
@@ -344,6 +344,14 @@ const defaultWorld = new World({
                         mass: 5.972168e24,
                         radius: 6378127,
                         flattening: 0.003352810681182319,
+                        rotation: {
+                            type: 'linear',
+                            min: 0,
+                            max: 360,
+                            period: 86164.100352,
+                            epoch: new Date(2024, 3, 20, 3, 7),
+                        },
+                        tilt: 23.4392811,
                         orbit: {
                             ap: 152097597000,
                             pe: 147098450000,
@@ -362,6 +370,13 @@ const defaultWorld = new World({
                         mass: 7.346e22,
                         radius: 1738100,
                         flattening: 0.0012,
+                        rotation: {
+                            type: 'linear',
+                            min: 0,
+                            max: 360,
+                            period: 2360591.5104,
+                            epoch: new Date(2024, 12, 1, 1, 21),
+                        },
                         orbit: {
                             ap: 405400000,
                             pe: 362600000,

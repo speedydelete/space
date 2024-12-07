@@ -50,20 +50,20 @@ class _Object<T extends ObjectType = ObjectType> {
     mass: number;
     radius: number;
     flattening: number;
-    rotation: Value = 0;
-    tilt: number = 0;
-    position: Position = [0, 0, 0];
+    rotation: Value;
+    tilt: number;
+    position: Position;
     orbit?: Orbit;
-    children: Object[] = [];
     constructor(type: T, data: ObjectParameters) {
         this.type = type;
         this.name = data.name;
         this.mass = data.mass;
         this.radius = data.radius;
         this.flattening = data.flattening;
+        this.rotation = data.rotation === undefined ? 0 : data.rotation;
+        this.tilt = data.tilt === undefined ? 0 : data.tilt;
+        this.position = data.position === undefined ? [0, 0, 0] : data.position;
         this.orbit = data.orbit;
-        if (data.position) this.position = data.position;
-        if (data.children) this.children = data.children;
     }
     hasOrbit(): this is OrbitObject {
         return this.orbit !== undefined;

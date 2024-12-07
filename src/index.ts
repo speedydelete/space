@@ -55,20 +55,24 @@ let changelogShown = false;
 
 window.addEventListener('keypress', function(event) {
     if (event.key == ',') {
+        event.preventDefault();
         if (Math.log10(timeWarp) % 1 === 0) {
             timeWarp /= 2;
         } else {
             timeWarp /= 5;
         }
     } else if (event.key == '.') {
+        event.preventDefault();
         if (Math.log10(timeWarp) % 1 === 0) {
             timeWarp *= 5;
         } else {
             timeWarp *= 2;
         }
     } else if (event.key == '/') {
+        event.preventDefault();
         timeWarp = 1;
     } else if (event.key == 'c' && changelogElt) {
+        event.preventDefault();
         changelogShown = !changelogShown;
         if (changelogShown) {
             changelogElt.style.display = 'block';
@@ -89,7 +93,7 @@ const textureLoader = new three.TextureLoader()
 function loadObjects(): void {
     for (const path of world.lsobjall()) {
         const object = world.getobj(path);
-        console.log(path, object);
+        console.log('loading object', path, object);
         if (object === undefined) continue;
         let material = new three.MeshStandardMaterial();
         if (object.texture) {
@@ -121,7 +125,9 @@ function rotateObjects() {
         const mesh = world.getObjectMesh(path);
         const object = world.getobj(path);
         if (mesh !== undefined && object !== undefined) {
-            mesh.rotation.y = resolveValue(object.rotation, world);
+            mesh.rotation.set(0, 0, 0);
+            mesh.rotateX(object.tilt * Math.PI / 180);
+            mesh.rotateY(resolveValue(object.rotation, world) * Math.PI / 180);
         }
     }
 }
@@ -131,7 +137,7 @@ function moveObjects(basePath: string = '') {
         const path = world.join(basePath, filename);
         const object = world.getobj(path);
         const mesh = world.getObjectMesh(path);
-        if (object && mesh) {
+        if (object && mesh !== undefined) {
             let [z, x, y] = getPosition(world, object);
             let [px, py, pz] = [0, 0, 0];
             if (!path.match(/^\/[^\/]+$/)) {
@@ -173,7 +179,7 @@ function animate(): void {
         Use ,./ to control time warp.
         Click on objects to select them.`;
     }
-    if (rightInfoElt && targetObj && mesh) {
+    if (rightInfoElt && targetObj !== undefined && mesh !== undefined) {
         rightInfoElt.innerText = `Path: ${target}
         Name: ${targetObj.name}
         X: ${formatLength(mesh.position.x*unitSize)}
@@ -194,7 +200,7 @@ function animate(): void {
     }
     if (fps != 0) {
         rotateObjects();
-        if (mesh) {
+        if (mesh !== undefined) {
             const [oldX, oldY, oldZ] = mesh.position;
             moveObjects();
             controls.target.copy(mesh.position);
@@ -203,6 +209,7 @@ function animate(): void {
             camera.position.y += newY - oldY;
             camera.position.z += newZ - oldZ;
         } else {
+            console.log(mesh, target, targetObj);
             moveObjects();
         }
     }
