@@ -43,7 +43,7 @@ class World {
     cd(path: string): void {
         this.dir = this.join(this.dir, path);
     }
-    read(path: string): File | undefined {
+    read(path: string, undefinedIfNonexistent: boolean = false): File | undefined {
         const paths = this.resolve(path).split(pathSep);
         let out: Directory[] = [this.rootDirectory];
         let i = 0;
@@ -58,7 +58,11 @@ class World {
             } else {
                 const file = out[out.length - 1].files[item];
                 if (file === undefined) {
-                    throw new TypeError(`nonexistent file '${paths.slice(0, i + 1).join('/')}'`);
+                    if (undefinedIfNonexistent) {
+                        return undefined;
+                    } else {
+                        throw new TypeError(`nonexistent file '${paths.slice(0, i + 1).join('/')}'`);
+                    }
                 } else if (file instanceof File) {
                     if (i == paths.length - 1) {
                         return file;
@@ -74,8 +78,8 @@ class World {
             i++;
         }
     }
-    readJSON(path: string): any {
-        const data = this.read(path);
+    readjson(path: string, undefinedIfNonexistent: boolean = false): any {
+        const data = this.read(path, undefinedIfNonexistent);
         return data !== undefined ? JSON.parse(data.data) : data;
     }
     write(path: string, data: string): void {
@@ -113,7 +117,7 @@ class World {
             i++;
         }
     }
-    writeJSON(path: string, data: any): void {
+    writejson(path: string, data: any): void {
         this.write(path, JSON.stringify(data));
     }
     mkdir<T extends {[key: string]: BaseFile} | BaseFile = {[key: string]: BaseFile}>(path: string): void {
@@ -246,7 +250,7 @@ class World {
         return false;
     }
     get config(): Config {
-        return this.readJSON('/etc/config');
+        return this.readjson('/etc/config');
     }
     get time(): Date | undefined {
         const out = this.read('/etc/time');
@@ -260,15 +264,22 @@ class World {
         this.write('/etc/time', value.toISOString());
     }
     getobj(path: string): Object_ | undefined {
-        const data = this.readJSON(this.join('/home/objects', path + '.object'));
+        let data: any;
+        data = this.readjson(this.join('/home/objects', path, '.object'), true);
         if (data === undefined) {
-            return undefined;
-        } else {
-            return new objectTypeMap[data.type](data);
+            data = this.readjson(this.join('/home/objects', path + '.object'), true);
+            if (data === undefined) {
+                return undefined;
+            }
         }
+        return new objectTypeMap[data.type](data);
     }
     setobj(path: string, object: Object_): void {
-        this.writeJSON(this.join('/home/objects', path + '.object'), object);
+        if (this.read(this.join('/home/objects', path, '.object'), true) !== undefined) {
+            this.writejson(this.join('/home/objects', path, '.object'), object);
+        } else {
+            this.writejson(this.join('/home/objects', path + '.object'), object);
+        }
     }
     lsobj(path: string = '/'): string[] {
         return this.ls(this.join('/home/objects', path));
@@ -280,7 +291,7 @@ class World {
             if (this.isDir(this.join('/home/objects', filepath))) {
                 out = out.concat(this.lsobjall(filepath));
             } else {
-                out.push(filepath.replace(/\.object$/, '').replace(/^\//, ''));
+                out.push(filepath.replace(/\.object$/, '').replace(/^\/|\/$/g, ''));
             }
         }
         return out;
@@ -309,43 +320,43 @@ const defaultWorld = new World({
     home: new Directory({
         root: new Link('/root/'),
         objects: new Directory({
-            'sun.object': new File(new Star({
-                name: 'Sun',
-                mass: 1.9985e30,
-                texture: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Solarsystemscope_texture_2k_sun.jpg/800px-Solarsystemscope_texture_2k_sun.jpg',
-                magnitude: 4.83,
-                radius: 695700000,
-                flattening: 0.00005,
-                rotation: {
-                    type: 'linear',
-                    min: 0,
-                    max: Math.PI*2,
-                    period: 2164320,
-                    epoch: new Date(2023, 1, 1, 9, 10),
-                },
-                position: [0, 0, 0],
-                spectralType: 'G2V',
-            })),
             sun: new Directory({
-                'earth.object': new File(new Planet({
-                    name: 'Earth',
-                    mass: 5.972168e24,
-                    radius: 6378127,
-                    flattening: 0.003352810681182319,
-                    orbit: {
-                        ap: 152097597000,
-                        pe: 147098450000,
-                        sma: 149598023000,
-                        ecc: 0.0167086,
-                        period: 31558149.7635,
-                        inc: 7.155,
-                        lan: -11.26064,
-                        aop: 114.20783,
-                        top: '2023-1-4'
+                '.object': new File(new Star({
+                    name: 'Sun',
+                    mass: 1.9985e30,
+                    texture: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Solarsystemscope_texture_2k_sun.jpg/800px-Solarsystemscope_texture_2k_sun.jpg',
+                    magnitude: 4.83,
+                    radius: 695700000,
+                    flattening: 0.00005,
+                    rotation: {
+                        type: 'linear',
+                        min: 0,
+                        max: Math.PI*2,
+                        period: 2164320,
+                        epoch: new Date(2023, 1, 1, 9, 10),
                     },
-                    texture: 'https://i.ibb.co/F7Wgjj1/2k-earth-daymap.jpg',
+                    position: [0, 0, 0],
+                    spectralType: 'G2V',
                 })),
                 earth: new Directory({
+                    '.object': new File(new Planet({
+                        name: 'Earth',
+                        mass: 5.972168e24,
+                        radius: 6378127,
+                        flattening: 0.003352810681182319,
+                        orbit: {
+                            ap: 152097597000,
+                            pe: 147098450000,
+                            sma: 149598023000,
+                            ecc: 0.0167086,
+                            period: 31558149.7635,
+                            inc: 7.155,
+                            lan: -11.26064,
+                            aop: 114.20783,
+                            top: '2023-1-4'
+                        },
+                        texture: 'https://i.ibb.co/F7Wgjj1/2k-earth-daymap.jpg',
+                    })),
                     'moon.object': new File(new Planet({
                         name: 'Moon',
                         mass: 7.346e22,

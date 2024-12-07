@@ -89,6 +89,7 @@ const textureLoader = new three.TextureLoader()
 function loadObjects(): void {
     for (const path of world.lsobjall()) {
         const object = world.getobj(path);
+        console.log(path, object);
         if (object === undefined) continue;
         let material = new three.MeshStandardMaterial();
         if (object.texture) {
