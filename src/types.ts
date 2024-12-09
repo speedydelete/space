@@ -44,7 +44,7 @@ interface ObjectParameters {
     children?: Object[];
 }
 
-class _Object<T extends ObjectType = ObjectType> {
+class _Obj<T extends ObjectType = ObjectType> {
     type: T;
     name: string;
     mass: number;
@@ -65,12 +65,12 @@ class _Object<T extends ObjectType = ObjectType> {
         this.position = data.position === undefined ? [0, 0, 0] : data.position;
         this.orbit = data.orbit;
     }
-    hasOrbit(): this is OrbitObject {
+    hasOrbit(): this is OrbitObj {
         return this.orbit !== undefined;
     }
 }
 
-interface OrbitObject extends _Object {
+interface OrbitObj extends _Obj {
     orbit: Orbit;
 }
 
@@ -86,7 +86,7 @@ interface StarParameters extends ObjectParameters {
     texture?: string;
 }
 
-class Star extends _Object<'star'> {
+class Star extends _Obj<'star'> {
     magnitude: number = 0;
     spectralType: SpectralType = '~';
     texture?: string;
@@ -110,7 +110,7 @@ interface PlanetParameters extends ObjectParameters {
     texture: string;
 }
 
-class Planet extends _Object<'planet'> {
+class Planet extends _Obj<'planet'> {
     texture: string;
     constructor(data: PlanetParameters) {
         super('planet', data);
@@ -118,7 +118,7 @@ class Planet extends _Object<'planet'> {
     }
 }
 
-type Object_ = Star | Planet;
+type Obj = Star | Planet;
 
 const objectTypeMap = {
     'star': Star,
@@ -146,7 +146,7 @@ class BaseFile {
 
 class File extends BaseFile {
     data: string;
-    constructor(data: string | Object_ | Config) {
+    constructor(data: string | Obj | Config) {
         super('regular');
         if (typeof data == 'string') {
             this.data = data;
@@ -228,9 +228,9 @@ export {
     ObjectParameters,
     StarParameters,
     PlanetParameters,
-    _Object,
-    Object_,
-    OrbitObject,
+    _Obj,
+    Obj,
+    OrbitObj,
     Star,
     Planet,
     BaseFile,

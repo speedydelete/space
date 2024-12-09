@@ -1,5 +1,4 @@
-
-import type {Time, Object_, OrbitObject} from './types.ts';
+import type {Time, Obj, OrbitObj} from './types.ts';
 import {timeDiff} from './util.ts';
 import type {World} from './world.ts';
 
@@ -31,13 +30,13 @@ function rotateVector(vec: Position, angle: number, axis: 'x' | 'y' | 'z'): Posi
     return vec;
 }
 
-function getAop(world: World, object: OrbitObject, time: Time): number {
+function getAop(world: World, object: OrbitObj, time: Time): number {
     const {sma, period, ecc, aopEpoch} = object.orbit;
     const aopPeriod = 24 * Math.PI**3 * sma**2 / period**2 / world.config.c**2 / (1 - ecc**2);
     return timeDiff(time, aopEpoch)/aopPeriod * 360;
 }
 
-function getAnomalies(world: World, object: OrbitObject, tol: number = 1e-6): {mna: number, eca: number, tra: number} {
+function getAnomalies(world: World, object: OrbitObj, tol: number = 1e-6): {mna: number, eca: number, tra: number} {
     const {ecc, period, top} = object.orbit;
     const mna = Math.abs(timeDiff(world.time, top)) / period;
     let eca = mna;
@@ -53,11 +52,11 @@ function getAnomalies(world: World, object: OrbitObject, tol: number = 1e-6): {m
     return {mna: mna, eca: eca, tra: tra};
 }
 
-function getOrbitalRadius(object: OrbitObject, tra: number): number {
+function getOrbitalRadius(object: OrbitObj, tra: number): number {
     return (object.orbit.sma * (1 - object.orbit.ecc**2))/(1 + object.orbit.ecc*Math.cos(tra));
 }
 
-function getPosition(world: World, object: Object_, tol=1e-6): Position {
+function getPosition(world: World, object: Obj, tol=1e-6): Position {
     if (object.hasOrbit()) {
         const {tra} = getAnomalies(world, object, tol);
         const radius = getOrbitalRadius(object, tra);

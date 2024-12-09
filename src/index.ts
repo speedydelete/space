@@ -1,14 +1,13 @@
-
 import * as three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
-import type {Object_} from './types.ts';
+import type {Position, Obj} from './types.ts';
 import {formatTime, formatLength} from './util.ts';
-import {type World, defaultWorld, resolveValue} from './world.ts';
+import {join, type World, defaultWorld, resolveValue} from './world.ts';
 import {getPosition} from './orbits.ts';
 
 const world: World = defaultWorld;
 
-const unitSize: number = 6371000; // settings.unitSize;
+const unitSize: number = 150000000000;
 
 let target: string = 'sun/earth';
 let timeWarp: number = 1;
@@ -93,7 +92,6 @@ const textureLoader = new three.TextureLoader()
 function loadObjects(): void {
     for (const path of world.lsobjall()) {
         const object = world.getobj(path);
-        console.log('loading object', path, object);
         if (object === undefined) continue;
         let material = new three.MeshStandardMaterial();
         if (object.texture) {
@@ -120,7 +118,7 @@ function loadObjects(): void {
     }
 }
 
-function rotateObjects() {
+function rotateObjects(): void {
     for (const path of world.lsobjall()) {
         const mesh = world.getObjectMesh(path);
         const object = world.getobj(path);
@@ -132,19 +130,20 @@ function rotateObjects() {
     }
 }
 
-function moveObjects(basePath: string = '') {
-    for (const filename of world.lsobjall(basePath)) {
-        const path = world.join(basePath, filename);
+function moveObjects(basePath: string = '', parentPos: Position = [0, 0, 0]): void {
+    for (const filename of world.lsobj(basePath)) {
+        const path = join(basePath, filename);
         const object = world.getobj(path);
         const mesh = world.getObjectMesh(path);
-        if (object && mesh !== undefined) {
+        if (object !== undefined && mesh !== undefined) {
             let [z, x, y] = getPosition(world, object);
-            let [px, py, pz] = [0, 0, 0];
-            if (!path.match(/^\/[^\/]+$/)) {
-                const parentMesh = world.getObjectMesh(world.join(path, '..'));
-                if (parentMesh) [px, py, pz] = parentMesh.position;
+            x += parentPos[0];
+            y += parentPos[1];
+            z += parentPos[2];
+            mesh.position.set(x/unitSize, y/unitSize, z/unitSize);
+            if (world.isdirobj(path)) {
+                moveObjects(path, [x, y, z]);
             }
-            mesh.position.set(px + x/unitSize, py + y/unitSize, pz + z/unitSize);
         }
     }
 }
@@ -165,7 +164,7 @@ function animate(): void {
         frames = 0;
         prevRealTime = realTime;
     }
-    const targetObj: Object_ | undefined = world.getobj(target);
+    const targetObj: Obj | undefined = world.getobj(target);
     const mesh: three.Mesh | undefined = world.getObjectMesh(target);
     if (leftInfoElt) {
         leftInfoElt.innerText = `FPS: ${fps}
@@ -189,28 +188,28 @@ function animate(): void {
         \tSemi-major Axis: ${formatLength(targetObj.orbit.sma)}
         \tEccentricity: ${targetObj.orbit.ecc}
         \tPeriod: ${formatTime(targetObj.orbit.period)}
-        \tInclination: ${targetObj.orbit.inc}°
-        \tLongitude of Ascending Node: ${targetObj.orbit.lan}°
-        \tArgument of Periapsis: ${targetObj.orbit.aop}°
+        \tInclination: ${targetObj.orbit.inc}\xb0
+        \tLongitude of Ascending Node: ${targetObj.orbit.lan}\xb0
+        \tArgument of Periapsis: ${targetObj.orbit.aop}\xb0
         \tTime of Periapsis: ${targetObj.orbit.top}`
         : `No orbit, root object`);
     }
-    if (world.time) {
-        world.time = new Date(world.time.getTime() + 1000 * timeWarp / fps);
-    }
     if (fps != 0) {
-        rotateObjects();
+        if (world.time) {
+            world.time = new Date(world.time.getTime() + 1000 * timeWarp / fps);
+        }
         if (mesh !== undefined) {
             const [oldX, oldY, oldZ] = mesh.position;
             moveObjects();
+            rotateObjects();
             controls.target.copy(mesh.position);
             const [newX, newY, newZ] = mesh.position;
             camera.position.x += newX - oldX;
             camera.position.y += newY - oldY;
             camera.position.z += newZ - oldZ;
         } else {
-            console.log(mesh, target, targetObj);
             moveObjects();
+            rotateObjects();
         }
     }
     camera.updateProjectionMatrix();

@@ -1,297 +1,145 @@
 
 import type {Mesh} from 'three';
-import type {Time, Object_, BaseFile, FileSystem} from './types.ts';
+import type {Time, Obj, BaseFile, FileSystem} from './types.ts';
 import {File, Value, Star, Planet, Directory, Link, Config, objectTypeMap} from './types.ts';
 import {timeDiff} from './util.ts';
 
 const pathSep = /(?<!\\)\//;
 
+function join(...paths: string[]): string {
+    let out: string[] = [];
+    for (const path of paths) {
+        for (const item of path.split(pathSep)) {
+            if (item == '' || item == '.') {
+                continue;
+            } else if (item == '..') {
+                out.pop();
+            } else {
+                out.push(item);
+            }
+        }
+    }
+    let path = out.filter((x) => x !== '').join('/');
+    if (!path.startsWith('/')) path = '/' + path;
+    return path;
+}
+
 class World {
-    files: FileSystem;
-    rootDirectory: Directory<FileSystem>;
-    dir: string;
-    objectMeshes: {[key: string]: Mesh} = {};
-    constructor(files: FileSystem) {
-        this.files = files;
-        this.rootDirectory = new Directory(files);
-        this.dir = '/';
+    files: {[key: string]: BaseFile} = {};
+    objectMeshes: {[key: string]: Mesh} = {}
+    constructor(files: Directory) {
+        this.setupFiles(files);
     }
-    join(...paths: string[]): string {
-        let out: string[] = [];
-        for (const path of paths) {
-            for (const item of path.split(pathSep)) {
-                if (item == '' || item == '.') {
-                    continue;
-                } else if (item == '..') {
-                    out.pop();
-                } else {
-                    out.push(item);
-                }
-            }
-        }
-        let path = out.filter((x) => x !== '').join('/');
-        if (!path.startsWith('/')) path = '/' + path;
-        return path;
-    }
-    resolve(...paths: string[]): string {
-        let path = this.join(...paths);
-        if (!path.startsWith('/')) {
-            path = this.join(this.dir, path);
-        }
-        return path;
-    }
-    cd(path: string): void {
-        this.dir = this.join(this.dir, path);
-    }
-    read(path: string, undefinedIfNonexistent: boolean = false): File | undefined {
-        const paths = this.resolve(path).split(pathSep);
-        let out: Directory[] = [this.rootDirectory];
-        let i = 0;
-        for (const item of paths) {
-            if (item === '' || item == '.') {
-            } else if (item == '..') {
-                if (out.length > 0) {
-                    out.pop();
-                } else {
-                    throw new TypeError(`directory '/' has no higher level directory`);
-                }
+    setupFiles(dir: Directory, basePath: string = '/'): void {
+        for (const [path, file] of Object.entries(dir.files)) {
+            const fullPath = join(basePath, path);
+            if (file instanceof Directory) {
+                this.files[fullPath] = new Directory({});
+                this.setupFiles(file, fullPath);
             } else {
-                const file = out[out.length - 1].files[item];
-                if (file === undefined) {
-                    if (undefinedIfNonexistent) {
-                        return undefined;
-                    } else {
-                        throw new TypeError(`nonexistent file '${paths.slice(0, i + 1).join('/')}'`);
-                    }
-                } else if (file instanceof File) {
-                    if (i == paths.length - 1) {
-                        return file;
-                    } else {
-                        throw new TypeError(`regular file '${paths.slice(0, i + 1).join('/')}' is not a directory`);
-                    }
-                } else if (file instanceof Link) {
-                    return this.read(this.join(file.path, ...paths.slice(i + 1)));
-                } else if (file instanceof Directory) {
-                    out.push(file);
-                }
+                this.files[fullPath] = file;
             }
-            i++;
         }
     }
-    readjson(path: string, undefinedIfNonexistent: boolean = false): any {
-        const data = this.read(path, undefinedIfNonexistent);
-        return data !== undefined ? JSON.parse(data.data) : data;
+    getFile(path: string): [string, BaseFile | undefined] {
+        let file = this.files[path];
+        while (file instanceof Link) {
+            path = file.path;
+            file = this.files[path];
+        }
+        return [path, file];
     }
-    write(path: string, data: string): void {
-        const paths = this.resolve(path).split(pathSep);
-        let out: Directory[] = [this.rootDirectory];
-        let i = 0;
-        for (const item of paths) {
-            if (item === '' || item == '.') {
-            } else if (item == '..') {
-                if (out.length > 0) {
-                    out.pop();
-                } else {
-                    throw new TypeError(`directory '/' has no higher level directory`);
-                }
-            } else {
-                const file = out[out.length - 1].files[item];
-                if (file === undefined) {
-                    if (i === paths.length - 1) {
-                        out[out.length - 1].files[item] = new File(data);
-                    } else {
-                        throw new TypeError(`nonexistent file '${paths.slice(0, i + 1).join('/')}'`);
-                    }
-                } else if (file instanceof File) {
-                    if (i === paths.length - 1) {
-                        file.data = data;
-                    } else {
-                        throw new TypeError(`regular file '${paths.slice(0, i + 1).join('/')}' is not a directory`);
-                    }
-                } else if (file instanceof Link) {
-                    return this.write(this.join(file.path, ...paths.slice(i + 1)), data);
-                } else if (file instanceof Directory) {
-                    out.push(file);
-                }
-            }
-            i++;
+    resolve(path: string): string {
+        return this.getFile(path)[0];
+    }
+    read(path: string): string | undefined {
+        let file = this.getFile(path)[1];
+        if (file instanceof File) {
+            return file.data;
+        } else if (file instanceof Directory) {
+            throw new TypeError(`cannot read directory ${path}`);
         }
     }
-    writejson(path: string, data: any): void {
-        this.write(path, JSON.stringify(data));
-    }
-    mkdir<T extends {[key: string]: BaseFile} | BaseFile = {[key: string]: BaseFile}>(path: string): void {
-        const paths = this.resolve(path).split(pathSep);
-        let out: Directory[] = [this.rootDirectory];
-        let i = 0;
-        for (const item of paths) {
-            if (item === '' || item == '.') {
-            } else if (item == '..') {
-                if (out.length > 0) {
-                    out.pop();
-                } else {
-                    throw new TypeError(`directory '/' has no higher level directory`);
-                }
-            } else {
-                const file = out[out.length - 1].files[item];
-                if (file === undefined) {
-                    if (i === paths.length - 1) {
-                        out[out.length - 1].files[item] = new Directory<T>();
-                    } else {
-                        throw new TypeError(`nonexistent file '${paths.slice(0, i + 1).join('/')}'`);
-                    }
-                } else if (file instanceof File) {
-                    throw new TypeError(`regular file '${paths.slice(0, i + 1).join('/')}' is not a directory`);
-                } else if (file instanceof Link) {
-                    this.mkdir(this.join(file.path, ...paths.slice(i + 1)));
-                } else if (file instanceof Directory) {
-                    out.push(file);
-                }
-            }
-            i++;
+    write(path: string, value: string): void {
+        const [resolvedPath, file] = this.getFile(path);
+        if (file === undefined) {
+            this.files[resolvedPath] = new File(value);
+        } else if (this.files[resolvedPath] instanceof File) {
+            this.files[resolvedPath].data = value;
         }
     }
-    rm(path: string): void {
-        const paths = this.resolve(path).split(pathSep);
-        let out: Directory[] = [this.rootDirectory];
-        let i = 0;
-        for (const item of paths) {
-            if (item === '' || item == '.') {
-            } else if (item == '..') {
-                if (out.length > 0) {
-                    out.pop();
-                } else {
-                    throw new TypeError(`directory '/' has no higher level directory`);
-                }
-            } else {
-                const file = out[out.length - 1].files[item];
-                if (file === undefined) {
-                    throw new TypeError(`nonexistent file '${paths.slice(0, i + 1).join('/')}'`);
-                } else if (file instanceof File) {
-                    if (i === paths.length - 1) {
-                        delete out[out.length - 1].files[item];
-                    } else {
-                        throw new TypeError(`regular file '${paths.slice(0, i + 1).join('/')}' is not a directory`);
-                    }
-                } else if (file instanceof Link) {
-                    this.rm(this.join(file.path, ...paths.slice(i + 1)));
-                } else if (file instanceof Directory) {
-                    out.push(file);
-                }
-            }
-            i++;
+    mkdir(path: string): void {
+        const [resolvedPath, file] = this.getFile(path);
+        if (file !== undefined) {
+            throw new TypeError(`file '${path}' already exists`);
+        } else {
+            this.files[resolvedPath] = new Directory({});
         }
     }
     ls(path: string): string[] {
-        const paths: string[] = this.resolve(path).split(pathSep);
-        let out: Directory[] = [this.rootDirectory];
-        for (let i = 0; i < paths.length; i++) {
-            const item: string = paths[i];
-            if (item === '' || item == '.') {
-            } else if (item == '..') {
-                if (out.length > 0) {
-                    out.pop();
-                } else {
-                    throw new TypeError(`directory '/' has no higher level directory`);
-                }
-            } else {
-                const file = out[out.length - 1].files[item];
-                if (file === undefined) {
-                    throw new TypeError(`nonexistent file '${paths.slice(0, i + 1 + 1).join('/')}'`);
-                } else if (file instanceof File) {
-                    throw new TypeError(`regular file '${paths.slice(0, i + 1 + 1).join('/')}' is not a directory`);
-                } else if (file instanceof Link) {
-                    return this.ls(this.join(file.path, ...paths.slice(i + 1 + 1)));
-                } else if (file instanceof Directory) {
-                    if (i === paths.length - 1) {
-                        return Object.keys(file.files);
-                    } else {
-                        out.push(file);
-                    }
+        const [resolvedPath, file] = this.getFile(path);
+        if (file instanceof Directory) {
+            let out: string[] = [];
+            const length = resolvedPath.length;
+            for (const filePath in this.files) {
+                if (filePath.startsWith(resolvedPath) && filePath.length > length && !filePath.slice(length + 1).match(pathSep)) {
+                    out.push(filePath.slice(length + 1));
                 }
             }
-        }
-        return [];
-    }
-    isDir(path: string): boolean {
-        const paths = this.resolve(path).split(pathSep);
-        let out: Directory[] = [this.rootDirectory];
-        let i = 0;
-        for (const item of paths) {
-            if (item === '' || item == '.') {
-            } else if (item == '..') {
-                if (out.length > 0) {
-                    out.pop();
-                } else {
-                    throw new TypeError(`directory '/' has no higher level directory`);
-                }
-            } else {
-                const file = out[out.length - 1].files[item];
-                if (file === undefined) {
-                    throw new TypeError(`nonexistent file '${paths.slice(0, i + 1).join('/')}'`);
-                } else if (file instanceof File) {
-                    if (i === paths.length - 1) {
-                        return false;
-                    } else {
-                        throw new TypeError(`regular file '${paths.slice(0, i + 1).join('/')}' is not a directory`);
-                    }
-                } else if (file instanceof Link) {
-                    return this.isDir(this.join(file.path, ...paths.slice(i + 1)));
-                } else if (file instanceof Directory) {
-                    if (i === paths.length - 1) {
-                        return true;
-                    } else {
-                        out.push(file);
-                    }
-                }
-            }
-            i++;
-        }
-        return false;
-    }
-    get config(): Config {
-        return this.readjson('/etc/config');
-    }
-    get time(): Date | undefined {
-        const out = this.read('/etc/time');
-        if (out) {
-            return new Date(out.data);
+            return out;
+        } else if (file instanceof File) {
+            throw new TypeError(`file '${path}' is not a directory`);
+        } else if (file === undefined) {
+            throw new TypeError(`directory '${path}' does not exist`);
         } else {
-            return undefined;
+            return [];
         }
     }
-    set time(value: Date) {
-        this.write('/etc/time', value.toISOString());
+    isdir(path: string): boolean {
+        return this.getFile(path)[1] instanceof Directory;
     }
-    getobj(path: string): Object_ | undefined {
+    readjson(path: string): any | undefined {
+        const text = this.read(path);
+        if (text === undefined) {
+            return undefined;
+        } else {
+            return JSON.parse(text);
+        }
+    }
+    writejson(path: string, value: any): void {
+        this.write(path, JSON.stringify(value));
+    }
+    getobj(path: string): Obj | undefined {
         let data: any;
-        data = this.readjson(this.join('/home/objects', path, '.object'), true);
+        data = this.readjson(join('/home/objects', path, '.object'));
         if (data === undefined) {
-            data = this.readjson(this.join('/home/objects', path + '.object'), true);
+            data = this.readjson(join('/home/objects', path + '.object'));
             if (data === undefined) {
                 return undefined;
             }
         }
         return new objectTypeMap[data.type](data);
     }
-    setobj(path: string, object: Object_): void {
-        if (this.read(this.join('/home/objects', path, '.object'), true) !== undefined) {
-            this.writejson(this.join('/home/objects', path, '.object'), object);
+    setobj(path: string, object: Obj): void {
+        if (this.read(join('/home/objects', path, '.object')) !== undefined) {
+            this.writejson(join('/home/objects', path, '.object'), object);
         } else {
-            this.writejson(this.join('/home/objects', path + '.object'), object);
+            this.writejson(join('/home/objects', path + '.object'), object);
         }
     }
-    lsobj(path: string = '/'): string[] {
-        return this.ls(this.join('/home/objects', path));
+    isdirobj(path: string): boolean {
+        return this.isdir(join('/home/objects', path));
     }
-    lsobjall(path = ''): string[] {
+    lsobj(path: string): string[] {
+        return this.ls(join('/home/objects', path)).map((x) => x.replace('.object', '').replace(/\/$/, '')).filter((x) => x != '.object' && x !== '');
+    }
+    lsobjall(path: string = ''): string[] {
         let out: string[] = [];
-        for (const filename of this.lsobj(path)) {
-            const filepath = this.join(path, filename);
-            if (this.isDir(this.join('/home/objects', filepath))) {
-                out = out.concat(this.lsobjall(filepath));
-            } else {
-                out.push(filepath.replace(/\.object$/, '').replace(/^\/|\/$/g, ''));
+        for (const filepath of this.lsobj(path)) {
+            const objpath = join(path, filepath).slice(1);
+            out.push(objpath);
+            if (this.isdirobj(objpath)) {
+                out = [...out, ...this.lsobjall(objpath)];
             }
         }
         return out;
@@ -303,9 +151,23 @@ class World {
         if (path.startsWith('/')) path = path.slice(1);
         return this.objectMeshes[path];
     }
+    get config(): Config {
+        return this.readjson('/etc/config');
+    }
+    get time(): Date | undefined {
+        const out = this.read('/etc/time');
+        if (out) {
+            return new Date(out);
+        } else {
+            return undefined;
+        }
+    }
+    set time(value: Date) {
+        this.write('/etc/time', value.toISOString());
+    }
 }
 
-const defaultWorld = new World({
+const defaultWorld = new World(new Directory({
     bin: new Directory(),
     boot: new Directory(),
     dev: new Directory(),
@@ -425,7 +287,7 @@ const defaultWorld = new World({
         spool: new Directory(),
         tmp: new Directory(),
     }),
-});
+}));
 
 function resolveValue(value: Value, world: World): number {
     if (Array.isArray(value)) {
@@ -446,6 +308,7 @@ function resolveValue(value: Value, world: World): number {
 }
 
 export {
+    join,
     World,
     defaultWorld,
     resolveValue,
