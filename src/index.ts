@@ -44,7 +44,7 @@ window.addEventListener('click', function(event) {
         -(event.clientY / window.innerHeight) * 2 + 1), camera);
     const intersects = raycaster.intersectObjects(Object.values(world.objectMeshes));
     if (intersects.length > 0) {
-        target = intersects[0].object.name;
+        target = Object.entries(world.objectMeshes).filter((x) => x[1] == intersects[0].object)[0][0];
         controls.target.copy(intersects[0].object.position);
     }
 });
@@ -110,6 +110,7 @@ function loadObjects(): void {
         if (object.type == 'star') {
             const light = new three.PointLight(object.color);
             light.power = world.config.lC / 10**(0.4 * object.magnitude) / unitSize**2 / 20000;
+            light.castShadow = true;
             mesh.add(light);
         }
         mesh.visible = true;
