@@ -40,14 +40,17 @@ function Game(): ReactNode {
         client = new Client();
         resume();
     }
-    useEffect(() => {
-        if (visible) {
-            document.body.appendChild(client.renderer.domElement);
-            return () => {
-                document.body.removeChild(client.renderer.domElement);
-            }
-        }
-    }, [visible]);
+    // let clientWrapperRef: RefObject<null | HTMLDivElement> = useRef(null);
+    // useEffect(() => {
+    //     if (visible && clientWrapperRef.current !== null) {
+    //         clientWrapperRef.current.appendChild(client.renderer.domElement);
+    //         return () => {
+    //             if (clientWrapperRef.current !== null) {
+    //                 clientWrapperRef.current.removeChild(client.renderer.domElement);
+    //             }
+    //         }
+    //     }
+    // }, [visible]);
     return (
         <>
             {inMenu && <Menu 
@@ -58,7 +61,7 @@ function Game(): ReactNode {
                 menu={menu}
                 setMenu={setMenu}
             />}
-            {visible && <iframe src="client.html" />}
+            {visible && <iframe src='client.html' />}
         </>
     );
 }
