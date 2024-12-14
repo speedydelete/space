@@ -9,18 +9,34 @@ html, body {
     width: 100%;
     margin: 0;
     overflow: hidden;
+    font-family: Consolas, 'Courier New', Courier, monospace;
+    color: #ffffff;
 }
 
-body > canvas {
-    display: block;
+#left-info {
+    position: absolute;
+    top: 10px;
+    left: 10px;
 }
 
-.menu {
+#right-info {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+#root, iframe, .menu {
     position: absolute;
     top: 0;
     bottom: 0;
     left: 0;
     right: 0;
+    height: 100%;
+    width: 100%;
+    border: none;
+}
+
+.menu {
     display: flex;
     flex-direction: column;
     justify-content: space-evenly;

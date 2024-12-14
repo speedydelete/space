@@ -79,7 +79,7 @@ function MenuWorld({world}: {world: WorldInfo}): ReactNode {
     let thumbnail = world.thumbnail;
     let style = {};
     if (thumbnail === undefined) {
-        thumbnail = 'https://preview.redd.it/tfe62gf9orl51.png?width=512&format=png&auto=webp&s=9ff2ff2218637e2f4b081159651ff708789c3ce1';
+        thumbnail = 'pack.png';
         style = {filter: 'grayscale(100%)'};
     }
     return (

@@ -31,11 +31,11 @@ module.exports = {
         },
         compress: true,
         port: 9000,
-        hot: true, // Enable HMR
+        hot: true,
         liveReload: true,
-        watchFiles: ['src/**/*', 'editor/**/*'], // Avoid watching the dist directory
+        watchFiles: ['src/**/*', 'editor/**/*'],
         devMiddleware: {
-            writeToDisk: true, // Ensure changes are written to disk
+            writeToDisk: true,
         },
     },
 };

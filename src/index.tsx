@@ -49,26 +49,31 @@ function Game(): ReactNode {
         }
     }, [visible]);
     return (
-        inMenu && <Menu 
-            worlds={worlds}
-            enterWorld={enterWorld}
-            resume={resume}
-            saveAndQuitToTitle={saveAndQuitToTitle}
-            menu={menu}
-            setMenu={setMenu}
-        />
+        <>
+            {inMenu && <Menu 
+                worlds={worlds}
+                enterWorld={enterWorld}
+                resume={resume}
+                saveAndQuitToTitle={saveAndQuitToTitle}
+                menu={menu}
+                setMenu={setMenu}
+            />}
+            {visible && <iframe src="client.html" />}
+        </>
     );
 }
 
-// const client = new Client();
-// document.body.appendChild(client.renderer.domElement);
-// client.start();
-
-const rootElement = document.getElementById('root');
-if (rootElement === null) throw new TypeError('cannot initiate react due to nonexistent root element');
-const root = createRoot(rootElement);
-root.render(
-    <StrictMode>
-        <Game />
-    </StrictMode>
-);
+if (window.location.href.includes('client.html')) {
+    const client = new Client();
+    document.body.appendChild(client.renderer.domElement);
+    client.start();
+} else {
+    const rootElement = document.getElementById('root');
+    if (rootElement === null) throw new TypeError('cannot initiate react due to nonexistent root element');
+    const root = createRoot(rootElement);
+    root.render(
+        <StrictMode>
+            <Game />
+        </StrictMode>
+    );
+}
