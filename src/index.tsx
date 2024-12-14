@@ -16,10 +16,8 @@ function Game(): ReactNode {
     const [menu, setMenu] = useState('main');
     const [visible, setVisible] = useState(false);
     let currentWorld: RefObject<null | WorldInfo> = useRef(null);
-    let client = new Client();
     function escapeHandler(event: KeyboardEvent): void {
         if (event.key == 'Escape') {
-            client.stop();
             setInMenu(true);
             setMenu('escape');
         }
@@ -27,7 +25,6 @@ function Game(): ReactNode {
     function resume(): void {
         setInMenu(false);
         window.addEventListener('keydown', escapeHandler);
-        client.start();
         setVisible(true);
     }
     function saveAndQuitToTitle(): void {
@@ -37,20 +34,8 @@ function Game(): ReactNode {
     }
     function enterWorld(world: WorldInfo): void {
         currentWorld.current = world;
-        client = new Client();
         resume();
     }
-    // let clientWrapperRef: RefObject<null | HTMLDivElement> = useRef(null);
-    // useEffect(() => {
-    //     if (visible && clientWrapperRef.current !== null) {
-    //         clientWrapperRef.current.appendChild(client.renderer.domElement);
-    //         return () => {
-    //             if (clientWrapperRef.current !== null) {
-    //                 clientWrapperRef.current.removeChild(client.renderer.domElement);
-    //             }
-    //         }
-    //     }
-    // }, [visible]);
     return (
         <>
             {inMenu && <Menu 
