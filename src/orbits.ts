@@ -1,6 +1,7 @@
-import type {Time, Obj, OrbitObj} from './types.ts';
-import {timeDiff} from './util.ts';
-import type {World} from './world.ts';
+
+import {type Time, timeDiff} from './util';
+import type {Obj, OrbitObj} from './obj';
+import type {World} from './world';
 
 type Position = [number, number, number];
 
@@ -30,11 +31,11 @@ function rotateVector(vec: Position, angle: number, axis: 'x' | 'y' | 'z'): Posi
     return vec;
 }
 
-function getAop(world: World, object: OrbitObj, time: Time): number {
-    const {sma, period, ecc, aopEpoch} = object.orbit;
-    const aopPeriod = 24 * Math.PI**3 * sma**2 / period**2 / world.config.c**2 / (1 - ecc**2);
-    return timeDiff(time, aopEpoch)/aopPeriod * 360;
-}
+// function getAop(world: World, object: OrbitObj, time: Time): number {
+//     const {sma, period, ecc, aopEpoch} = object.orbit;
+//     const aopPeriod = 24 * Math.PI**3 * sma**2 / period**2 / world.config.c**2 / (1 - ecc**2);
+//     return timeDiff(time, aopEpoch)/aopPeriod * 360;
+// }
 
 function getAnomalies(world: World, object: OrbitObj, tol: number = 1e-6): {mna: number, eca: number, tra: number} {
     const {ecc, period, top} = object.orbit;
@@ -71,7 +72,7 @@ function getPosition(world: World, object: Obj, tol=1e-6): Position {
 }
 
 export {
-    getAop,
+    // getAop,
     getAnomalies,
     getOrbitalRadius,
     getPosition,

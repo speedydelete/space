@@ -1,0 +1,178 @@
+
+* {
+    user-select: none;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+
+body > canvas {
+    display: block;
+}
+
+.menu {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+    font-size: 14px;
+    background-color: transparent;
+}
+
+.menu * {
+    font-family: Consolas, 'Courier New', Courier, monospace;
+    background-color: transparent;
+    color: #ffffff;
+}
+
+.menu a {
+    text-decoration: none;
+    color: #0078d4;
+}
+
+.menu button {
+    appearance: none;
+    height: 50px;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 24px;
+    background-color: #5f5f5f;
+    border: 1px solid #ffffff;
+    color: inherit;
+    &:hover {
+        background-color: #3f3f3f;
+    }
+}
+
+.menu > * {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.menu > canvas {
+    background-color: black;
+    z-index: -1;
+}
+
+.menu-section {
+    z-index: 1;
+}
+
+.menu-main {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 25px;
+}
+
+.menu-main button {
+    width: 300px;
+}
+
+.menu-main .title {
+    margin-bottom: 48px;
+    font-size: 48px;
+}
+
+.menu-main .version {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    font-size: 14px;
+}
+
+.menu-section :has(> .menu-worlds) {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.menu-worlds {
+    width: 100%;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding-top: 25px;
+}
+
+.menu-world {
+    height: 84px;
+    padding: 10px;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    font-size: 20px;
+}
+
+.menu-world div:has(img) {
+    position: relative;
+    height: 64px;
+    width: 64px;
+}
+
+.menu-world img {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    width: 64px;
+    z-index: 0;
+    background-color: transparent;
+}
+
+.menu-world img.enter-arrow {
+    z-index: 1;
+    opacity: 0;
+}
+
+.menu-world div:has(img):hover img.enter-arrow {
+    opacity: 1;
+}
+
+.menu-world-desc {
+    white-space: pre-wrap;
+    color: #cccccc;
+}
+
+.menu-worlds-bottom {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 25px;
+    display: flex;
+    flex-direction: row;
+    gap: 25px;
+    border-top: 2px solid #ffffff;
+}
+
+.menu-escape {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 25px;
+}

@@ -1,8 +1,8 @@
 {
   "name": "space",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Space game.",
-  "main": "src/index.ts",
+  "main": "src/index.tsx",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack",
@@ -12,17 +12,19 @@
   "author": "speedydelete",
   "license": "GPL-3.0-only",
   "dependencies": {
-    "fuse.js": "^7.0.0",
-    "three": "^0.170.0"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "three": "^0.170.0",
+    "ts-loader": "^9.5.1"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.26.0",
+    "@babel/preset-react": "^7.26.3",
     "@babel/preset-typescript": "^7.26.0",
+    "@types/react": "^19.0.1",
+    "@types/react-dom": "^19.0.2",
     "@types/three": "^0.170.0",
     "babel-loader": "^9.2.1",
-    "css-loader": "^7.1.2",
-    "source-map-loader": "^5.0.0",
-    "style-loader": "^4.0.0",
     "webpack": "^5.97.1",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^5.1.0"

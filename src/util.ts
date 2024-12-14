@@ -1,6 +1,4 @@
 
-import type {Time} from './types.ts';
-
 function type(value: any): string {
     if (value === undefined) {
         ((value): value is undefined => true)(value)
@@ -42,6 +40,8 @@ function type(value: any): string {
         return 'unknown';
     }
 }
+
+type Time = number | undefined | string | Date;
 
 function getTime(time?: Time): number {
     if (typeof time == 'number') {
@@ -91,10 +91,18 @@ function formatLength(value: number): string {
     }
 }
 
+function formatDate(value: Date): string {
+    value = new Date(value.getTime() - value.getTimezoneOffset()*60000);
+    const split = value.toISOString().split('T');
+    return split[0] + ' ' + split[1].split('Z')[0];
+}
+
 export {
+    Time,
     type,
     getTime,
     timeDiff,
     formatTime,
+    formatDate,
     formatLength,
 }
