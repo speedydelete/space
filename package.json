@@ -5,8 +5,9 @@
   "main": "src/index.tsx",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack",
-    "build serve": "webpack serve --hot"
+    "dev": "webpack --mode development",
+    "dev-server": "webpack serve --mode development --hot",
+    "build": "webpack --mode production"
   },
   "keywords": [],
   "author": "speedydelete",

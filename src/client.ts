@@ -117,7 +117,6 @@ class Client {
     };
 
     handleMessage(event: MessageEvent): void {
-        console.log(event.source, event.data);
         if (event.source === window.top) {
             const {type} = event.data;
             if (type == 'start') {
