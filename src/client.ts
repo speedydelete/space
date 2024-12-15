@@ -2,15 +2,14 @@
 import * as three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import * as util from './util';
-import type {Position, Obj} from './obj';
-import {join} from './files';
-import {getPosition} from './orbits';
+import type {Obj} from './obj';
 import type {World} from './world.ts';
 import {defaultWorld} from './default_world';
 
 class Client {
 
     world: World = defaultWorld;
+
     unitSize: number = 150000000000;
     target: string = 'sun/earth';
 
@@ -37,7 +36,8 @@ class Client {
     
     boundHandleResize: (event: Event) => void;
     boundHandleClick: (event: MouseEvent) => void;
-    boundHandleKeyPress: (event: KeyboardEvent) => void;
+    boundHandleKeyDown: (event: KeyboardEvent) => void;
+    boundHandleMessage: (event: MessageEvent) => void;
 
     constructor() {
         this.renderer = new three.WebGLRenderer();
@@ -58,7 +58,7 @@ class Client {
         this.rightInfoElt = document.getElementById('right-info');
         this.boundHandleResize = this.handleResize.bind(this);
         this.boundHandleClick = this.handleClick.bind(this);
-        this.boundHandleKeyPress = this.handleKeyPress.bind(this);
+        this.boundHandleKeyDown = this.handleKeyDown.bind(this);
         this.loadObjects();
     }
 
@@ -79,7 +79,7 @@ class Client {
         }
     };
 
-    handleKeyPress(event: KeyboardEvent): void {
+    handleKeyDown(event: KeyboardEvent): void {
         if (event.key == ',') {
             event.preventDefault();
             if (Math.log10(this.world.timeWarp) % 1 === 0) {
@@ -109,8 +109,24 @@ class Client {
                 if (this.leftInfoElt) this.leftInfoElt.style.display = 'block';
                 if (this.rightInfoElt) this.rightInfoElt.style.display = 'block';
             }
+        } else if (event.key == 'Escape' && window.top) {
+            window.top.postMessage({
+                type: 'escape',
+            }, '*');
         }
     };
+
+    handleMessage(event: MessageEvent): void {
+        console.log(event.source, event.data);
+        if (event.source === window.top) {
+            const {type} = event.data;
+            if (type == 'start') {
+                this.start();
+            } else if (type == 'stop') {
+                this.stop();
+            }
+        }
+    }
 
     loadObjects(): void {
         const textureLoader = new three.TextureLoader();
@@ -176,7 +192,7 @@ class Client {
             Total Objects: ${this.world.lsObjAll().length}
             Time: ${this.world.time ? util.formatDate(this.world.time) : 'undefined'}
             Time Warp: ${this.world.timeWarp}x (${util.formatTime(this.world.timeWarp)}/s)
-            Press C for changelog.
+            Down C for changelog.
             Use ,./ to control time warp.
             Click on objects to select them.`;
         }
@@ -213,7 +229,8 @@ class Client {
         }, 1000);
         window.addEventListener('resize', this.boundHandleResize);
         window.addEventListener('click', this.boundHandleClick);
-        window.addEventListener('keypress', this.boundHandleKeyPress);
+        window.addEventListener('keydown', this.boundHandleKeyDown);
+        window.addEventListener('message', this.boundHandleMessage);
         this.request = requestAnimationFrame(this.animate.bind(this));
         this.world.start();
         this.running = true;
@@ -226,9 +243,10 @@ class Client {
         this.world.stop();
         window.removeEventListener('resize', this.boundHandleResize);
         // @ts-ignore
-        window.removeEventListener('resize', this.boundHandleClick);
+        window.removeEventListener('click', this.boundHandleClick);
         // @ts-ignore
-        window.removeEventListener('resize', this.boundHandleKeyPress);
+        window.removeEventListener('keydown', this.boundHandleKeyDown);
+        window.removeEventListener('message', this.boundHandleMessage);
     }
 
 }

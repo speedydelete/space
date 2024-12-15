@@ -11,8 +11,9 @@ interface WorldInfo {
 const MenuContext = createContext({
     menu: 'main',
     setMenu: (menu: string): void => {},
-    enterWorld: (world: WorldInfo) => {},
-    resume: () => {},
+    enterWorld: (world: WorldInfo): void => {},
+    resume: (): void => {},
+    saveAndQuitToTitle: ():  void => {},
 });
 
 const starSizes: number[] = [1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3];
@@ -125,10 +126,6 @@ function MultiplayerMenu(): ReactNode {
     return (
         <MenuSection name='multiplayer'>
             <WorldSelectionBottom>
-                <button>Play Selected World</button>
-                <button>Create New World</button>
-                <button>Edit</button>
-                <button>Delete</button>
                 <SwitchMenuButton menu='main'>Cancel</SwitchMenuButton>
             </WorldSelectionBottom>
         </MenuSection>
@@ -137,11 +134,14 @@ function MultiplayerMenu(): ReactNode {
 
 
 function EscapeMenu(): ReactNode {
-    const resume = useContext(MenuContext).resume;
+    const {resume, saveAndQuitToTitle} = useContext(MenuContext);
     return (
         <MenuSection name='escape'>
-            <button onClick={resume}>Back to Game</button>
-            <SwitchMenuButton menu='main'>Save and Quit to Title</SwitchMenuButton>
+            <div className='menu-escape'>
+                <button onClick={resume}>Back to Game</button>
+                <SwitchMenuButton menu='settings'>Options</SwitchMenuButton>
+                <button onClick={saveAndQuitToTitle}>Save and Quit to Title</button>
+            </div>
         </MenuSection>
     );
 }
@@ -160,13 +160,14 @@ function MainMenu(): ReactNode {
     )
 }
 
-function Menu({worlds, enterWorld, resume, saveAndQuitToTitle, menu, setMenu}: {worlds: WorldInfo[], enterWorld: (world: WorldInfo) => void, resume, saveAndQuitToTitle, menu: string, setMenu: (menu: string) => void, showStars?: boolean}): ReactNode {
-    const [showStars, setShowStars] = useState(true);
+function Menu({worlds, enterWorld, resume, saveAndQuitToTitle, menu, setMenu, showStars}: {worlds: WorldInfo[], enterWorld: (world: WorldInfo) => void, resume, saveAndQuitToTitle, menu: string, setMenu: (menu: string) => void, showStars?: boolean}): ReactNode {
+    if (showStars === undefined) showStars = true;
     const contextData = {
         menu: menu,
         setMenu: setMenu,
         enterWorld: enterWorld,
         resume: resume,
+        saveAndQuitToTitle: saveAndQuitToTitle,
     };
     return (
         <div className='menu'>

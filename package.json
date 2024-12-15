@@ -15,7 +15,10 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "three": "^0.170.0",
-    "ts-loader": "^9.5.1"
+    "ts-loader": "^9.5.1",
+    "webpack": "^5.97.1",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.2.0"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.26.0",
@@ -24,9 +27,6 @@
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.2",
     "@types/three": "^0.170.0",
-    "babel-loader": "^9.2.1",
-    "webpack": "^5.97.1",
-    "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^5.1.0"
+    "babel-loader": "^9.2.1"
   }
 }

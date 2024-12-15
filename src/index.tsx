@@ -15,29 +15,51 @@ function Game(): ReactNode {
     const [inMenu, setInMenu] = useState(true);
     const [menu, setMenu] = useState('main');
     const [visible, setVisible] = useState(false);
-    let currentWorld: RefObject<null | WorldInfo> = useRef(null);
-    function escapeHandler(event: KeyboardEvent): void {
-        if (event.key == 'Escape') {
-            setInMenu(true);
-            setMenu('escape');
+    const [showStars, setShowStars] = useState(true);
+    let currentWorldRef: RefObject<null | WorldInfo> = useRef(null);
+    let iframeRef: RefObject<null | HTMLIFrameElement> = useRef(null);
+    function sendMessage(type: string, data: object = {}): void {
+        if (iframeRef.current !== null && iframeRef.current.contentWindow !== null) {
+            iframeRef.current.contentWindow.postMessage({type: type, ...data}, '*');
+        }
+    }
+    function handleMessage(event: MessageEvent): void {
+        if (iframeRef.current && event.source === iframeRef.current.contentWindow) {
+            const {type} = event.data;
+            if (type == 'escape') {
+                sendMessage('stop');
+                setInMenu(true);
+                setVisible(true);
+                setMenu('escape');
+                setShowStars(false);
+            }
         }
     }
     function resume(): void {
         setInMenu(false);
-        window.addEventListener('keydown', escapeHandler);
+        window.addEventListener('message', handleMessage);
         setVisible(true);
+        setShowStars(false);
+        sendMessage('start');
     }
     function saveAndQuitToTitle(): void {
         setVisible(false);
         setInMenu(true);
         setMenu('main');
+        setShowStars(true);
     }
     function enterWorld(world: WorldInfo): void {
-        currentWorld.current = world;
+        currentWorldRef.current = world;
         resume();
     }
+    useEffect(() => {
+        window.addEventListener('message', handleMessage);
+        return () => {
+            window.removeEventListener('message', handleMessage);
+        }
+    }, []);
     return (
-        <>
+        <div>
             {inMenu && <Menu 
                 worlds={worlds}
                 enterWorld={enterWorld}
@@ -45,9 +67,10 @@ function Game(): ReactNode {
                 saveAndQuitToTitle={saveAndQuitToTitle}
                 menu={menu}
                 setMenu={setMenu}
+                showStars={showStars}
             />}
-            {visible && <iframe src='client.html' />}
-        </>
+            {visible && <iframe src='client.html' ref={iframeRef} />}
+        </div>
     );
 }
 
