@@ -31,12 +31,7 @@ function StarCanvas(): ReactNode {
         ctx.drawImage(fakeCtx.canvas, 0, 0, width, height - 1, 0, 1, width, height - 1);
         requestRef.current = requestAnimationFrame(() => animate(ctx, fakeCtx));
     }
-    useEffect((): (() => void) => {
-        // @ts-ignore
-        let ctx: CanvasRenderingContext2D = canvasRef.current.getContext('2d');
-        // @ts-ignore
-        let fakeCtx: CanvasRenderingContext2D = document.createElement('canvas').getContext('2d');
-        ctx.fillStyle = 'black';
+    function setup(ctx: CanvasRenderingContext2D, fakeCtx: CanvasRenderingContext2D): void {
         ctx.canvas.width = fakeCtx.canvas.width = window.innerWidth;
         ctx.canvas.height = fakeCtx.canvas.height = window.innerHeight;
         for (let x = 0; x < window.innerWidth; x++) {
@@ -45,11 +40,20 @@ function StarCanvas(): ReactNode {
             const size: number = starSizes[Math.floor(Math.random() * starSizes.length)];
             ctx.fillRect(x, y, size, size);
         }
+    }
+    useEffect((): (() => void) => {
+        // @ts-ignore
+        let ctx: CanvasRenderingContext2D = canvasRef.current.getContext('2d');
+        // @ts-ignore
+        let fakeCtx: CanvasRenderingContext2D = document.createElement('canvas').getContext('2d');
+        setup(ctx, fakeCtx);
         requestRef.current = requestAnimationFrame(() => animate(ctx, fakeCtx));
+        window.addEventListener('resize', () => setup(ctx, fakeCtx));
         return (): void => {
             if (requestRef.current !== null) {
                 cancelAnimationFrame(requestRef.current);
             }
+            window.removeEventListener('resize', () => setup(ctx, fakeCtx));
         };
     }, []);
     return (

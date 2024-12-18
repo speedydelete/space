@@ -135,16 +135,18 @@ class World {
     }
 
     tick(): void {
-        this.time = new Date(this.time.getTime() + 1000 * this.timeWarp / this.tps);
+        if (this.time !== undefined) {
+            this.time = new Date(this.time.getTime() + 1000 * this.timeWarp / this.tps);
+        }
         this.updateObjects();
     }
 
     start(): void {
-        this.tickInterval = setInterval(this.tick.bind(this), 1000/this.tps);
+        this.tickInterval = window.setInterval(this.tick.bind(this), 1000/this.tps);
     }
 
     stop(): void {
-        clearInterval(this.tickInterval);
+        if (this.tickInterval !== null) window.clearInterval(this.tickInterval);
         this.tickInterval = null;
     }
 

@@ -33,6 +33,7 @@ class Client {
     blurred: boolean = false;
     request: null | number = null;
     running: boolean = false;
+    initialStartComplete: boolean = false;
     
     boundHandleResize: (event: Event) => void;
     boundHandleClick: (event: MouseEvent) => void;
@@ -59,6 +60,7 @@ class Client {
         this.boundHandleResize = this.handleResize.bind(this);
         this.boundHandleClick = this.handleClick.bind(this);
         this.boundHandleKeyDown = this.handleKeyDown.bind(this);
+        this.boundHandleMessage = this.handleMessage.bind(this);
         this.loadObjects();
     }
 
@@ -111,13 +113,14 @@ class Client {
             }
         } else if (event.key == 'Escape' && window.top) {
             window.top.postMessage({
+                isSpace: true,
                 type: 'escape',
-            }, '*');
+            }, origin);
         }
     };
 
     handleMessage(event: MessageEvent): void {
-        if (event.source === window.top) {
+        if (event.source === window.top && event.data.isSpace === true) {
             const {type} = event.data;
             if (type == 'start') {
                 this.start();
@@ -219,13 +222,15 @@ class Client {
     }
 
     start(): void {
-        setTimeout(() => {
-            const object = this.world.readObj(this.target);
-            const mesh = this.world.getObjectMesh(this.target);
-            if (object && mesh) {
-                this.camera.position.set(mesh.position.x + object.radius/this.unitSize*10, mesh.position.y, mesh.position.z);
-            }
-        }, 1000);
+        if (!this.initialStartComplete) {
+            setTimeout(() => {
+                const object = this.world.readObj(this.target);
+                const mesh = this.world.getObjectMesh(this.target);
+                if (object && mesh) {
+                    this.camera.position.set(mesh.position.x + object.radius/this.unitSize*10, mesh.position.y, mesh.position.z);
+                }
+            }, 1000);
+        }
         window.addEventListener('resize', this.boundHandleResize);
         window.addEventListener('click', this.boundHandleClick);
         window.addEventListener('keydown', this.boundHandleKeyDown);

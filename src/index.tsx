@@ -5,6 +5,34 @@ import {createRoot} from 'react-dom/client';
 import {Client} from './client';
 import {type WorldInfo, Menu} from './menu';
 
+function ClientIframe({doEscape}: {doEscape: () => void}): ReactNode {
+    let iframeRef: RefObject<null | HTMLIFrameElement> = useRef(null);
+    function sendMessage(type: string): void {
+        if (iframeRef.current !== null && iframeRef.current.contentWindow !== null) {
+            iframeRef.current.contentWindow.postMessage({isSpace: true, type: type}, origin);
+        }
+    }
+    function handleMessage(event: MessageEvent): void {
+        if (iframeRef.current && event.source === iframeRef.current.contentWindow && event.data.isSpace === true) {
+            const {type} = event.data;
+            if (type == 'escape') {
+                doEscape();
+            }
+        }
+    }
+    useEffect(() => {
+        setTimeout(() => {
+            sendMessage('start');
+            window.addEventListener('message', handleMessage);
+        }, 100);
+        return () => {
+            sendMessage('stop');
+            window.removeEventListener('message', handleMessage);
+        };
+    }, []);
+    return <iframe src="client.html" ref={iframeRef}></iframe>;
+}
+
 function Game(): ReactNode {
     const worlds = [
         {
@@ -17,30 +45,10 @@ function Game(): ReactNode {
     const [visible, setVisible] = useState(false);
     const [showStars, setShowStars] = useState(true);
     let currentWorldRef: RefObject<null | WorldInfo> = useRef(null);
-    let iframeRef: RefObject<null | HTMLIFrameElement> = useRef(null);
-    function sendMessage(type: string, data: object = {}): void {
-        if (iframeRef.current !== null && iframeRef.current.contentWindow !== null) {
-            iframeRef.current.contentWindow.postMessage({type: type, ...data}, '*');
-        }
-    }
-    function handleMessage(event: MessageEvent): void {
-        if (iframeRef.current && event.source === iframeRef.current.contentWindow) {
-            const {type} = event.data;
-            if (type == 'escape') {
-                sendMessage('stop');
-                setInMenu(true);
-                setVisible(true);
-                setMenu('escape');
-                setShowStars(false);
-            }
-        }
-    }
     function resume(): void {
         setInMenu(false);
-        window.addEventListener('message', handleMessage);
-        setVisible(true);
         setShowStars(false);
-        sendMessage('start');
+        setVisible(true);
     }
     function saveAndQuitToTitle(): void {
         setVisible(false);
@@ -52,12 +60,12 @@ function Game(): ReactNode {
         currentWorldRef.current = world;
         resume();
     }
-    useEffect(() => {
-        window.addEventListener('message', handleMessage);
-        return () => {
-            window.removeEventListener('message', handleMessage);
-        }
-    }, []);
+    function doEscape(): void {
+        setInMenu(true);
+        setVisible(true);
+        setMenu('escape');
+        setShowStars(false);
+    }
     return (
         <div>
             {inMenu && <Menu 
@@ -69,7 +77,7 @@ function Game(): ReactNode {
                 setMenu={setMenu}
                 showStars={showStars}
             />}
-            {visible && <iframe src='client.html' ref={iframeRef} />}
+            {visible && <ClientIframe doEscape={doEscape} />}
         </div>
     );
 }
