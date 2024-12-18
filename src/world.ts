@@ -19,7 +19,6 @@ class World {
     fs: FileSystem;
     timeWarp: number = 1;
     tps: number;
-    objMeshes: {[key: string]: Mesh} = {};
 
     tickInterval: number | null = null;
 
@@ -87,15 +86,6 @@ class World {
         return out;
     }
 
-    getObjectMesh(path: string): Mesh | undefined {
-        if (path.startsWith('/')) path = path.slice(1);
-        return this.objMeshes[path];
-    }
-
-    setObjectMesh(path: string, mesh: Mesh) {
-        this.objMeshes[path] = mesh;
-    }
-
     get config(): Config {
         return this.fs.readjson('/etc/config');
     }
@@ -153,5 +143,6 @@ class World {
 }
 
 export {
+    Config,
     World,
 }
