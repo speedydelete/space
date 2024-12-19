@@ -4,7 +4,7 @@ import {type Config, World} from './world';
 import {defaultWorld} from './default_world';
 
 type GetTimeRequest = {type: 'get-time', data: undefined};
-type GetTimeResponse = {type: 'get-time', data: Date};
+type GetTimeResponse = {type: 'get-time', data: Date | undefined};
 
 type GetTimeWarpRequest = {type: 'get-time-warp', data: undefined};
 type GetTimeWarpResponse = {type: 'get-time-warp', data: number};
@@ -46,7 +46,7 @@ type RequestResponseTypeMap =
     | {request: StopRequest, response: StopResponse};
 
 type Request = RequestResponseTypeMap['request'];
-type Response = RequestResponseTypeMap['request'];
+type Response = RequestResponseTypeMap['response'];
 
 type ResponseForRequest<T extends Request> = T extends RequestResponseTypeMap['request'] ? Extract<RequestResponseTypeMap, { request: T }>['response'] : never;
 
@@ -64,8 +64,38 @@ class Server {
 
     world: World;
 
-    constructor() {
-        this.world = defaultWorld;
+    sent: SentResponse[];
+    waitingMsgs: {[key: number]: (value: any) => void} = {};
+
+    constructor(world: World) {
+        this.world = world;
+    }
+
+    async respond<T extends Response>(id: number, type: T['type'], data: T['data'] = undefined) {
+        // @ts-ignore
+        this.sent.push({id: id, data: {type: type, data: data}});
+    }
+
+    recv({id, data: request}: SentRequest) {
+        const {type, data} = request;
+        if (type == 'get-time') {
+            this.respond<GetTimeResponse>(id, 'get-time', this.world.time);
+        } else if (type == 'get-time-warp') {
+            this.respond<GetTimeWarpResponse>(id, 'get-time-warp', this.world.timeWarp);
+        } else if (type == 'set-time-warp') {
+            this.world.timeWarp = data;
+            this.respond<SetTimeWarpResponse>(id, 'set-time-warp');
+        }
+    }
+
+    clientSend(data) {
+        this.recv(data);
+    }
+
+    clientRecv() {
+        const sent = this.sent;
+        this.sent = [];
+        return sent;
     }
 
 }

@@ -81,7 +81,7 @@ class Client {
     async send<T extends Request>(type: T['type'], data: T['data'] = undefined): Promise<ResponseForRequest<T>['data']> {
         // @ts-ignore
         const msg: SentRequest = {id: this.nextMsgId, data: {type: type, data: data}};
-        this.nextMsgId++;
+        this.nextMsgId += 2;
         this.syncSend(msg);
         // @ts-ignore
         const {promise, resolve} = Promise.withResolvers();

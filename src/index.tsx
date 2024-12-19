@@ -2,8 +2,10 @@
 import type {ReactNode, RefObject} from 'react';
 import React, {StrictMode, useRef, useState, useEffect} from 'react';
 import {createRoot} from 'react-dom/client';
+import {Server} from './server';
 import {Client} from './client';
 import {type WorldInfo, Menu} from './menu';
+import {defaultWorld} from './default_world';
 
 function ClientIframe({doEscape}: {doEscape: () => void}): ReactNode {
     let iframeRef: RefObject<null | HTMLIFrameElement> = useRef(null);
@@ -83,7 +85,8 @@ function Game(): ReactNode {
 }
 
 if (window.location.href.includes('client.html')) {
-    const client = new Client();
+    const server = new Server(defaultWorld);
+    const client = new Client(server.clientSend, server.clientRecv);
     document.body.appendChild(client.renderer.domElement);
     client.start();
 } else {
