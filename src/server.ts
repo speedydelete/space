@@ -76,7 +76,7 @@ class Server {
         this.sent.push({id: id, data: {type: type, data: data}});
     }
 
-    recv({id, data: request}: SentRequest) {
+    recv({id, data: request}: SentRequest): void {
         const {type, data} = request;
         if (type == 'get-time') {
             this.respond<GetTimeResponse>(id, 'get-time', this.world.time);
@@ -88,11 +88,7 @@ class Server {
         }
     }
 
-    clientSend(data) {
-        this.recv(data);
-    }
-
-    clientRecv() {
+    clientRecv(): SentResponse[] {
         const sent = this.sent;
         this.sent = [];
         return sent;
