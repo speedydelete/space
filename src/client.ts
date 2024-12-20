@@ -2,10 +2,15 @@
 import * as three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import * as util from './util';
-import type {Obj} from './obj';
+import type {Position, Obj} from './obj';
+import {getPosition} from './orbits';
+import {join, World} from './world';
+import {emptyWorld} from './default_world';
 import type {GetTimeRequest, GetTimeWarpRequest, GetObjectRequest, GetAllObjectsRequest, GetAllObjectPathsRequest, GetObjectCountRequest, GetConfigRequest, StartRequest, StopRequest, Request, ResponseForRequest, SentRequest, SentResponse, SetTimeWarpRequest} from './server';
 
 class Client {
+
+    world: World = emptyWorld;
 
     syncSend: (data: SentRequest) => void;
     syncRecv: () => SentResponse[];
@@ -30,12 +35,14 @@ class Client {
 
     oldMeshPos: three.Vector3 = new three.Vector3(0, 0, 0);
 
+    running: boolean = false;
     frames: number = 0;
     prevRealTime: number = performance.now();
     fps: number = 60;
     blurred: boolean = false;
-    request: null | number = null;
-    running: boolean = false;
+    animateRequest: null | number = null;
+    checkInterval: null | number = null;
+    resyncInterval: null | number = null;
     initialStartComplete: boolean = false;
     
     boundHandleResize: (event: Event) => void;
@@ -66,7 +73,6 @@ class Client {
         this.boundHandleClick = this.handleClick.bind(this);
         this.boundHandleKeyDown = this.handleKeyDown.bind(this);
         this.boundHandleMessage = this.handleMessage.bind(this);
-        this.loadObjects();
     }
 
     checkMessages(): void {
@@ -114,24 +120,27 @@ class Client {
     async handleKeyDown(event: KeyboardEvent): Promise<void> {
         if (event.key == ',') {
             event.preventDefault();
-            let timeWarp: number =(await this.send<GetTimeWarpRequest>('get-time-warp'));
+            let timeWarp = this.world.timeWarp;
             if (Math.log10(timeWarp) % 1 === 0) {
                 timeWarp /= 2;
             } else {
                 timeWarp /= 5;
             }
+            this.world.timeWarp = timeWarp;
             this.send<SetTimeWarpRequest>('set-time-warp', timeWarp);
         } else if (event.key == '.') {
             event.preventDefault();
-            let timeWarp: number = await this.send<GetTimeWarpRequest>('get-time-warp');
+            let timeWarp = this.world.timeWarp;
             if (Math.log10(timeWarp) % 1 === 0) {
                 timeWarp *= 5;
             } else {
                 timeWarp *= 2;
             }
+            this.world.timeWarp = timeWarp;
             this.send<SetTimeWarpRequest>('set-time-warp', timeWarp);
         } else if (event.key == '/') {
             event.preventDefault();
+            this.world.timeWarp = 1;
             this.send<SetTimeWarpRequest>('set-time-warp', 1);
         } else if (event.key == 'c' && this.changelogElt) {
             event.preventDefault();
@@ -169,6 +178,7 @@ class Client {
         const lC: number = await this.send<GetConfigRequest>('get-config', 'lC');
         for (const {path, object} of await this.send<GetAllObjectsRequest>('get-all-objects')) {
             if (object === undefined) continue;
+            this.world.writeObj(path, object);
             let material = new three.MeshStandardMaterial();
             if (object.texture) {
                 material.map = textureLoader.load(object.texture);
@@ -195,10 +205,35 @@ class Client {
         }
     }
 
-    async animate(): Promise<void> {
-        this.checkMessages();
+    updateObjects(): void {
+        for (const filename of this.world.lsObjAll()) {
+            const path = join(filename);
+            const object = this.world.readObj(path);
+            const mesh = this.getObjectMesh(path);
+            if (object !== undefined && mesh !== undefined) {
+                const [x, y, z] = object.position;
+                mesh.position.set(x/this.unitSize, y/this.unitSize, z/this.unitSize);
+                mesh.rotation.set(0, 0, 0);
+                mesh.rotateX(object.tilt * Math.PI / 180);
+                mesh.rotateY(this.world.cycle(object.rotation) * Math.PI / 180);
+            }
+        }
+    }
+
+    async resync(): Promise<void> {
+        const newTime = await this.send<GetTimeRequest>('get-time');
+        if (newTime) this.world.time = newTime;
+        this.world.timeWarp = await this.send<GetTimeWarpRequest>('get-time-warp');
+        for (const {path, object} of await this.send<GetAllObjectsRequest>('get-all-objects')) {
+            if (object !== undefined) this.world.writeObj(path, object);
+        }
+    }
+
+    animate(): void {
+        this.updateObjects();
         if (document.hidden || document.visibilityState == 'hidden') {
             this.blurred = true;
+            this.animateRequest = requestAnimationFrame(this.animate.bind(this));
             return;
         } else if (this.blurred) {
             this.blurred = false;
@@ -213,7 +248,7 @@ class Client {
             this.frames = 0;
             this.prevRealTime = realTime;
         }
-        const targetObj: Obj | undefined = await this.send<GetObjectRequest>('get-object', this.target);
+        const targetObj: Obj | undefined = this.world.readObj(this.target);
         const mesh: three.Mesh | undefined = this.getObjectMesh(this.target);
         if (mesh && mesh.position) {
             this.camera.position.x += mesh.position.x - this.oldMeshPos.x;
@@ -222,15 +257,13 @@ class Client {
             this.controls.target.copy(mesh.position);
         }
         if (this.leftInfoElt) {
-            const time = await this.send<GetTimeRequest>('get-time');
-            const timeWarp = await this.send<GetTimeWarpRequest>('get-time-warp');
             this.leftInfoElt.innerText = `FPS: ${this.fps}
             Camera X: ${util.formatLength(this.camera.position.x*this.unitSize)}
             Camera Y: ${util.formatLength(this.camera.position.y*this.unitSize)}
             Camera Z: ${util.formatLength(this.camera.position.z*this.unitSize)}
-            Total Objects: ${await this.send<GetObjectCountRequest>('get-object-count')}
-            Time: ${time ? util.formatDate(time) : 'undefined'}
-            Time Warp: ${timeWarp}x (${util.formatTime(timeWarp)}/s)
+            Total Objects: ${this.world.lsObjAll().length}
+            Time: ${this.world.time ? util.formatDate(this.world.time) : 'undefined'}
+            Time Warp: ${this.world.timeWarp}x (${util.formatTime(this.world.timeWarp)}/s)
             Down C for changelog.
             Use ,./ to control time warp.
             Click on objects to select them.`;
@@ -255,32 +288,44 @@ class Client {
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
         if (mesh) this.oldMeshPos = mesh.position.clone();
-        this.request = requestAnimationFrame(this.animate.bind(this));
+        this.animateRequest = requestAnimationFrame(this.animate.bind(this));
     }
 
     async start(): Promise<void> {
+        this.checkInterval = window.setInterval(this.checkMessages.bind(this), 1);
         if (!this.initialStartComplete) {
-            setTimeout(async () => {
+            setTimeout((async () => {
                 const object: Obj = await this.send<GetObjectRequest>('get-object', this.target);
                 const mesh = this.getObjectMesh(this.target);
                 if (object && mesh) {
                     this.camera.position.set(mesh.position.x + object.radius/this.unitSize*10, mesh.position.y, mesh.position.z);
                 }
-            }, 1000);
+                this.initialStartComplete = true;
+            }).bind(this), 1000);
         }
         window.addEventListener('resize', this.boundHandleResize);
         window.addEventListener('click', this.boundHandleClick);
         window.addEventListener('keydown', this.boundHandleKeyDown);
         window.addEventListener('message', this.boundHandleMessage);
-        this.request = requestAnimationFrame(this.animate.bind(this));
         await this.send<StartRequest>('start');
+        this.world = emptyWorld;
+        await this.loadObjects();
+        const time = await this.send<GetTimeRequest>('get-time');
+        if (time !== undefined) this.world.time = time;
+        this.world.start();
+        this.world.timeWarp = await this.send<GetTimeWarpRequest>('get-time-warp');
+        this.animateRequest = requestAnimationFrame(this.animate.bind(this));
+        this.resyncInterval = window.setInterval(this.resync.bind(this), 1000);
         this.running = true;
     }
 
     async stop(): Promise<void> {
         this.running = false;
-        if (this.request !== null) cancelAnimationFrame(this.request);
-        this.request = null;
+        if (this.resyncInterval !== null) window.clearInterval(this.resyncInterval);
+        if (this.animateRequest !== null) cancelAnimationFrame(this.animateRequest);
+        if (this.checkInterval !== null) window.clearInterval(this.checkInterval);
+        this.animateRequest = null;
+        this.world.stop();
         await this.send<StopRequest>('stop');
         window.removeEventListener('resize', this.boundHandleResize);
         // @ts-ignore

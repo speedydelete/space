@@ -3,10 +3,14 @@ import {type ObjType, type Obj, type ObjParamsMap, obj} from './obj';
 
 const pathSep = /(?<!\\)\//;
 
+function split(path: string): string[] {
+    return path.split(pathSep);
+}
+
 function join(...paths: string[]): string {
     let out: string[] = [];
     for (const path of paths) {
-        for (const item of path.split(pathSep)) {
+        for (const item of split(path)) {
             if (item == '' || item == '.') {
                 continue;
             } else if (item == '..') {
@@ -115,6 +119,11 @@ class FileSystem {
     write(path: string, value: string): void {
         const [resolvedPath, file] = this.getFile(path);
         if (file === undefined) {
+            const splitPath = split(resolvedPath);
+            for (let i = 0; i < splitPath.length; i++) {
+                const dir = splitPath.slice(0, i).join('/');
+                if (!this.exists(dir)) this.mkdir(dir);
+            }
             this.files[resolvedPath] = new File(value);
         } else if (this.files[resolvedPath] instanceof File) {
             this.files[resolvedPath].data = value;
@@ -148,6 +157,10 @@ class FileSystem {
         } else {
             return [];
         }
+    }
+
+    exists(path: string): boolean {
+        return this.getFile(path)[1] !== undefined;
     }
 
     isdir(path: string): boolean {
@@ -186,6 +199,7 @@ function objfile<T extends ObjType>(type: T, params: ObjParamsMap[T]): File {
 }
 
 export {
+    split,
     join,
     FileType,
     BaseFile,

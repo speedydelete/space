@@ -2,6 +2,56 @@
 import {directory, link, file, objfile} from './files';
 import {World} from './world';
 
+const emptyWorld = new World(directory({
+    bin: directory(),
+    boot: directory(),
+    dev: directory(),
+    etc: directory({
+        config: file({
+            tps: 20,
+            c: 299792458,
+            G: 6.6743e-11,
+            lC: 3.2065e+30,
+        }),
+        time: file((new Date()).toISOString()),
+    }),
+    home: directory({
+        root: link('/root/'),
+        objects: directory(),
+    }),
+    lib: directory(),
+    media: directory(),
+    mnt: directory(),
+    opt: directory(),
+    proc: directory(),
+    root: directory(),
+    sbin: directory(),
+    srv: directory(),
+    sys: directory(),
+    tmp: directory(),
+    usr: directory({
+        bin: link('/bin'),
+        include: directory(),
+        lib: directory(),
+        libexec: directory(),
+        local: directory(),
+        sbin: link('/sbin'),
+        share: directory(),
+        src: directory(),
+    }),
+    var: directory({
+        cache: directory(),
+        lib: directory(),
+        lock: directory(),
+        log: directory(),
+        mail: directory(),
+        opt: directory(),
+        run: directory(),
+        spool: directory(),
+        tmp: directory(),
+    }),
+}));
+
 const defaultWorld = new World(directory({
     bin: directory(),
     boot: directory(),
@@ -63,30 +113,32 @@ const defaultWorld = new World(directory({
                         },
                         texture: 'https://i.ibb.co/F7Wgjj1/2k-earth-daymap.jpg',
                     }),
-                    'moon.object': objfile('planet', {
-                        name: 'Moon',
-                        mass: 7.346e22,
-                        radius: 1738100,
-                        flattening: 0.0012,
-                        rotation: {
-                            type: 'linear',
-                            min: 0,
-                            max: 360,
-                            period: 2360591.5104,
-                            epoch: new Date(2024, 12, 1, 1, 21),
-                        },
-                        orbit: {
-                            ap: 405400000,
-                            pe: 362600000,
-                            sma: 384399000,
-                            ecc: 0.0549,
-                            period: 2360591.5104,
-                            inc: 5.145,
-                            lan: 0,
-                            aop: 0,
-                            top: new Date(2024, 11, 14, 11, 18),
-                        },
-                        texture: 'https://s3-us-west-2.amazonaws.com/s.cdpn.io/17271/lroc_color_poles_1k.jpg',
+                    'moon': directory({
+                        '.object': objfile('planet', {
+                            name: 'Moon',
+                            mass: 7.346e22,
+                            radius: 1738100,
+                            flattening: 0.0012,
+                            rotation: {
+                                type: 'linear',
+                                min: 0,
+                                max: 360,
+                                period: 2360591.5104,
+                                epoch: new Date(2024, 12, 1, 1, 21),
+                            },
+                            orbit: {
+                                ap: 405400000,
+                                pe: 362600000,
+                                sma: 384399000,
+                                ecc: 0.0549,
+                                period: 2360591.5104,
+                                inc: 5.145,
+                                lan: 0,
+                                aop: 0,
+                                top: new Date(2024, 11, 14, 11, 18),
+                            },
+                            texture: 'https://s3-us-west-2.amazonaws.com/s.cdpn.io/17271/lroc_color_poles_1k.jpg',
+                        }),
                     }),
                 }),
             }),
@@ -126,5 +178,6 @@ const defaultWorld = new World(directory({
 }));
 
 export {
+    emptyWorld,
     defaultWorld,
 }

@@ -86,7 +86,7 @@ function Game(): ReactNode {
 
 if (window.location.href.includes('client.html')) {
     const server = new Server(defaultWorld);
-    const client = new Client(server.recv, server.clientRecv);
+    const client = new Client(server.recv.bind(server), server.clientRecv.bind(server));
     document.body.appendChild(client.renderer.domElement);
     client.start();
 } else {

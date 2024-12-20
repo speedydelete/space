@@ -1,11 +1,8 @@
 
-import type {Mesh} from 'three';
 import {timeDiff} from './util';
 import {type Cycle, type Position, type Obj, obj} from './obj';
 import {join, type Directory, FileSystem} from './files';
 import {getPosition} from './orbits';
-
-const unitSize = 150000000000;
 
 interface Config {
     tps: number,
@@ -47,23 +44,13 @@ class World {
     }
 
     readObj(path: string): Obj | undefined {
-        let data: any;
-        data = this.fs.readjson(join('/home/objects', path, '.object'));
-        if (data === undefined) {
-            data = this.fs.readjson(join('/home/objects', path + '.object'));
-            if (data === undefined) {
-                return undefined;
-            }
-        }
+        let data: any | undefined = this.fs.readjson(join('/home/objects', path, '.object'));
+        if (data === undefined) return undefined;
         return obj(data.type, data);
     }
 
     writeObj(path: string, object: Obj): void {
-        if (this.fs.read(join('/home/objects', path, '.object')) !== undefined) {
-            this.fs.writejson(join('/home/objects', path, '.object'), object);
-        } else {
-            this.fs.writejson(join('/home/objects', path + '.object'), object);
-        }
+        this.fs.writejson(join('/home/objects', path, '.object'), object);
     }
 
     isdirObj(path: string): boolean {
@@ -107,16 +94,13 @@ class World {
         for (const filename of this.lsObj(basePath)) {
             const path = join(basePath, filename);
             const object = this.readObj(path);
-            const mesh = this.getObjectMesh(path);
-            if (object !== undefined && mesh !== undefined) {
+            if (object !== undefined) {
                 let [z, x, y] = getPosition(this, object);
                 x += parentPos[0];
                 y += parentPos[1];
                 z += parentPos[2];
-                mesh.position.set(x/unitSize, y/unitSize, z/unitSize);
-                mesh.rotation.set(0, 0, 0);
-                mesh.rotateX(object.tilt * Math.PI / 180);
-                mesh.rotateY(this.cycle(object.rotation) * Math.PI / 180);
+                object.position = [x, y, z];
+                this.writeObj(path, object);
                 if (this.isdirObj(path)) {
                     this.updateObjects(path, [x, y, z]);
                 }
@@ -143,6 +127,7 @@ class World {
 }
 
 export {
+    join,
     Config,
     World,
 }
