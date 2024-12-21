@@ -182,22 +182,6 @@ class FileSystem {
 
 }
 
-function file(data: string | Obj | any): File {
-    return new File(data);
-}
-
-function directory(files: {[key: string]: BaseFile} = {}): Directory {
-    return new Directory(files);
-}
-
-function link<T extends string = string>(path: T): Link {
-    return new Link(path);
-}
-
-function objfile<T extends ObjType>(type: T, params: ObjParamsMap[T]): File {
-    return new File(obj(type, params));
-}
-
 export {
     split,
     join,
@@ -207,8 +191,4 @@ export {
     Directory,
     Link,
     FileSystem,
-    file,
-    directory,
-    link,
-    objfile,
 }

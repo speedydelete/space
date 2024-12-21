@@ -17,7 +17,7 @@ const MenuContext = createContext({
 });
 
 const starSizes: number[] = [1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3];
-const starColors: string[] = Object.values({...await (await fetch('spectral_type_colors.json')).json(), info: undefined, '~': undefined});
+const starColors: string[] = Object.values({...await (await fetch('./data/spectral_type_colors.json')).json(), info: undefined, '~': undefined});
 
 function StarCanvas(): ReactNode {
     let canvasRef: RefObject<null | HTMLCanvasElement> = useRef(null);

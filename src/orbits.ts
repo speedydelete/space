@@ -31,15 +31,21 @@ function rotateVector(vec: Position, angle: number, axis: 'x' | 'y' | 'z'): Posi
     return vec;
 }
 
+function getPeriod(G: number, object: OrbitObj, parent: Obj) {
+    return 2 * Math.PI * Math.sqrt(object.orbit.sma ** 3 / G / parent.mass);
+}
+
 // function getAop(world: World, object: OrbitObj, time: Time): number {
 //     const {sma, period, ecc, aopEpoch} = object.orbit;
 //     const aopPeriod = 24 * Math.PI**3 * sma**2 / period**2 / world.config.c**2 / (1 - ecc**2);
 //     return timeDiff(time, aopEpoch)/aopPeriod * 360;
 // }
 
-function getAnomalies(world: World, object: OrbitObj, tol: number = 1e-6): {mna: number, eca: number, tra: number} {
-    const {ecc, period, top} = object.orbit;
-    const mna = Math.abs(timeDiff(world.time, top)) / period;
+function getAnomalies(object: OrbitObj, tol: number = 1e-6): {mna: number, eca: number, tra: number} {
+    const ecc = object.orbit.ecc === undefined ? 0 : object.orbit.ecc;
+    let mna = object.orbit.mna;
+    if (mna === undefined) throw new TypeError('no mna');
+    mna /= 360;
     let eca = mna;
     let delta: number;
     do {
@@ -54,17 +60,20 @@ function getAnomalies(world: World, object: OrbitObj, tol: number = 1e-6): {mna:
 }
 
 function getOrbitalRadius(object: OrbitObj, tra: number): number {
-    return (object.orbit.sma * (1 - object.orbit.ecc**2))/(1 + object.orbit.ecc*Math.cos(tra));
+    const ecc = object.orbit.ecc === undefined ? 0 : object.orbit.ecc;
+    return (object.orbit.sma * (1 - (ecc **2))/(1 + ecc*Math.cos(tra)));
 }
 
-function getPosition(world: World, object: Obj, tol=1e-6): Position {
+function getPosition(world: World, object: Obj, parent: Obj | null = null, tol: number = 1e-6): Position {
     if (object.hasOrbit()) {
-        const {tra} = getAnomalies(world, object, tol);
+        if (!object.orbit.mna) object.orbit.mna = 0;
+        if (parent !== null) object.orbit.mna += 360 * (world.timeWarp / world.tps)/getPeriod(world.config.G, object, parent);
+        const {tra} = getAnomalies(object, tol);
         const radius = getOrbitalRadius(object, tra);
         let pos: Position = [radius * Math.cos(tra), radius * Math.sin(tra), 0];
-        pos = rotateVector(pos, -object.orbit.lan*Math.PI/180, 'z');
-        pos = rotateVector(pos, -object.orbit.inc*Math.PI/180, 'x');
-        pos = rotateVector(pos, -object.orbit.aop*Math.PI/180, 'z');
+        if (object.orbit.lan !== undefined) pos = rotateVector(pos, -object.orbit.lan*Math.PI/180, 'z');
+        if (object.orbit.inc !== undefined) pos = rotateVector(pos, -object.orbit.inc*Math.PI/180, 'x');
+        if (object.orbit.aop !== undefined) pos = rotateVector(pos, -object.orbit.aop*Math.PI/180, 'z');
         return pos;
     } else {
         return object.position;
@@ -72,6 +81,7 @@ function getPosition(world: World, object: Obj, tol=1e-6): Position {
 }
 
 export {
+    getPeriod,
     // getAop,
     getAnomalies,
     getOrbitalRadius,

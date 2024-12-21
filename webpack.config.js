@@ -26,7 +26,7 @@ module.exports = {
     },
     devServer: {
         static: {
-            directory: path.join(__dirname, 'src'),
+            directory: path.join(__dirname, 'dist'),
         },
         compress: true,
         port: 9000,
@@ -34,7 +34,7 @@ module.exports = {
         liveReload: true,
         watchFiles: ['src/**/*', 'editor/**/*'],
         devMiddleware: {
-            writeToDisk: true,
+            writeToDisk: false,
         },
     },
 };

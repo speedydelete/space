@@ -1,6 +1,4 @@
 
-import type {Time} from './util';
-
 type FixedCycle = {
     type: 'fixed',
     value: number,
@@ -11,7 +9,7 @@ interface LinearCycle {
     min: Cycle,
     max: Cycle,
     period: Cycle,
-    epoch: Time,
+    epoch?: Date,
 }
 
 type Cycle = FixedCycle | LinearCycle | Cycle[];
@@ -19,52 +17,75 @@ type Cycle = FixedCycle | LinearCycle | Cycle[];
 type Position = [number, number, number];
 
 interface Orbit {
-    ap: number,
-    pe: number,
+    at?: Date,
     sma: number,
-    ecc: number,
-    period: number,
-    inc: number,
-    lan: number,
-    aop: number,
-    top: Time,
+    ecc?: number,
+    mna?: number,
+    inc?: number,
+    lan?: number,
+    aop?: number,
+    retrograde?: boolean;
+}
+
+interface Axis {
+    tilt: number,
+    period: number | 'sync',
+    epoch: Date,
+    ra: number,
 }
 
 type ObjType = 'star' | 'planet';
+type BaseObjType = 'root' | ObjType;
 
 interface ObjParams {
-    name: string;
     mass: number;
     radius: number;
-    flattening: number;
+    axis?: Axis;
     orbit?: Orbit;
     position?: Position;
-    rotation?: Cycle;
     tilt?: number;
+    albedo?: number;
     children?: Object[];
 }
 
-class _Obj<T extends ObjType = ObjType> {
+class _BaseObj<T extends BaseObjType = BaseObjType> {
 
-    type: T;
+    $type: T;
     name: string;
-    mass: number;
-    radius: number;
-    flattening: number;
-    rotation: Cycle;
-    tilt: number;
+    designation: string;
+
+    constructor(type: T, name: string, designation: string) {
+        this.$type = type;
+        this.name = name;
+        this.designation = designation;
+    }
+}
+
+class RootObj extends _BaseObj<'root'> {
+
+    constructor(type: 'root', name: string, designation: string, data: {} = {}) {
+        super(type, name, designation);
+    }
+
+}
+
+class _Obj<T extends ObjType = ObjType> extends _BaseObj {
+
     position: Position;
     orbit?: Orbit;
-    constructor(type: T, data: ObjParams) {
-        this.type = type;
-        this.name = data.name;
-        this.mass = data.mass;
-        this.radius = data.radius;
-        this.flattening = data.flattening;
-        this.rotation = data.rotation === undefined ? 0 : data.rotation;
-        this.tilt = data.tilt === undefined ? 0 : data.tilt;
+    radius: number;
+    mass: number;
+    axis?: Axis;
+    albedo: number;
+
+    constructor(type: T, name: string, designation: string, data: ObjParams) {
+        super(type, name, designation);
         this.position = data.position === undefined ? [0, 0, 0] : data.position;
         this.orbit = data.orbit;
+        this.radius = data.radius;
+        this.mass = data.mass;
+        if (data.axis !== undefined) this.axis = data.axis;
+        this.albedo = data.albedo === undefined ? 0.09 : data.albedo;
     }
 
     hasOrbit(): this is OrbitObj {
@@ -81,29 +102,31 @@ type SpectralType = string;
 
 type SpectralTypeRegexLiteral = SpectralType;
 
-const spectralTypeColors: {[key: SpectralTypeRegexLiteral]: string} = (await (await fetch('./spectral_type_colors.json')).json());
+const spectralTypeColors: {[key: SpectralTypeRegexLiteral]: string} = (await (await fetch('./data/spectral_type_colors.json')).json());
 
 interface StarParams extends ObjParams {
     magnitude: number;
-    spectralType: SpectralType;
+    type: SpectralType;
     texture?: string;
 }
 
 class Star extends _Obj<'star'> {
 
-    magnitude: number = 0;
-    spectralType: SpectralType = '~';
+    $type: 'star' = 'star';
+    magnitude: number;
+    type: SpectralType;
     texture?: string;
-    constructor(data: StarParams) {
-        super('star', data);
+
+    constructor(name: string, desgn: string, data: StarParams) {
+        super('star', name, desgn, data);
         this.magnitude = data.magnitude;
-        this.spectralType = data.spectralType;
+        this.type = data.type;
         this.texture = data.texture;
     }
 
     get color(): number {
         for (const [type, color] of Object.entries(spectralTypeColors)) {
-            if ((new RegExp(type)).test(this.spectralType)) {
+            if ((new RegExp(type)).test(this.type)) {
                 return parseInt(color.replace('#', '0x'));
             }
         }
@@ -113,32 +136,41 @@ class Star extends _Obj<'star'> {
 }
 
 interface PlanetParams extends ObjParams {
-    texture: string;
+    texture?: string;
+    type?: string;
 }
 
 class Planet extends _Obj<'planet'> {
+
+    $type: 'planet' = 'planet';
     texture: string;
-    constructor(data: PlanetParams) {
-        super('planet', data);
-        this.texture = data.texture;
+    type: string;
+
+    constructor(name: string, desgn: string, data: PlanetParams) {
+        super('planet', name, desgn, data);
+        if (data.texture !== undefined) this.texture = data.texture;
+        this.type = data.type === undefined ? '' : data.type;
     }
 }
 
 type Obj = Star | Planet;
+type ObjIncludingRoot = RootObj | Obj;
 
 const objTypeMap = {
+    'root': RootObj,
     'star': Star,
     'planet': Planet,
 }
 
 interface ObjParamsMap {
+    'root': {},
     'star': StarParams,
     'planet': PlanetParams,
 }
 
-function obj<T extends ObjType>(type: T, params: ObjParamsMap[T]): Obj {
+function obj<T extends BaseObjType>(type: T, params: ObjParamsMap[T] & {name: string, designation: string}): Obj {
     // @ts-ignore
-    return new (objTypeMap[type])(params);
+    return new (objTypeMap[type])(params.name, params.designation, params);
 }
 
 export {
@@ -147,11 +179,16 @@ export {
     Cycle,
     Position,
     Orbit,
+    Axis,
     ObjType,
+    BaseObjType,
+    _BaseObj,
+    _Obj,
     OrbitObj,
     Star,
     Planet,
     Obj,
+    ObjIncludingRoot,
     objTypeMap,
     ObjParamsMap,
     obj,

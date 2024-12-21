@@ -44,13 +44,13 @@ class World {
     }
 
     readObj(path: string): Obj | undefined {
-        let data: any | undefined = this.fs.readjson(join('/home/objects', path, '.object'));
+        let data: any | undefined = this.fs.readjson(join('/home/objects', path, 'object'));
         if (data === undefined) return undefined;
-        return obj(data.type, data);
+        return obj(data.$type, data);
     }
 
     writeObj(path: string, object: Obj): void {
-        this.fs.writejson(join('/home/objects', path, '.object'), object);
+        this.fs.writejson(join('/home/objects', path, 'object'), object);
     }
 
     isdirObj(path: string): boolean {
@@ -90,19 +90,21 @@ class World {
         this.fs.write('/etc/time', value.toISOString());
     }
 
-    updateObjects(basePath: string = '', parentPos: Position = [0, 0, 0]): void {
+    updateObjects(basePath: string = '', parent: Obj | null = null): void {
         for (const filename of this.lsObj(basePath)) {
             const path = join(basePath, filename);
             const object = this.readObj(path);
             if (object !== undefined) {
-                let [z, x, y] = getPosition(this, object);
-                x += parentPos[0];
-                y += parentPos[1];
-                z += parentPos[2];
+                let [z, x, y] = getPosition(this, object, parent);
+                if (parent) {
+                    x += parent.position[0];
+                    y += parent.position[1];
+                    z += parent.position[2];
+                }
                 object.position = [x, y, z];
                 this.writeObj(path, object);
                 if (this.isdirObj(path)) {
-                    this.updateObjects(path, [x, y, z]);
+                    this.updateObjects(path, object);
                 }
             }
         }

@@ -2,11 +2,11 @@
 import * as three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import * as util from './util';
-import type {Position, Obj} from './obj';
-import {getPosition} from './orbits';
+import type {Obj} from './obj';
+import {getPeriod} from './orbits';
 import {join, World} from './world';
 import {emptyWorld} from './default_world';
-import type {GetTimeRequest, GetTimeWarpRequest, GetObjectRequest, GetAllObjectsRequest, GetAllObjectPathsRequest, GetObjectCountRequest, GetConfigRequest, StartRequest, StopRequest, Request, ResponseForRequest, SentRequest, SentResponse, SetTimeWarpRequest} from './server';
+import type {GetTimeRequest, GetTimeWarpRequest, GetObjectRequest, GetAllObjectsRequest, GetConfigRequest, StartRequest, StopRequest, Request, ResponseForRequest, SentRequest, SentResponse, SetTimeWarpRequest} from './server';
 
 class Client {
 
@@ -175,9 +175,19 @@ class Client {
 
     async loadObjects(): Promise<void> {
         const textureLoader = new three.TextureLoader();
+        const G: number = await this.send<GetConfigRequest>('get-config', 'G');
         const lC: number = await this.send<GetConfigRequest>('get-config', 'lC');
+        this.world.fs.writejson
         for (const {path, object} of await this.send<GetAllObjectsRequest>('get-all-objects')) {
             if (object === undefined) continue;
+            if (object.axis && object.axis.period == 'sync' && object.hasOrbit()) {   
+                const parent = this.world.readObj(join(path, '..'));
+                if (parent === undefined) {
+                    console.error('undefined parent for', object, 'path:', path, 'parent path:', join(path, '..'));
+                } else {
+                    object.axis.period = getPeriod(G, object, parent);
+                }
+            }
             this.world.writeObj(path, object);
             let material = new three.MeshStandardMaterial();
             if (object.texture) {
@@ -185,7 +195,7 @@ class Client {
             }
             material.opacity = 1;
             material.transparent = true;
-            if (object.type == 'star') {
+            if (object.$type == 'star') {
                 if (material.map) material.emissiveMap = material.map;
                 material.emissive = new three.Color(object.color);
                 material.emissiveIntensity = 2;
@@ -193,7 +203,7 @@ class Client {
             const geometry = new three.SphereGeometry(object.radius/this.unitSize, 512, 512);
             const mesh = new three.Mesh(geometry, material);
             mesh.position.set(...object.position);
-            if (object.type == 'star') {
+            if (object.$type == 'star') {
                 const light = new three.PointLight(object.color);
                 light.power = lC / 10**(0.4 * object.magnitude) / this.unitSize**2 / 20000;
                 light.castShadow = true;
@@ -214,8 +224,16 @@ class Client {
                 const [x, y, z] = object.position;
                 mesh.position.set(x/this.unitSize, y/this.unitSize, z/this.unitSize);
                 mesh.rotation.set(0, 0, 0);
-                mesh.rotateX(object.tilt * Math.PI / 180);
-                mesh.rotateY(this.world.cycle(object.rotation) * Math.PI / 180);
+                if (object.axis) {
+                    mesh.rotateX(object.axis.tilt * Math.PI / 180);
+                    if (object.axis.epoch !== null) {
+                        if (object.axis.period == 'sync') {
+                            //console.error('period is sync for', object, 'path:', path);
+                        } else {
+                            mesh.rotateY(object.axis.period * Math.PI * 2);
+                        }
+                    }
+                }
             }
         }
     }
@@ -269,20 +287,20 @@ class Client {
             Click on objects to select them.`;
         }
         if (this.rightInfoElt && targetObj !== undefined && mesh !== undefined) {
-            this.rightInfoElt.innerText = `Path: ${this.target}
-            Name: ${targetObj.name}
+            this.rightInfoElt.innerText = `Name: ${targetObj.name}
+            Designation: ${targetObj.designation}
+            Path: ${this.target}
             X: ${util.formatLength(mesh.position.x*this.unitSize)}
             Y: ${util.formatLength(mesh.position.y*this.unitSize)}
-            Z: ${util.formatLength(mesh.position.z*this.unitSize)}\n` + (targetObj.orbit ? 
-            `\tApoapsis: ${util.formatLength(targetObj.orbit.ap)}
-            \tPeriapsis: ${util.formatLength(targetObj.orbit.pe)}
-            \tEccentricity: ${targetObj.orbit.ecc}
-            \tPeriod: ${util.formatTime(targetObj.orbit.period)}
-            \tInclination: ${targetObj.orbit.inc}\xb0
-            \tLongitude of Ascending Node: ${targetObj.orbit.lan}\xb0
-            \tArgument of Periapsis: ${targetObj.orbit.aop}\xb0
-            \tTime of Periapsis: ${targetObj.orbit.top}`
-            : `No orbit, root object`);
+            Z: ${util.formatLength(mesh.position.z*this.unitSize)}\n` + (targetObj.orbit ?
+            
+            `\tSMA: ${util.formatLength(targetObj.orbit.sma)}
+            \tECC: ${targetObj.orbit.ecc}
+            \tMNA: ${targetObj.orbit.mna?.toFixed(3)}
+            \tINC: ${targetObj.orbit.inc}
+            \tLAN: ${targetObj.orbit.lan}
+            \tAOP: ${targetObj.orbit.aop}`
+            : `No orbit`);
         }
         this.camera.updateProjectionMatrix();
         this.controls.update();
