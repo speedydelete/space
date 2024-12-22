@@ -135,7 +135,10 @@ class World {
                 if (object.axis && object.axis.period == 'sync') {
                     object.axis.period = getPeriod(this.config.G, object, parent);
                 }
-                }
+            }
+            if (object.axis && object.axis.epoch === null) {
+                object.axis.epoch = this.time;
+            }
             this.writeObj(path, object);
         }
     }

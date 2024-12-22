@@ -218,12 +218,14 @@ class Client {
                 mesh.position.set(x/this.unitSize, y/this.unitSize, z/this.unitSize);
                 mesh.rotation.set(0, 0, 0);
                 if (object.axis) {
+                    mesh.rotation.set(0, 0, 0);
                     mesh.rotateX(object.axis.tilt * Math.PI / 180);
                     if (object.axis.epoch !== null) {
                         if (object.axis.period == 'sync') {
-                            //console.error('period is sync for', object, 'path:', path);
-                        } else {
-                            mesh.rotateY(object.axis.period * Math.PI * 2);
+                            console.error('period is sync for', object, 'path:', path);
+                        } else if (this.world.time) {
+                            const diff = (this.world.time.getTime() - new Date(object.axis.epoch).getTime())/1000;
+                            mesh.rotateY((diff/object.axis.period % 1) * Math.PI * 2);
                         }
                     }
                 }
