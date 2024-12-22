@@ -145,7 +145,31 @@ function About(): ReactNode {
                 Space is an open-source space simulation game licensed under the <a href="https://www.gnu.org/licenses/gpl-3.0.en.html#license-text">GPLv3.0</a>. Here is its <a href="https://github.com/speedydelete/space">GitHub</a>.
                 <br />
                 <br />
-                <h2>Credits:</h2>
+                <h2>Version History</h2>
+                <ul>
+                    <li>v0.3.0 - 2024-12-22
+                        <ul>
+                            <li>Added a lot more objects.</li>
+                            <li>Added movement using the [ and ] keys.</li>
+                            <li>Added an about page.</li>
+                        </ul>
+                    </li>
+                    <li>v0.2.0 - 2024-12-15
+                        <ul>
+                            <li>Added a menu.</li>
+                        </ul>
+                    </li>
+                    <li>
+                        v0.1.0 - 2024-12-06
+                        <ul>
+                            <li>3D rendering of the Sun, Earth, and the Moon.</li>
+                            <li>Shows a bunch of information on the screen.</li>
+                            <li>Can be interacted with (panning, zooming, clicking) using the mouse.</li>
+                            <li>Time warp controlled using comma, period, and slash keys.</li>
+                        </ul>
+                    </li>
+                </ul>
+                <h2>Credits</h2>
                 <ul>
                     <li>
                         These textures are from <a href="https://solarsystemscope.com/">solarsystemscope.com</a>. They were created by <a href="http://inove.eu.com/">INOVE</a> and are licensed under the <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License.</a>

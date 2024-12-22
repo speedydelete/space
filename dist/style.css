@@ -196,9 +196,9 @@ div:has(> .menu-about) {
 }
 
 .menu-about {
-    width: 500px;
     overflow-y: scroll;
     padding: 50px 0;
+    margin: 0 300px;
     font-size: 16px;
 }
 
