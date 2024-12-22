@@ -295,7 +295,7 @@ class Client {
             Time: ${this.world.time ? util.formatDate(this.world.time) : 'undefined'}
             Time Warp: ${this.world.timeWarp}x (${util.formatTime(this.world.timeWarp)}/s)
             Click on objects to select them, or use [ and ] to move around.
-            Use ,./ to control time warp and +- to zoom.`;
+            Use ,./ to control time warp, and +- to zoom.`;
         }
         if (this.rightInfoElt && targetObj !== undefined && mesh !== undefined) {
             this.rightInfoElt.innerText = `Name: ${targetObj.name}
