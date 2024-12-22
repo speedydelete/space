@@ -248,7 +248,7 @@ function MainMenu(): ReactNode {
                 <SwitchMenuButton menu='multiplayer'>Multiplayer</SwitchMenuButton>
                 <SwitchMenuButton menu='settings'>Settings</SwitchMenuButton>
                 <SwitchMenuButton menu='about'>About</SwitchMenuButton>
-                <div className='small-text lower-left'>v0.2.0</div>
+                <div className='small-text lower-left'>v0.3.0</div>
             </div>
         </MenuSection>
     )
