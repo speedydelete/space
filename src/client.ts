@@ -7,6 +7,7 @@ import {getPeriod} from './orbits';
 import {join, World} from './world';
 import {emptyWorld} from './default_world';
 import type {GetTimeRequest, GetTimeWarpRequest, GetObjectRequest, GetAllObjectsRequest, GetConfigRequest, StartRequest, StopRequest, Request, ResponseForRequest, SentRequest, SentResponse, SetTimeWarpRequest} from './server';
+import { objectScale } from 'three/webgpu';
 
 class Client {
 
@@ -145,10 +146,18 @@ class Client {
             }
         } else if (event.key == '[') {
             const allObjects = this.world.lsObjAll();
-            this.target = allObjects[(allObjects.indexOf(this.target) - 1) % allObjects.length];
+            let index = allObjects.indexOf(this.target);
+            if (index === 0) {
+                index = allObjects.length;
+            }
+            this.target = allObjects[(index - 1) % allObjects.length];
         } else if (event.key == ']') {
             const allObjects = this.world.lsObjAll();
-            this.target = allObjects[(allObjects.indexOf(this.target) + 1) % allObjects.length];
+            let index = allObjects.indexOf(this.target);
+            if (index == allObjects.length - 1) {
+                index = -1;
+            }
+            this.target = allObjects[(index + 1) % allObjects.length];
         } else if (event.key == 'Escape' && window.top) {
             window.top.postMessage({
                 isSpace: true,
@@ -187,6 +196,9 @@ class Client {
             }
             material.opacity = 1;
             material.transparent = true;
+            if (object.albedo) {
+                material.color = new three.Color(object.albedo, object.albedo, object.albedo);
+            }
             if (object.$type == 'star') {
                 if (material.map) material.emissiveMap = material.map;
                 material.emissive = new three.Color(object.color);

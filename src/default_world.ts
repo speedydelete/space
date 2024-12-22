@@ -593,7 +593,7 @@ const defaultWorld = new World(directory({
                         lan: 103.71,
                         aop: 151.66,
                     },
-                    radius: 262.7,
+                    radius: 262700,
                     mass: 2.590271e20,
                     axis: axis(29, 19232.64, 308),
                     albedo: 0.423,
