@@ -38,8 +38,7 @@ class Client {
     fps: number = 60;
     blurred: boolean = false;
     animateRequest: null | number = null;
-    checkInterval: null | number = null;
-    resyncInterval: null | number = null;
+    intervals: number[] = [];
     initialStartComplete: boolean = false;
     
     boundHandleResize: (event: Event) => void;
@@ -233,10 +232,13 @@ class Client {
         }
     }
 
-    async resync(): Promise<void> {
+    async resyncTime(): Promise<void> {
         const newTime = await this.send<GetTimeRequest>('get-time');
         if (newTime) this.world.time = newTime;
         this.world.timeWarp = await this.send<GetTimeWarpRequest>('get-time-warp');
+    }
+
+    async resyncObjects(): Promise<void> {
         for (const {path, object} of await this.send<GetAllObjectsRequest>('get-all-objects')) {
             if (object !== undefined) {
                 this.world.writeObj(path, object);
@@ -308,7 +310,7 @@ class Client {
     }
 
     async start(): Promise<void> {
-        this.checkInterval = window.setInterval(this.checkMessages.bind(this), 1);
+        this.intervals.push(window.setInterval(this.checkMessages.bind(this), 1));
         if (!this.initialStartComplete) {
             setTimeout((async () => {
                 const object: Obj = await this.send<GetObjectRequest>('get-object', this.target);
@@ -331,15 +333,17 @@ class Client {
         this.world.start();
         this.world.timeWarp = await this.send<GetTimeWarpRequest>('get-time-warp');
         this.animateRequest = requestAnimationFrame(this.animate.bind(this));
-        this.resyncInterval = window.setInterval(this.resync.bind(this), 1000);
+        this.intervals.push(window.setInterval(this.resyncTime.bind(this), 10));
+        this.intervals.push(window.setInterval(this.resyncObjects.bind(this), 1000));
         this.running = true;
     }
 
     async stop(): Promise<void> {
         this.running = false;
-        if (this.resyncInterval !== null) window.clearInterval(this.resyncInterval);
+        for (const interval of this.intervals) {
+            window.clearInterval(interval);
+        }
         if (this.animateRequest !== null) cancelAnimationFrame(this.animateRequest);
-        if (this.checkInterval !== null) window.clearInterval(this.checkInterval);
         this.animateRequest = null;
         this.world.stop();
         await this.send<StopRequest>('stop');
