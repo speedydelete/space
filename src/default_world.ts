@@ -261,7 +261,7 @@ const defaultWorld = new World(directory({
                             ecc: 0.009,
                             inc: 0.47,
                         },
-                        radius: 1560.8,
+                        radius: 1560800,
                         mass: 4.79984e22,
                         axis: axis(0.1, 'sync', 268.08),
                         albedo: 0.67,
