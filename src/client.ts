@@ -26,14 +26,11 @@ class Client {
     controls: OrbitControls;
     raycaster: three.Raycaster;
     objMeshes: {[key: string]: three.Mesh} = {};
-
-    changelogElt: HTMLElement | null;
-    changelogShown: boolean = false;
-
+    oldMeshPos: three.Vector3 = new three.Vector3(0, 0, 0);
+    zoom: number = 1;
+    
     leftInfoElt: HTMLElement | null;
     rightInfoElt: HTMLElement | null;
-
-    oldMeshPos: three.Vector3 = new three.Vector3(0, 0, 0);
 
     running: boolean = false;
     frames: number = 0;
@@ -66,7 +63,6 @@ class Client {
         this.controls.listenToKeyEvents(window);
         this.scene.add(new three.AmbientLight(0xffffff, 0.2));
         this.raycaster = new three.Raycaster();
-        this.changelogElt = document.getElementById('changelog');
         this.leftInfoElt = document.getElementById('left-info');
         this.rightInfoElt = document.getElementById('right-info');
         this.boundHandleResize = this.handleResize.bind(this);
@@ -119,7 +115,6 @@ class Client {
 
     async handleKeyDown(event: KeyboardEvent): Promise<void> {
         if (event.key == ',') {
-            event.preventDefault();
             let timeWarp = this.world.timeWarp;
             if (Math.log10(timeWarp) % 1 === 0) {
                 timeWarp /= 2;
@@ -129,7 +124,6 @@ class Client {
             this.world.timeWarp = timeWarp;
             this.send<SetTimeWarpRequest>('set-time-warp', timeWarp);
         } else if (event.key == '.') {
-            event.preventDefault();
             let timeWarp = this.world.timeWarp;
             if (Math.log10(timeWarp) % 1 === 0) {
                 timeWarp *= 5;
@@ -142,18 +136,20 @@ class Client {
             event.preventDefault();
             this.world.timeWarp = 1;
             this.send<SetTimeWarpRequest>('set-time-warp', 1);
-        } else if (event.key == 'c' && this.changelogElt) {
-            event.preventDefault();
-            this.changelogShown = !this.changelogShown;
-            if (this.changelogShown) {
-                this.changelogElt.style.display = 'block';
-                if (this.leftInfoElt) this.leftInfoElt.style.display = 'none';
-                if (this.rightInfoElt) this.rightInfoElt.style.display = 'none';
-            } else {
-                this.changelogElt.style.display = 'none';
-                if (this.leftInfoElt) this.leftInfoElt.style.display = 'block';
-                if (this.rightInfoElt) this.rightInfoElt.style.display = 'block';
+        } else if (event.key == '-') {
+            if (this.zoom > 1) {
+                this.zoom -= 1;
             }
+        } else if (event.key == '=' || event.key == '+') {
+            if (this.zoom < 100) {
+                this.zoom += 1;
+            }
+        } else if (event.key == '[') {
+            const allObjects = this.world.lsObjAll();
+            this.target = allObjects[(allObjects.indexOf(this.target) - 1) % allObjects.length];
+        } else if (event.key == ']') {
+            const allObjects = this.world.lsObjAll();
+            this.target = allObjects[(allObjects.indexOf(this.target) + 1) % allObjects.length];
         } else if (event.key == 'Escape' && window.top) {
             window.top.postMessage({
                 isSpace: true,
@@ -240,7 +236,9 @@ class Client {
         if (newTime) this.world.time = newTime;
         this.world.timeWarp = await this.send<GetTimeWarpRequest>('get-time-warp');
         for (const {path, object} of await this.send<GetAllObjectsRequest>('get-all-objects')) {
-            if (object !== undefined) this.world.writeObj(path, object);
+            if (object !== undefined) {
+                this.world.writeObj(path, object);
+            }
         }
     }
 
@@ -276,12 +274,12 @@ class Client {
             Camera X: ${util.formatLength(this.camera.position.x*this.unitSize)}
             Camera Y: ${util.formatLength(this.camera.position.y*this.unitSize)}
             Camera Z: ${util.formatLength(this.camera.position.z*this.unitSize)}
+            Zoom: ${Math.round(this.zoom*10)/10}
             Total Objects: ${this.world.lsObjAll().length}
             Time: ${this.world.time ? util.formatDate(this.world.time) : 'undefined'}
             Time Warp: ${this.world.timeWarp}x (${util.formatTime(this.world.timeWarp)}/s)
-            Down C for changelog.
-            Use ,./ to control time warp.
-            Click on objects to select them.`;
+            Click on objects to select them, or use [ and ] to move around.
+            Use ,./ to control time warp.`;
         }
         if (this.rightInfoElt && targetObj !== undefined && mesh !== undefined) {
             this.rightInfoElt.innerText = `Name: ${targetObj.name}
@@ -299,6 +297,7 @@ class Client {
             \tAOP: ${targetObj.orbit.aop}`
             : `No orbit`);
         }
+        this.camera.zoom = this.zoom;
         this.camera.updateProjectionMatrix();
         this.controls.update();
         this.renderer.render(this.scene, this.camera);

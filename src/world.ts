@@ -58,7 +58,7 @@ class World {
     }
 
     lsObj(path: string): string[] {
-        return this.fs.ls(join('/home/objects', path)).map((x) => x.replace('.object', '').replace(/\/$/, '')).filter((x) => x != '.object' && x !== '');
+        return this.fs.ls(join('/home/objects', path)).map((x) => x.replace('object', '').replace(/\/$/, '')).filter((x) => x != 'object' && x !== '');
     }
 
     lsObjAll(path: string = ''): string[] {
@@ -127,9 +127,6 @@ class World {
                     const at = new Date(object.orbit.at);
                     const diff = (this.time.getTime() - at.getTime())/1000;
                     if (object.orbit.mna) {
-                        if (path == 'sun/earth') {
-                            console.log(this.config.G, parent.mass, object.orbit.sma, getPeriod(this.config.G, object, parent));
-                        }
                         const degDiff = diff/getPeriod(this.config.G, object, parent) * 360;
                         object.orbit.mna += degDiff;
                         object.orbit.mna %= 360;
@@ -140,9 +137,6 @@ class World {
                 }
                 }
             this.writeObj(path, object);
-            if (path.includes('earth')) {
-                console.log('in loop', this.readObj(path));
-            }
         }
     }
 

@@ -172,6 +172,7 @@ const defaultWorld = new World(directory({
                             at: J2000,
                             sma: 384399000,
                             ecc: 0.0549,
+                            mna: 249.9439,
                             inc: 28.645,
                             lan: 125.04452,
                             aop: 318.15156,
