@@ -112,10 +112,10 @@ const defaultWorld = new World(directory({
         objects: objdir('root', 'Root', 'special:root', {}, {
             sun: objdir('star', 'Sun', 'special:sun', {
                 position: [0, 0, 0],
-                mass: 1.9985e30,
+                mass: 1.9891e30,
                 radius: 695700000,
                 axis: axis(0, 2164230, '2024-01-01 09:10:00', 286.13),
-                texture: 'data/textures/sun.jpg',
+                texture: 'data/textures/ssc/sun_8k.jpg',
                 magnitude: 4.83,
                 type: 'G2V',
             }, {
@@ -133,7 +133,7 @@ const defaultWorld = new World(directory({
                     mass: 3.3011e23,
                     axis: axis(0.034, 5067014.4, null, 281.01),
                     albedo: 0.142,
-                    texture: 'data/textures/mercury.jpg',
+                    texture: 'data/textures/ssc/mercury_8k.jpg',
                 }),
                 venus: objdir('planet', 'Venus', 'planet:venus', {
                     orbit: {
@@ -149,7 +149,7 @@ const defaultWorld = new World(directory({
                     mass: 4.8675e24,
                     axis: axis(177.36, 20997152.64, null, 272.76),
                     albedo: 0.689,
-                    texture: 'data/textures/venus.jpg',
+                    texture: 'data/textures/ssc/venus_atmosphere_4k.jpg',
                 }),
                 earth: objdir('planet', 'Earth', 'planet:earth', {
                     orbit: {
@@ -165,7 +165,7 @@ const defaultWorld = new World(directory({
                     mass: 5.972168e24,
                     axis: axis(23.4392811, 86164.100352, date('2024-03-20 03:07:00'), 0),
                     albedo: 0.367,
-                    texture: 'data/textures/earth.jpg',
+                    texture: 'data/textures/ssc/earth_8k.jpg',
                 }, {
                     moon: objdir('planet', 'Moon', 'moon:earth/1', {
                         orbit: {
@@ -180,7 +180,7 @@ const defaultWorld = new World(directory({
                         mass: 7.346e22,
                         axis: axis(6.687, 'sync', 266.86),
                         albedo: 0.136,
-                        texture: 'data/textures/moon.jpg',
+                        texture: 'data/textures/ssc/moon_8k.jpg',
                     }),
                 }),
                 mars: objdir('planet', 'Mars', 'planet:mars', {
@@ -197,7 +197,7 @@ const defaultWorld = new World(directory({
                     mass: 6.4171e23,
                     axis: axis(25.19, 88642.6848, null, 317.269),
                     albedo: 0.17,
-                    texture: 'data/textures/mars.jpg',
+                    texture: 'data/textures/ssc/mars_8k.jpg',
                 }, {
                     phobos: objdir('planet', 'Phobos', 'moon:mars/1', {
                         orbit: {
@@ -210,7 +210,7 @@ const defaultWorld = new World(directory({
                         mass: 1.06e16,
                         axis: axis(0, 'sync', null, null),
                         albedo: 0.07,
-                        texture: 'data/textures/phobos.jpg',
+                        texture: 'data/textures/nasa/phobos.jpg',
                     }),
                     deimos: objdir('planet', 'Deimos', 'moon:mars/2', {
                         orbit: {
@@ -223,7 +223,7 @@ const defaultWorld = new World(directory({
                         mass: 1.51e15,
                         axis: axis(null, 'sync', null, null),
                         albedo: 0.068,
-                        texture: 'data/textures/deimos.jpg'
+                        texture: 'data/textures/nasa/deimos.jpg'
                     }),
                 }),
                 jupiter: objdir('planet', 'Jupiter', 'planet:jupiter', {
@@ -239,7 +239,7 @@ const defaultWorld = new World(directory({
                     mass: 1.8982e27,
                     axis: axis(3.13, 35730, null, 268.057),
                     albedo: 0.538,
-                    texture: 'data/textures/jupiter.jpg',
+                    texture: 'data/textures/ssc/jupiter.jpg',
                 }, {
                     io: objdir('planet', 'Io', 'moon:jupiter/1', {
                         orbit: {
@@ -251,7 +251,7 @@ const defaultWorld = new World(directory({
                         mass: 8.931938e22,
                         axis: axis(null, 'sync', 268.05),
                         albedo: 0.63,
-                        texture: 'data/textures/io.jpg',
+                        texture: 'data/textures/nasa/io.jpg',
                     }),
                     europa: objdir('planet', 'Europa', 'moon:jupiter/2', {
                         orbit: {
@@ -264,7 +264,7 @@ const defaultWorld = new World(directory({
                         mass: 4.79984e22,
                         axis: axis(0.1, 'sync', 268.08),
                         albedo: 0.67,
-                        texture: 'data/textures/europa.jpg',
+                        texture: 'data/textures/nasa/europa.jpg',
                     }),
                     ganymede: objdir('planet', 'Ganymede', 'moon:jupiter/3', {
                         orbit: {
@@ -276,7 +276,7 @@ const defaultWorld = new World(directory({
                         mass: 1.4819e23,
                         axis: axis(0.165, 'sync', 268.2),
                         albedo: 0.43,
-                        texture: 'data/textures/ganymede.jpg',
+                        texture: 'data/textures/nasa/ganymede.jpg',
                     }),
                     callisto: objdir('planet', 'Callisto', 'moon:jupiter/4', {
                         orbit: {
@@ -288,7 +288,7 @@ const defaultWorld = new World(directory({
                         mass: 1.075938e23,
                         axis: axis(1.8, 'sync', 268.72),
                         albedo: 0.22,
-                        texture: 'data/textures/callisto.jpg',
+                        texture: 'data/textures/nasa/callisto.jpg',
                     }),
                 }),
                 saturn: objdir('planet', 'Saturn', 'planet:saturn', {
@@ -305,7 +305,7 @@ const defaultWorld = new World(directory({
                     mass: 5.6834e26,
                     axis: axis(26.73, 38018, null, 40.589),
                     albedo: 0.499,
-                    texture: 'https://www.solarsystemscope.com/textures/download/2k_saturn.jpg',
+                    texture: 'data/textures/ssc/saturn.jpg',
                 }, {
                     mimas: objdir('planet', 'Mimas', 'moon:saturn/1', {
                         orbit: {
@@ -317,7 +317,7 @@ const defaultWorld = new World(directory({
                         radius: 198200,
                         axis: axis(0, 'sync'),
                         albedo: 0.962,
-                        texture: 'https://github.com/nasa/NASA-3D-Resources/blob/master/Images%20and%20Textures/Mimas/sat1vss2.jpg?raw=true',
+                        texture: 'data/textures/nasa/mimas.jpg',
                     }),
                     enceladus: objdir('planet', 'Enceladus', 'moon:saturn/2', {
                         orbit: {
@@ -329,7 +329,7 @@ const defaultWorld = new World(directory({
                         mass: 1.080318e20,
                         axis: axis(0, 'sync'),
                         albedo: 1.375,
-                        texture: 'https://github.com/nasa/NASA-3D-Resources/blob/master/Images%20and%20Textures/Enceladus/sat2vss2.jpg?raw=true',
+                        texture: 'data/textures/nasa/enceladus.jpg',
                     }),
                     tethys: objdir('planet', 'Tethys', 'moon:saturn/3', {
                         orbit: {
@@ -341,7 +341,7 @@ const defaultWorld = new World(directory({
                         mass: 6.1749e20,
                         axis: axis(0, 'sync'),
                         albedo: 1.229,
-                        texture: 'https://github.com/nasa/NASA-3D-Resources/blob/master/Images%20and%20Textures/Tethys/sat3vss2.jpg',
+                        texture: 'data/textures/nasa/tethys.jpg',
                     }),
                     dione: objdir('planet', 'Dione', 'moon:saturn/4', {
                         orbit: {
@@ -353,7 +353,7 @@ const defaultWorld = new World(directory({
                         mass: 1.0954868e21,
                         axis: axis(0, 'sync'),
                         albedo: 0.998,
-                        texture: 'https://github.com/nasa/NASA-3D-Resources/blob/master/Images%20and%20Textures/Dione/sat4vuu2.jpg?raw=true',
+                        texture: 'data/textures/nasa/dione.jpg',
                     }),
                     rhea: objdir('planet', 'Rhea', 'moon:saturn/5', {
                         orbit: {
@@ -365,7 +365,7 @@ const defaultWorld = new World(directory({
                         mass: 2.3064854e21,
                         axis: axis(0, 'sync'),
                         albedo: 0.949,
-                        texture: 'https://github.com/nasa/NASA-3D-Resources/blob/master/Images%20and%20Textures/Rhea/sat5vss2.jpg?raw=true',
+                        texture: 'data/textures/nasa/rhea.jpg',
                     }),
                     titan: objdir('planet', 'Titan', 'moon:saturn/6', {
                         orbit: {
@@ -377,7 +377,7 @@ const defaultWorld = new World(directory({
                         mass: 1.3452e23,
                         axis: axis(0, 'sync'),
                         albedo: 0.22,
-                        texture: 'https://github.com/nasa/NASA-3D-Resources/blob/master/Images%20and%20Textures/Titan/sat6fss1.jpg?raw=true',
+                        texture: 'data/textures/nasa/titan.jpg',
                     }),
                     hyperion: objdir('planet', 'Hyperion', 'moon:saturn/7', {
                         orbit: {
@@ -399,7 +399,7 @@ const defaultWorld = new World(directory({
                         mass: 1.80565e21,
                         axis: axis(0, 'sync'),
                         albedo: 0.5,
-                        texture: 'https://github.com/nasa/NASA-3D-Resources/blob/master/Images%20and%20Textures/Iapetus/sat8vss2.jpg',
+                        texture: 'data/textures/nasa/iapetus.jpg',
                     }),
                 }),
                 uranus: objdir('planet', 'Uranus', 'planet:uranus', {
@@ -416,7 +416,7 @@ const defaultWorld = new World(directory({
                     mass: 8.681e25,
                     axis: axis(97.77, 62064, null, 257.311),
                     albedo: 0.488,
-                    texture: 'https://www.solarsystemscope.com/textures/download/2k_uranus.jpg',
+                    texture: 'data/textures/ssc/uranus.jpg',
                 }, {
                     ariel: objdir('planet', 'Ariel', 'moon:uranus/1', {
                         orbit: {
@@ -428,7 +428,7 @@ const defaultWorld = new World(directory({
                         mass: 1.2331e21,
                         axis: axis(null, 'sync'),
                         albedo: 0.53,
-                        texture: 'https://github.com/nasa/NASA-3D-Resources/blob/master/Images%20and%20Textures/Ariel/ura1vuu2.jpg?raw=true',
+                        texture: 'data/textures/nasa/ariel.jpg',
                     }),
                     umbriel: objdir('planet', 'Umbriel', 'moon:uranus/2', {
                         orbit: {
@@ -440,7 +440,7 @@ const defaultWorld = new World(directory({
                         mass: 1.2885e21,
                         axis: axis(0, 'sync'),
                         albedo: 0.26,
-                        texture: 'https://github.com/nasa/NASA-3D-Resources/blob/master/Images%20and%20Textures/Umbriel/ura2vuu2.jpg?raw=true',
+                        texture: 'data/textures/nasa/umbriel.jpg',
                     }),
                     titania: objdir('planet', 'Titania', 'moon:uranus/3', {
                         orbit: {
@@ -452,7 +452,7 @@ const defaultWorld = new World(directory({
                         mass: 3.455e21,
                         axis: axis(0, 'sync'),
                         albedo: 0.35,
-                        texture: 'https://github.com/nasa/NASA-3D-Resources/blob/master/Images%20and%20Textures/Titania/ura3vuu2.jpg?raw=true',
+                        texture: 'data/textures/nasa/titania.jpg',
                     }),
                     oberon: objdir('planet', 'Oberon', 'moon:uranus/4', {
                         orbit: {
@@ -464,7 +464,7 @@ const defaultWorld = new World(directory({
                         mass: 3.1104e21,
                         axis: axis(null, 'sync'),
                         albedo: 0.31,
-                        texture: 'https://github.com/nasa/NASA-3D-Resources/blob/master/Images%20and%20Textures/Oberon/ura4vuu2.jpg?raw=true',
+                        texture: 'data/textures/nasa/oberon.jpg',
                     }),
                     miranda: objdir('planet', 'Miranda', 'moon:uranus/5', {
                         orbit: {
@@ -476,7 +476,7 @@ const defaultWorld = new World(directory({
                         mass: 6.293e19,
                         axis: axis(0, 'sync'),
                         albedo: 0.32,
-                        texture: 'https://github.com/nasa/NASA-3D-Resources/blob/master/Images%20and%20Textures/Miranda/ura5vuu2.jpg?raw=true',
+                        texture: 'data/textures/nasa/miranda.jpg',
                     }),
                 }),
                 neptune: objdir('planet', 'Neptune', 'planet:neptune', {
@@ -493,7 +493,7 @@ const defaultWorld = new World(directory({
                     mass: 1.02409e26,
                     axis: axis(28.32, 57996, null, 299.36),
                     albedo: 0.29,
-                    texture: 'https://github.com/nasa/NASA-3D-Resources/blob/master/Images%20and%20Textures/Neptune/nep0fds1.jpg?raw=true',
+                    texture: 'data/textures/ssc/neptune.jpg',
                 }, {
                     triton: objdir('planet', 'Triton', 'moon:neptune/1', {
                         orbit: {
@@ -506,7 +506,7 @@ const defaultWorld = new World(directory({
                         mass: 2.1389e22,
                         axis: axis(0, 'sync'),
                         albedo: 0.76,
-                        texture: 'https://github.com/nasa/NASA-3D-Resources/blob/master/Images%20and%20Textures/Triton/nep1vuu2.jpg',
+                        texture: 'data/textures/nasa/triton.jpg',
                     }),
                     nereid: objdir('planet', 'Nereid', 'moon:neptune/2', {
                         orbit: {
@@ -736,7 +736,7 @@ const defaultWorld = new World(directory({
                     mass: 1.3025e22,
                     axis: axis(122.53, 551856.672, null, 132.993),
                     albedo: 0.52,
-                    texture: 'https://github.com/nasa/NASA-3D-Resources/blob/master/Images%20and%20Textures/Pluto/plu0rss1.jpg?raw=true',
+                    texture: 'data/textures/nasa/pluto.jpg',
                 }, {
                     charon: objdir('planet', 'Charon', 'mp_moon:134340/1', {
                         orbit: {
@@ -748,7 +748,7 @@ const defaultWorld = new World(directory({
                         radius: 606000,
                         mass: 1.5897e21,
                         albedo: 0.35,
-                        texture: 'https://github.com/nasa/NASA-3D-Resources/blob/master/Images%20and%20Textures/Charon/plu1rss1.jpg',
+                        texture: 'data/textures/nasa/charon.jpg',
                     }),
                 }),
                 haumea: objdir('planet', 'Haumea', 'mp:136108', {

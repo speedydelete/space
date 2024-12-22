@@ -89,6 +89,16 @@ html, body {
     z-index: 1;
 }
 
+.menu-section .small-text {
+    font-size: 14px;
+}
+
+.menu-section .lower-left {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+}
+
 .menu-main {
     height: 100%;
     width: 100%;
@@ -108,13 +118,6 @@ html, body {
     font-size: 48px;
 }
 
-.menu-main .version {
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    font-size: 14px;
-}
-
 .menu-section :has(> .menu-worlds) {
     height: 100%;
     width: 100%;
@@ -130,6 +133,7 @@ html, body {
     justify-content: flex-start;
     align-items: center;
     padding-top: 25px;
+    overflow-y: scroll;
 }
 
 .menu-world {
@@ -183,6 +187,19 @@ html, body {
     flex-direction: row;
     gap: 25px;
     border-top: 2px solid #ffffff;
+}
+
+div:has(> .menu-about) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.menu-about {
+    width: 500px;
+    overflow-y: scroll;
+    padding: 50px 0;
+    font-size: 16px;
 }
 
 .menu-escape {

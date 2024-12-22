@@ -17,7 +17,7 @@ type Cycle = FixedCycle | LinearCycle | Cycle[];
 type Position = [number, number, number];
 
 interface Orbit {
-    at?: Date,
+    at?: Date | string,
     sma: number,
     ecc?: number,
     mna?: number,

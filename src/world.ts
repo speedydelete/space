@@ -2,7 +2,7 @@
 import {timeDiff} from './util';
 import {type Cycle, type Position, type Obj, obj} from './obj';
 import {join, type Directory, FileSystem} from './files';
-import {getPosition} from './orbits';
+import {getPosition, getPeriod} from './orbits';
 
 interface Config {
     tps: number,
@@ -106,6 +106,42 @@ class World {
                 if (this.isdirObj(path)) {
                     this.updateObjects(path, object);
                 }
+            }
+        }
+    }
+
+    init(): void {
+        if (this.time === undefined) {
+            this.time = new Date();
+        }
+        for (const path of this.lsObjAll()) {
+            const object = this.readObj(path)
+            if (object === undefined) continue;
+            if (object.hasOrbit()) {
+                const parent = this.readObj(join(path, '..'));
+                if (parent === undefined) {
+                    console.error('undefined parent for', object, 'path:', path, 'parent path:', join(path, '..'));
+                    continue;
+                }
+                if (object.orbit.at) {
+                    const at = new Date(object.orbit.at);
+                    const diff = (this.time.getTime() - at.getTime())/1000;
+                    if (object.orbit.mna) {
+                        if (path == 'sun/earth') {
+                            console.log(this.config.G, parent.mass, object.orbit.sma, getPeriod(this.config.G, object, parent));
+                        }
+                        const degDiff = diff/getPeriod(this.config.G, object, parent) * 360;
+                        object.orbit.mna += degDiff;
+                        object.orbit.mna %= 360;
+                    }
+                }
+                if (object.axis && object.axis.period == 'sync') {
+                    object.axis.period = getPeriod(this.config.G, object, parent);
+                }
+                }
+            this.writeObj(path, object);
+            if (path.includes('earth')) {
+                console.log('in loop', this.readObj(path));
             }
         }
     }

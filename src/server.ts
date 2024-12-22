@@ -1,7 +1,6 @@
 
 import {Obj} from './obj';
 import {type Config, World} from './world';
-import {defaultWorld} from './default_world';
 
 type GetTimeRequest = {type: 'get-time', data: undefined};
 type GetTimeResponse = {type: 'get-time', data: Date | undefined};
@@ -111,6 +110,18 @@ class Server {
         const sent = this.sent;
         this.sent = [];
         return sent;
+    }
+
+    init(): void {
+        this.world.init();
+    }
+
+    start(): void {
+        this.world.start();
+    }
+
+    stop(): void {
+        this.world.stop();
     }
 
 }

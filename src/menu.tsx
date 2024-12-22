@@ -84,7 +84,7 @@ function MenuWorld({world}: {world: WorldInfo}): ReactNode {
     let thumbnail = world.thumbnail;
     let style = {};
     if (thumbnail === undefined) {
-        thumbnail = 'pack.png';
+        thumbnail = 'data/textures/pack.png';
         style = {filter: 'grayscale(100%)'};
     }
     return (
@@ -136,6 +136,71 @@ function MultiplayerMenu(): ReactNode {
     );
 }
 
+function About(): ReactNode {
+    return (
+        <MenuSection name='about'>
+            <div className='lower-left'><SwitchMenuButton menu='main'>Back</SwitchMenuButton></div>
+            <div className='menu-about'>
+                <h1>About</h1>
+                Space is an open-source space simulation game licensed under the <a href="https://www.gnu.org/licenses/gpl-3.0.en.html#license-text">GPLv3.0</a>. Here is its <a href="https://github.com/speedydelete/space">GitHub</a>.
+                <br />
+                <br />
+                <h2>Credits:</h2>
+                <ul>
+                    <li>
+                        These textures are from <a href="https://solarsystemscope.com/">solarsystemscope.com</a>. They were created by <a href="http://inove.eu.com/">INOVE</a> and are licensed under the <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License.</a>
+                        <ul>
+                            <li><a href="data/textures/ssc/sun.jpg">sun.jpg</a></li>
+                            <li><a href="data/textures/ssc/sun_8k.jpg">sun_8k.jpg</a></li>
+                            <li><a href="data/textures/ssc/mercury.jpg">mercury.jpg</a></li>
+                            <li><a href="data/textures/ssc/mercury_8k.jpg">mercury_8k.jpg</a></li>
+                            <li><a href="data/textures/ssc/venus_atmosphere.jpg">venus_atmosphere.jpg</a></li>
+                            <li><a href="data/textures/ssc/venus_atmosphere_4k.jpg">venus_atmosphere_4k.jpg</a></li>
+                            <li><a href="data/textures/ssc/earth.jpg">earth.jpg</a></li>
+                            <li><a href="data/textures/ssc/earth_8k.jpg">earth_8k.jpg</a></li>
+                            <li><a href="data/textures/ssc/moon.jpg">moon.jpg</a></li>
+                            <li><a href="data/textures/ssc/moon_8k.jpg">moon_8k.jpg</a></li>
+                            <li><a href="data/textures/ssc/mars.jpg">mars.jpg</a></li>
+                            <li><a href="data/textures/ssc/mars_8k.jpg">mars_8k.jpg</a></li>
+                            <li><a href="data/textures/ssc/jupiter.jpg">jupiter.jpg</a></li>
+                            <li><a href="data/textures/ssc/jupiter_8k.jpg">jupiter_8k.jpg</a></li>
+                            <li><a href="data/textures/ssc/saturn.jpg">saturn.jpg</a></li>
+                            <li><a href="data/textures/ssc/saturn_8k.jpg">saturn_8k.jpg</a></li>
+                            <li><a href="data/textures/ssc/uranus.jpg">uranus.jpg</a></li>
+                            <li><a href="data/textures/ssc/neptune.jpg">neptune.jpg</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        These textures are from <a href="https://github.com/nasa/NASA-3D-Resources/">NASA</a> and are provided without copyright.
+                        <ul>
+                            <li><a href="data/textures/nasa/phobos.jpg">phobos.jpg</a></li>
+                            <li><a href="data/textures/nasa/deimos.jpg">deimos.jpg</a></li>
+                            <li><a href="data/textures/nasa/io.jpg">io.jpg</a></li>
+                            <li><a href="data/textures/nasa/europa.jpg">europa.jpg</a></li>
+                            <li><a href="data/textures/nasa/ganymede.jpg">ganymede.jpg</a></li>
+                            <li><a href="data/textures/nasa/callisto.jpg">callisto.jpg</a></li>
+                            <li><a href="data/textures/nasa/mimas.jpg">mimas.jpg</a></li>
+                            <li><a href="data/textures/nasa/enceladus.jpg">enceladus.jpg</a></li>
+                            <li><a href="data/textures/nasa/tethys.jpg">tethys.jpg</a></li>
+                            <li><a href="data/textures/nasa/dione.jpg">dione.jpg</a></li>
+                            <li><a href="data/textures/nasa/rhea.jpg">rhea.jpg</a></li>
+                            <li><a href="data/textures/nasa/titan.jpg">titan.jpg</a></li>
+                            <li><a href="data/textures/nasa/iapetus.jpg">iapetus.jpg</a></li>
+                            <li><a href="data/textures/nasa/ariel.jpg">ariel.jpg</a></li>
+                            <li><a href="data/textures/nasa/umbriel.jpg">umbriel.jpg</a></li>
+                            <li><a href="data/textures/nasa/titania.jpg">titania.jpg</a></li>
+                            <li><a href="data/textures/nasa/oberon.jpg">oberon.jpg</a></li>
+                            <li><a href="data/textures/nasa/miranda.jpg">miranda.jpg</a></li>
+                            <li><a href="data/textures/nasa/triton.jpg">triton.jpg</a></li>
+                            <li><a href="data/textures/nasa/pluto.jpg">pluto.jpg</a></li>
+                            <li><a href="data/textures/nasa/charon.jpg">charon.jpg</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </MenuSection>
+    );
+}
 
 function EscapeMenu(): ReactNode {
     const {resume, saveAndQuitToTitle} = useContext(MenuContext);
@@ -158,7 +223,8 @@ function MainMenu(): ReactNode {
                 <SwitchMenuButton menu='singleplayer'>Singleplayer</SwitchMenuButton>
                 <SwitchMenuButton menu='multiplayer'>Multiplayer</SwitchMenuButton>
                 <SwitchMenuButton menu='settings'>Settings</SwitchMenuButton>
-                <div className='version'>v0.2.0</div>
+                <SwitchMenuButton menu='about'>About</SwitchMenuButton>
+                <div className='small-text lower-left'>v0.2.0</div>
             </div>
         </MenuSection>
     )
@@ -180,8 +246,9 @@ function Menu({worlds, enterWorld, resume, saveAndQuitToTitle, menu, setMenu, sh
                 <MainMenu />
                 <SingleplayerMenu worlds={worlds} />
                 <MultiplayerMenu />
-                <EscapeMenu />
                 <Settings />
+                <About />
+                <EscapeMenu />
             </MenuContext.Provider>
         </div>
     );

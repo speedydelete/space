@@ -88,6 +88,8 @@ if (window.location.href.includes('client.html')) {
     const server = new Server(defaultWorld);
     const client = new Client(server.recv.bind(server), server.clientRecv.bind(server));
     document.body.appendChild(client.renderer.domElement);
+    server.init();
+    server.start();
     client.start();
 } else {
     const rootElement = document.getElementById('root');
