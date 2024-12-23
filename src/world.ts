@@ -62,15 +62,29 @@ class World {
         return this.fs.ls(join('/home/objects', path)).map((x) => x.replace('object', '').replace(/\/$/, '')).filter((x) => x != 'object' && x !== '');
     }
 
-    lsObjAll(path: string = ''): string[] {
-        let out: string[] = [''];
-        for (const filepath of this.lsObj(path)) {
-            const objpath = join(path, filepath).slice(1);
-            out.push(objpath);
-            if (this.isdirObj(objpath)) {
-                out = [...out, ...this.lsObjAll(objpath)];
+    lsObjAll(): string[] {
+        let out: string[] = [];
+        for (const path in this.fs.files) {
+            if (path.startsWith('/home/objects/') && path.endsWith('/object')) {
+                out.push(path.slice('/home/objects/'.length, -'/object'.length));
             }
         }
+        // for (const filepath of this.lsObj(path)) {
+        //     const objpath = join(path, filepath).slice(1);
+        //     out.push(objpath);
+        //     if (this.isdirObj(objpath)) {
+        //         out = [...out, ...this.lsObjAll(objpath)];
+        //     }
+        // }
+        return out;
+    }
+    
+    lsObjAllOrderedBySma(): string[] {
+        const base = this.lsObjAll();
+        const withObjs = base.map((x): [string, Obj | undefined] => [x, this.readObj(x)]);
+        const filtered: [string, Obj][] = withObjs.filter((x): x is [string, Obj] => x[1] !== undefined);
+        const sorted = filtered.sort(([x, a], [y, b]) => a.hasOrbit() ? (b.hasOrbit() ? a.orbit.sma - b.orbit.sma : 1) : (b.hasOrbit() ? -1 : 0));
+        const out = sorted.map(([x, y]) => x);
         return out;
     }
 

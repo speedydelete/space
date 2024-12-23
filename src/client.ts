@@ -18,7 +18,7 @@ interface Settings {
 const defaultSettings: Settings = {
     unitSize: 150000000000,
     cameraMinDistance: 0.00000001,
-    cameraMaxDistance: 1000,
+    cameraMaxDistance: 150000000000,
     controlsMinDistance: 0.00001,
     controlsMaxDistance: 1000000,
 }
@@ -175,16 +175,13 @@ class Client {
                 index = allObjects.length;
             }
             this.target = allObjects[(index - 1) % allObjects.length];
-            console.log('[', 'dec', allObjects, this.target);
         } else if (event.key == ']') {
             const allObjects = this.world.lsObjAll();
-            console.log(allObjects);
             let index = allObjects.indexOf(this.target);
             if (index == allObjects.length - 1) {
                 index = -1;
             }
             this.target = allObjects[(index + 1) % allObjects.length];
-            console.log(']', 'inc', allObjects, this.target);
         } else if (event.key == 'Escape' && window.top) {
             window.top.postMessage({
                 isSpace: true,
