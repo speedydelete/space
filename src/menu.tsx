@@ -148,6 +148,11 @@ function About(): ReactNode {
                 <br />
                 <h2>Version History</h2>
                 <ul>
+                    <li>v0.3.1 - 2024-12-23
+                        <ul>
+                            <li>Fixed the lag.</li>
+                        </ul>
+                    </li>
                     <li>v0.3.0 - 2024-12-22
                         <ul>
                             <li>Added a lot more objects.</li>
