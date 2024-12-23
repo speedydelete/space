@@ -7,7 +7,7 @@ import {getPeriod} from './orbits';
 import {join, World} from './world';
 import {emptyWorld} from './default_world';
 import type {GetTimeRequest, GetTimeWarpRequest, GetObjectRequest, GetAllObjectsRequest, GetConfigRequest, StartRequest, StopRequest, Request, ResponseForRequest, SentRequest, SentResponse, SetTimeWarpRequest} from './server';
-import { objectScale } from 'three/webgpu';
+import { distance, objectScale } from 'three/webgpu';
 
 class Client {
 
@@ -239,6 +239,9 @@ class Client {
                             mesh.rotateY((diff/object.axis.period % 1) * Math.PI * 2);
                         }
                     }
+                }
+                if (object.type == 'star') {
+                    
                 }
             }
         }

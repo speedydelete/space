@@ -62,7 +62,7 @@ class World {
     }
 
     lsObjAll(path: string = ''): string[] {
-        let out: string[] = [];
+        let out: string[] = [''];
         for (const filepath of this.lsObj(path)) {
             const objpath = join(path, filepath).slice(1);
             out.push(objpath);
