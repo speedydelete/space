@@ -1,2 +1,5 @@
 node_modules
-dist/main*
+index.bundle.js
+index.bundle.js.LICENSE.txt
+game.bundle.js
+game.bundle.js.LICENSE.txt

@@ -2,12 +2,10 @@
 import * as three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import * as util from './util';
-import type {Obj} from './obj';
-import {getPeriod} from './orbits';
+import {RootObj, type Obj} from './obj';
 import {join, World} from './world';
 import {emptyWorld} from './default_world';
 import type {GetTimeRequest, GetTimeWarpRequest, GetObjectRequest, GetAllObjectsRequest, GetConfigRequest, StartRequest, StopRequest, Request, ResponseForRequest, SentRequest, SentResponse, SetTimeWarpRequest} from './server';
-import { distance, objectScale } from 'three/webgpu';
 
 class Client {
 
@@ -179,9 +177,7 @@ class Client {
 
     async init(): Promise<void> {
         const textureLoader = new three.TextureLoader();
-        const G: number = await this.send<GetConfigRequest>('get-config', 'G');
         const lC: number = await this.send<GetConfigRequest>('get-config', 'lC');
-        this.world.fs.writejson
         for (const {path, object} of await this.send<GetAllObjectsRequest>('get-all-objects')) {
             if (object === undefined) continue;
             this.world.writeObj(path, object);
@@ -189,7 +185,7 @@ class Client {
         this.world.init();
         for (const path of this.world.lsObjAll()) {
             const object = this.world.readObj(path);
-            if (object === undefined) continue;
+            if (object === undefined || object instanceof RootObj) continue;
             let material = new three.MeshStandardMaterial();
             if (object.texture) {
                 material.map = textureLoader.load(object.texture);

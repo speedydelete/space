@@ -2,11 +2,14 @@
 const path = require('path');
 
 module.exports = {
-    entry: './src/index.tsx',
+    entry: {
+        index: './src/index.tsx',
+        game: './src/game.ts',
+    },
     output: {
-        filename: 'main.js',
-        publicPath: '/',
+        filename: '[name].bundle.js',
         path: path.resolve(__dirname, 'dist'),
+        publicPath: '/',
     },
     resolve: {
         extensions: ['.html', '.js', '.ts', '.tsx'],

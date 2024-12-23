@@ -2,12 +2,9 @@
 import type {ReactNode, RefObject} from 'react';
 import React, {StrictMode, useRef, useState, useEffect} from 'react';
 import {createRoot} from 'react-dom/client';
-import {Server} from './server';
-import {Client} from './client';
 import {type WorldInfo, Menu} from './menu';
-import {defaultWorld} from './default_world';
 
-function ClientIframe({doEscape}: {doEscape: () => void}): ReactNode {
+function GameIframe({doEscape}: {doEscape: () => void}): ReactNode {
     let iframeRef: RefObject<null | HTMLIFrameElement> = useRef(null);
     function sendMessage(type: string): void {
         if (iframeRef.current !== null && iframeRef.current.contentWindow !== null) {
@@ -79,25 +76,16 @@ function Game(): ReactNode {
                 setMenu={setMenu}
                 showStars={showStars}
             />}
-            {visible && <ClientIframe doEscape={doEscape} />}
+            {visible && <GameIframe doEscape={doEscape} />}
         </div>
     );
 }
 
-if (window.location.href.includes('client.html')) {
-    const server = new Server(defaultWorld);
-    const client = new Client(server.recv.bind(server), server.clientRecv.bind(server));
-    document.body.appendChild(client.renderer.domElement);
-    server.init();
-    server.start();
-    client.start();
-} else {
-    const rootElement = document.getElementById('root');
-    if (rootElement === null) throw new TypeError('cannot initiate react due to nonexistent root element');
-    const root = createRoot(rootElement);
-    root.render(
-        <StrictMode>
-            <Game />
-        </StrictMode>
-    );
-}
+const rootElement = document.getElementById('root');
+if (rootElement === null) throw new TypeError('cannot initiate react due to nonexistent root element');
+const root = createRoot(rootElement);
+root.render(
+    <StrictMode>
+        <Game />
+    </StrictMode>
+);

@@ -109,7 +109,7 @@ const defaultWorld = new World(directory({
     }),
     home: directory({
         root: link('/root/'),
-        objects: objdir('root', 'Root', 'special:root', {}, {
+        objects: objdir('root', 'root', 'special:root', {}, {
             sun: objdir('star', 'Sun', 'special:sun', {
                 position: [0, 0, 0],
                 mass: 1.9891e30,

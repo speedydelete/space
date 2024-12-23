@@ -54,17 +54,21 @@ class _BaseObj<T extends BaseObjType = BaseObjType> {
     name: string;
     designation: string;
 
-    constructor(type: T, name: string, designation: string) {
+    constructor(type: T, name: string, designation: string, data: {} = {}) {
         this.$type = type;
         this.name = name;
         this.designation = designation;
+    }
+
+    hasOrbit(): this is OrbitObj {
+        return false;
     }
 }
 
 class RootObj extends _BaseObj<'root'> {
 
-    constructor(type: 'root', name: string, designation: string, data: {} = {}) {
-        super(type, name, designation);
+    constructor(name: string, designation: string, data: {} = {}) {
+        super('root', name, designation, data);
     }
 
 }
@@ -183,6 +187,7 @@ export {
     ObjType,
     BaseObjType,
     _BaseObj,
+    RootObj,
     _Obj,
     OrbitObj,
     Star,
