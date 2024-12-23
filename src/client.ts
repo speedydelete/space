@@ -7,17 +7,34 @@ import {join, World} from './world';
 import {emptyWorld} from './default_world';
 import type {GetTimeRequest, GetTimeWarpRequest, GetObjectRequest, GetAllObjectsRequest, GetConfigRequest, StartRequest, StopRequest, Request, ResponseForRequest, SentRequest, SentResponse, SetTimeWarpRequest} from './server';
 
+interface Settings {
+    unitSize: number,
+    cameraMinDistance: number,
+    cameraMaxDistance: number,
+    controlsMinDistance: number,
+    controlsMaxDistance: number,
+}
+
+const defaultSettings: Settings = {
+    unitSize: 150000000000,
+    cameraMinDistance: 0.00000001,
+    cameraMaxDistance: 1000,
+    controlsMinDistance: 0.00001,
+    controlsMaxDistance: 1000000,
+}
+
 class Client {
 
     world: World = emptyWorld;
+    settings: Settings;
 
     syncSend: (data: SentRequest) => void;
     syncRecv: () => SentResponse[];
     waitingMsgs: {[key: number]: (value: any) => void} = {};
     nextMsgId: number = 0;
 
-    unitSize: number = 150000000000;
-    target: string = 'sun/earth';
+    target: string = '';
+    zoom: number = 1;
 
     renderer: three.WebGLRenderer;
     scene: three.Scene;
@@ -26,7 +43,6 @@ class Client {
     raycaster: three.Raycaster;
     objMeshes: {[key: string]: three.Mesh} = {};
     oldMeshPos: three.Vector3 = new three.Vector3(0, 0, 0);
-    zoom: number = 1;
     
     leftInfoElt: HTMLElement | null;
     rightInfoElt: HTMLElement | null;
@@ -39,22 +55,28 @@ class Client {
     animateRequest: null | number = null;
     intervals: number[] = [];
     initialStartComplete: boolean = false;
-    
+
     boundHandleResize: (event: Event) => void;
     boundHandleClick: (event: MouseEvent) => void;
     boundHandleKeyDown: (event: KeyboardEvent) => void;
     boundHandleMessage: (event: MessageEvent) => void;
 
-    constructor(send: (data: SentRequest) => void, recv: () => SentResponse[]) {
+    constructor(send: (data: SentRequest) => void, recv: () => SentResponse[], settings: Settings) {
         this.syncSend = send;
         this.syncRecv = recv;
+        this.settings = settings;
         this.renderer = new three.WebGLRenderer();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.scene = new three.Scene();
-        this.camera = new three.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.0000000000001, 100000000000000);
+        this.camera = new three.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            this.settings.cameraMinDistance,
+            this.settings.cameraMaxDistance,
+        );
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.minDistance = 0.0000000000001;
-        this.controls.maxDistance = 100000000000000;
+        this.controls.minDistance = this.settings.controlsMinDistance;
+        this.controls.maxDistance = this.settings.controlsMaxDistance;
         this.controls.keys = {LEFT: 'ArrowLeft', UP: 'ArrowUp', RIGHT: 'ArrowRight', BOTTOM: 'ArrowDown'}
         this.controls.keyPanSpeed = 2;
         this.controls.update();
@@ -67,6 +89,10 @@ class Client {
         this.boundHandleClick = this.handleClick.bind(this);
         this.boundHandleKeyDown = this.handleKeyDown.bind(this);
         this.boundHandleMessage = this.handleMessage.bind(this);
+    }
+
+    get unitSize(): number {
+        return this.settings.unitSize;
     }
 
     checkMessages(): void {
@@ -149,13 +175,16 @@ class Client {
                 index = allObjects.length;
             }
             this.target = allObjects[(index - 1) % allObjects.length];
+            console.log('[', 'dec', allObjects, this.target);
         } else if (event.key == ']') {
             const allObjects = this.world.lsObjAll();
+            console.log(allObjects);
             let index = allObjects.indexOf(this.target);
             if (index == allObjects.length - 1) {
                 index = -1;
             }
             this.target = allObjects[(index + 1) % allObjects.length];
+            console.log(']', 'inc', allObjects, this.target);
         } else if (event.key == 'Escape' && window.top) {
             window.top.postMessage({
                 isSpace: true,
@@ -176,8 +205,7 @@ class Client {
     }
 
     async init(): Promise<void> {
-        const textureLoader = new three.TextureLoader();
-        const lC: number = await this.send<GetConfigRequest>('get-config', 'lC');
+        const textureLoader = new three.TextureLoader();;
         for (const {path, object} of await this.send<GetAllObjectsRequest>('get-all-objects')) {
             if (object === undefined) continue;
             this.world.writeObj(path, object);
@@ -205,7 +233,7 @@ class Client {
             mesh.position.set(...object.position);
             if (object.$type == 'star') {
                 const light = new three.PointLight(object.color);
-                light.power = lC / 10**(0.4 * object.magnitude) / this.unitSize**2 / 20000;
+                light.power = this.world.config.lC / 10**(0.4 * object.magnitude) / this.unitSize**2 / 20000;
                 light.castShadow = true;
                 mesh.add(light);
             }
@@ -317,32 +345,34 @@ class Client {
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
         if (mesh) this.oldMeshPos = mesh.position.clone();
-        this.animateRequest = requestAnimationFrame(this.animate.bind(this));
-    }
-
-    async start(): Promise<void> {
-        this.intervals.push(window.setInterval(this.checkMessages.bind(this), 1));
         if (!this.initialStartComplete) {
-            setTimeout((async () => {
+            setTimeout(async () => {
+                this.target = this.world.config.initialTarget;
                 const object: Obj = await this.send<GetObjectRequest>('get-object', this.target);
                 const mesh = this.getObjectMesh(this.target);
                 if (object && mesh) {
                     this.camera.position.set(mesh.position.x + object.radius/this.unitSize*10, mesh.position.y, mesh.position.z);
                 }
                 this.initialStartComplete = true;
-            }).bind(this), 1000);
+            }, 0);
         }
+        this.animateRequest = requestAnimationFrame(this.animate.bind(this));
+    }
+
+    async start(): Promise<void> {
+        this.intervals.push(window.setInterval(this.checkMessages.bind(this), 1));
         window.addEventListener('resize', this.boundHandleResize);
         window.addEventListener('click', this.boundHandleClick);
         window.addEventListener('keydown', this.boundHandleKeyDown);
         window.addEventListener('message', this.boundHandleMessage);
         await this.send<StartRequest>('start');
         this.world = emptyWorld;
-        await this.init();
         const time = await this.send<GetTimeRequest>('get-time');
-        if (time !== undefined) this.world.time = time;
-        this.world.start();
         this.world.timeWarp = await this.send<GetTimeWarpRequest>('get-time-warp');
+        this.world.fs.writejson('/etc/config', await this.send<GetConfigRequest>('get-config'));
+        if (time !== undefined) this.world.time = time;
+        await this.init();
+        this.world.start();
         this.animateRequest = requestAnimationFrame(this.animate.bind(this));
         this.intervals.push(window.setInterval(this.resyncTime.bind(this), 10));
         this.intervals.push(window.setInterval(this.resyncObjects.bind(this), 1000));
@@ -369,5 +399,7 @@ class Client {
 }
 
 export {
+    Settings,
+    defaultSettings,
     Client,
 }

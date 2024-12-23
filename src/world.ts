@@ -9,6 +9,7 @@ interface Config {
     c: number,
     G: number,
     lC: number,
+    initialTarget: string,
 }
 
 class World {

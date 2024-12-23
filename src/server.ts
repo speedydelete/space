@@ -23,8 +23,8 @@ type GetAllObjectPathsResponse = {type: 'get-all-object-paths', data: string[]};
 type GetObjectCountRequest = {type: 'get-object-count', data: undefined};
 type GetObjectCountResponse = {type: 'get-object-count', data: number};
 
-type GetConfigRequest = {type: 'get-config', data: string};
-type GetConfigResponse = {type: 'get-config', data: Config[keyof Config]};
+type GetConfigRequest = {type: 'get-config', data: undefined};
+type GetConfigResponse = {type: 'get-config', data: Config};
 
 type StartRequest = {type: 'start', data: undefined};
 type StartResponse = {type: 'start', data: undefined};
@@ -96,7 +96,7 @@ class Server {
         } else if (type == 'get-object-count') {
             this.respond<GetObjectCountResponse>(id, 'get-object-count', this.world.lsObjAll().length);
         } else if (type == 'get-config') {
-            this.respond<GetConfigResponse>(id, 'get-config', this.world.config[data]);
+            this.respond<GetConfigResponse>(id, 'get-config', this.world.config);
         } else if (type == 'start') {
             this.world.start();
             this.respond<StartResponse>(id, 'start');
