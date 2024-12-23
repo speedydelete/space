@@ -8,6 +8,8 @@ import {emptyWorld} from './default_world';
 import type {GetTimeRequest, GetTimeWarpRequest, GetObjectRequest, GetAllObjectsRequest, GetConfigRequest, StartRequest, StopRequest, Request, ResponseForRequest, SentRequest, SentResponse, SetTimeWarpRequest} from './server';
 
 interface Settings {
+    fov: number,
+    renderDistance: number,
     unitSize: number,
     cameraMinDistance: number,
     cameraMaxDistance: number,
@@ -16,11 +18,13 @@ interface Settings {
 }
 
 const defaultSettings: Settings = {
+    fov: 75,
+    renderDistance: 150000000000,
     unitSize: 150000000000,
     cameraMinDistance: 0.00000001,
-    cameraMaxDistance: 150000000000,
+    cameraMaxDistance: 300000000,
     controlsMinDistance: 0.00001,
-    controlsMaxDistance: 1000000,
+    controlsMaxDistance: Number.MAX_SAFE_INTEGER,
 }
 
 class Client {
@@ -69,20 +73,20 @@ class Client {
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.scene = new three.Scene();
         this.camera = new three.PerspectiveCamera(
-            75,
-            window.innerWidth / window.innerHeight,
-            this.settings.cameraMinDistance,
-            this.settings.cameraMaxDistance,
+            this.settings.fov,
+            window.innerWidth/window.innerHeight,
+            this.settings.cameraMinDistance/this.unitSize,
+            this.settings.cameraMaxDistance/this.unitSize,
         );
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.minDistance = this.settings.controlsMinDistance;
-        this.controls.maxDistance = this.settings.controlsMaxDistance;
+        this.controls.minDistance = this.settings.controlsMinDistance/this.unitSize;
+        this.controls.maxDistance = this.settings.controlsMaxDistance/this.unitSize;
         this.controls.keys = {LEFT: 'ArrowLeft', UP: 'ArrowUp', RIGHT: 'ArrowRight', BOTTOM: 'ArrowDown'}
         this.controls.keyPanSpeed = 2;
         this.controls.update();
         this.controls.listenToKeyEvents(window);
         this.scene.add(new three.AmbientLight(0xffffff, 0.2));
-        this.raycaster = new three.Raycaster();
+        this.raycaster = new three.Raycaster();        
         this.leftInfoElt = document.getElementById('left-info');
         this.rightInfoElt = document.getElementById('right-info');
         this.boundHandleResize = this.handleResize.bind(this);
@@ -234,7 +238,6 @@ class Client {
                 light.castShadow = true;
                 mesh.add(light);
             }
-            mesh.visible = true;
             this.scene.add(mesh);
             this.objMeshes[path] = mesh;
         }
@@ -263,6 +266,9 @@ class Client {
                 }
                 if (object.type == 'star') {
                     
+                }
+                if (!object.alwaysVisible) {
+                    mesh.visible = mesh.position.distanceTo(this.camera.position) < this.settings.renderDistance/this.settings.unitSize;
                 }
             }
         }

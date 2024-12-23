@@ -17,7 +17,7 @@ const MenuContext = createContext({
 });
 
 const starSizes: number[] = [1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3];
-const starColors: string[] = Object.values({...await (await fetch('./data/spectral_type_colors.json')).json(), info: undefined, '~': undefined});
+const starColors: string[] = Object.values({...await (await fetch('./data/spectral_type_colors.json')).json(), info: undefined, '~': undefined}).filter((x): x is string => x !== undefined);
 
 function StarCanvas(): ReactNode {
     let canvasRef: RefObject<null | HTMLCanvasElement> = useRef(null);
@@ -48,12 +48,13 @@ function StarCanvas(): ReactNode {
         let fakeCtx: CanvasRenderingContext2D = document.createElement('canvas').getContext('2d');
         setup(ctx, fakeCtx);
         requestRef.current = requestAnimationFrame(() => animate(ctx, fakeCtx));
-        window.addEventListener('resize', () => setup(ctx, fakeCtx));
+        const setupResizeFunc = () => setup(ctx, fakeCtx);
+        window.addEventListener('resize', setupResizeFunc);
         return (): void => {
             if (requestRef.current !== null) {
                 cancelAnimationFrame(requestRef.current);
             }
-            window.removeEventListener('resize', () => setup(ctx, fakeCtx));
+            window.removeEventListener('resize', setupResizeFunc);
         };
     }, []);
     return (
@@ -84,7 +85,7 @@ function MenuWorld({world}: {world: WorldInfo}): ReactNode {
     let thumbnail = world.thumbnail;
     let style = {};
     if (thumbnail === undefined) {
-        thumbnail = 'data/textures/pack.png';
+        thumbnail = 'data/img/pack.png';
         style = {filter: 'grayscale(100%)'};
     }
     return (

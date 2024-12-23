@@ -45,6 +45,7 @@ interface ObjParams {
     position?: Position;
     tilt?: number;
     albedo?: number;
+    alwaysVisible?: boolean;
     children?: Object[];
 }
 
@@ -53,6 +54,7 @@ class _BaseObj<T extends BaseObjType = BaseObjType> {
     $type: T;
     name: string;
     designation: string;
+    alwaysVisible: boolean = false;
 
     constructor(type: T, name: string, designation: string, data: {} = {}) {
         this.$type = type;
@@ -81,6 +83,7 @@ class _Obj<T extends ObjType = ObjType> extends _BaseObj {
     mass: number;
     axis?: Axis;
     albedo: number;
+    alwaysVisible: boolean;
 
     constructor(type: T, name: string, designation: string, data: ObjParams) {
         super(type, name, designation);
@@ -90,6 +93,7 @@ class _Obj<T extends ObjType = ObjType> extends _BaseObj {
         this.mass = data.mass;
         if (data.axis !== undefined) this.axis = data.axis;
         this.albedo = data.albedo === undefined ? 0.09 : data.albedo;
+        this.alwaysVisible = data.alwaysVisible === undefined ? false : data.alwaysVisible;
     }
 
     hasOrbit(): this is OrbitObj {

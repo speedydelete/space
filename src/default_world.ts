@@ -120,6 +120,7 @@ const defaultWorld = new World(directory({
                 texture: 'data/textures/ssc/sun_8k.jpg',
                 magnitude: 4.83,
                 type: 'G2V',
+                alwaysVisible: true,
             }, {
                 mercury: objdir('planet', 'Mercury', 'planet:mercury', {
                     orbit: {
