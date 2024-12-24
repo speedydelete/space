@@ -238,6 +238,7 @@ class Client {
                 light.castShadow = true;
                 mesh.add(light);
             }
+            mesh.material.side = three.DoubleSide;
             this.scene.add(mesh);
             this.objMeshes[path] = mesh;
         }
@@ -248,12 +249,12 @@ class Client {
             const path = join(filename);
             const object = this.world.readObj(path);
             const mesh = this.getObjectMesh(path);
-            if (object !== undefined && mesh !== undefined) {
+            if (object !== undefined && mesh !== undefined && (object.alwaysVisible || mesh.position.distanceTo(this.camera.position) < this.settings.renderDistance/this.settings.unitSize)) {
+                mesh.visible = true;
                 const [x, y, z] = object.position;
                 mesh.position.set(x/this.unitSize, y/this.unitSize, z/this.unitSize);
                 mesh.rotation.set(0, 0, 0);
                 if (object.axis) {
-                    mesh.rotation.set(0, 0, 0);
                     mesh.rotateX(object.axis.tilt * Math.PI / 180);
                     if (object.axis.epoch !== null) {
                         if (object.axis.period == 'sync') {
@@ -267,9 +268,8 @@ class Client {
                 if (object.type == 'star') {
                     
                 }
-                if (!object.alwaysVisible) {
-                    mesh.visible = mesh.position.distanceTo(this.camera.position) < this.settings.renderDistance/this.settings.unitSize;
-                }
+            } else if (mesh) {
+                mesh.visible = false;
             }
         }
     }
