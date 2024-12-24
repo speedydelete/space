@@ -166,7 +166,7 @@ const defaultWorld = new World(directory({
                     },
                     radius: 6371000,
                     mass: 5.972168e24,
-                    axis: axis(23.4392811, 86164.100352, date('2024-03-20 03:07:00'), 0),
+                    axis: axis(23.4392811, 86164.100352, date('2024-04-15 20:00:00'), 0),
                     albedo: 0.367,
                     texture: 'data/textures/ssc/earth_8k.jpg',
                 }, {
@@ -676,7 +676,7 @@ const defaultWorld = new World(directory({
                         aop: 311.352,
                     },
                     mass: 3e21,
-                    radius: 965,
+                    radius: 965000,
                     axis: axis(null, 36982.8, null, null),
                     albedo: 0.41,
                     type: 'RR',

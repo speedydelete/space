@@ -92,7 +92,7 @@ function formatLength(value: number): string {
 }
 
 function formatDate(value: Date): string {
-    value = new Date(value.getTime() - value.getTimezoneOffset()*60000);
+    //value = new Date(value.getTime() - value.getTimezoneOffset()*60000);
     const split = value.toISOString().split('T');
     return split[0] + ' ' + split[1].split('Z')[0];
 }
