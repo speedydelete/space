@@ -1,6 +1,7 @@
 
 import type {ReactNode, RefObject} from 'react';
 import React, {useRef, useState, useEffect, useContext, createContext} from 'react';
+import {type Settings, type SettingsKey, type SettingsValue, getSettings, defaultSettings} from './client.ts';
 
 interface WorldInfo {
     name: string,
@@ -69,15 +70,7 @@ function SwitchMenuButton({menu, children}: {menu: string, children: ReactNode})
 
 function MenuSection({name, children}: {name: string, children: ReactNode}): ReactNode {
     const menu = useContext(MenuContext).menu;
-    return menu == name && <div className='menu-section'>{children}</div>;
-}
-
-function Settings(): ReactNode {
-    return (
-        <MenuSection name='settings'>
-            <SwitchMenuButton menu='main'>Back</SwitchMenuButton>
-        </MenuSection>
-    );
+    return menu == name && <div className={'menu-section menu-' + name}>{children}</div>;
 }
 
 function MenuWorld({world}: {world: WorldInfo}): ReactNode {
@@ -92,7 +85,7 @@ function MenuWorld({world}: {world: WorldInfo}): ReactNode {
         <div className='menu-world'>
             <div onClick={() => enterWorld(world)}>
                 <img src={thumbnail} style={style} />
-                <img className="enter-arrow" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 16 16'><polygon points='8,2 8,14 14,8' style='fill: white;' /></svg>" />
+                <img className='enter-arrow' src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 16 16'><polygon points='8,2 8,14 14,8' style='fill: white;' /></svg>" />
             </div>
             <div>
                 <div>{world.name}</div>
@@ -100,7 +93,7 @@ function MenuWorld({world}: {world: WorldInfo}): ReactNode {
             </div>
         </div>
     );
-}//data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
+}
 
 function WorldSelection({children}: {children: ReactNode}): ReactNode {
     return <div className='menu-worlds'>{children}</div>;
@@ -137,13 +130,72 @@ function MultiplayerMenu(): ReactNode {
     );
 }
 
-function About(): ReactNode {
+const SettingsContext: React.Context<[Settings, React.Dispatch<React.SetStateAction<Settings>>]> = createContext<[Settings, React.Dispatch<React.SetStateAction<Settings>>]>([defaultSettings, () => null]);
+
+function Setting({type, setting, name}: {type: string, setting: SettingsKey, name: string}): ReactNode {
+    const [settings, setSettings] = useContext(SettingsContext);
+    const [value, setValue] = useState(settings[setting]);
+    function handleChange(event: React.FormEvent<HTMLInputElement>) {
+        const target = event.currentTarget;
+        let newValue: SettingsValue;
+        if (target.type == 'checkbox') {
+            newValue = target.checked;
+        } else if (target.type == 'number') {
+            newValue = target.valueAsNumber;
+        } else {
+            newValue = target.value;
+        }
+        setValue(newValue);
+        if (Number.isNaN(newValue)) {
+            // @ts-ignore
+            setValue(target.value);
+        }
+        settings[setting] = newValue;
+        setSettings(settings);
+        localStorage.setItem('space-game-settings', JSON.stringify(settings));
+    }
+    return (
+        <div>
+            <label htmlFor={setting}>{name}:&nbsp;</label>
+            <input
+                type={type}
+                onChange={handleChange}
+                value={typeof value == 'number' || typeof value == 'string' ? value : ''}
+                checked={typeof value == 'boolean' ? value : undefined}
+                name={setting}
+            />
+        </div>
+    );
+}
+
+function SettingsMenu(): ReactNode {
+    const [settings, setSettings] = useState(getSettings());
+    return (
+        <MenuSection name='settings'>
+            <div className='lower-left'><SwitchMenuButton menu='main'>Back</SwitchMenuButton></div>
+            <div className='menu-content'>
+                <h1>Settings</h1>
+                <SettingsContext.Provider value={[settings, setSettings]}>
+                    <Setting type='number' setting='fov' name='FOV' />
+                    <Setting type='number' setting='unitSize' name='Unit Size' />
+                    <Setting type='number' setting='renderDistance' name='Render Distance' />
+                    <Setting type='number' setting='cameraMinDistance' name='Camera Minimum Distance' />
+                    <Setting type='number' setting='cameraMaxDistance' name='Camera Maximum Distance' />
+                    <Setting type='number' setting='controlsMinDistance' name='Zoom Minimum Distance' />
+                    <Setting type='number' setting='controlsMaxDistance' name='Zoom Maximum Distance' />
+                </SettingsContext.Provider>
+            </div>
+        </MenuSection>
+    );
+}
+
+function AboutMenu(): ReactNode {
     return (
         <MenuSection name='about'>
             <div className='lower-left'><SwitchMenuButton menu='main'>Back</SwitchMenuButton></div>
-            <div className='menu-about'>
+            <div className='menu-content'>
                 <h1>About</h1>
-                Space is an open-source space simulation game licensed under the <a href="https://www.gnu.org/licenses/gpl-3.0.en.html#license-text">GPLv3.0</a>. Here is its <a href="https://github.com/speedydelete/space">GitHub</a>.
+                Space is an open-source space simulation game licensed under the <a href='https://www.gnu.org/licenses/gpl-3.0.en.html#license-text'>GPLv3.0</a>. Here is its <a href='https://github.com/speedydelete/space'>GitHub</a>.
                 <br />
                 <br />
                 <h2>Version History</h2>
@@ -178,52 +230,52 @@ function About(): ReactNode {
                 <h2>Credits</h2>
                 <ul>
                     <li>
-                        These textures are from <a href="https://solarsystemscope.com/">solarsystemscope.com</a>. They were created by <a href="http://inove.eu.com/">INOVE</a> and are licensed under the <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License.</a>
+                        These textures are from <a href='https://solarsystemscope.com/'>solarsystemscope.com</a>. They were created by <a href='http://inove.eu.com/'>INOVE</a> and are licensed under the <a href='https://creativecommons.org/licenses/by/4.0/'>Creative Commons Attribution 4.0 International License.</a>
                         <ul>
-                            <li><a href="data/textures/ssc/sun.jpg">sun.jpg</a></li>
-                            <li><a href="data/textures/ssc/sun_8k.jpg">sun_8k.jpg</a></li>
-                            <li><a href="data/textures/ssc/mercury.jpg">mercury.jpg</a></li>
-                            <li><a href="data/textures/ssc/mercury_8k.jpg">mercury_8k.jpg</a></li>
-                            <li><a href="data/textures/ssc/venus_atmosphere.jpg">venus_atmosphere.jpg</a></li>
-                            <li><a href="data/textures/ssc/venus_atmosphere_4k.jpg">venus_atmosphere_4k.jpg</a></li>
-                            <li><a href="data/textures/ssc/earth.jpg">earth.jpg</a></li>
-                            <li><a href="data/textures/ssc/earth_8k.jpg">earth_8k.jpg</a></li>
-                            <li><a href="data/textures/ssc/moon.jpg">moon.jpg</a></li>
-                            <li><a href="data/textures/ssc/moon_8k.jpg">moon_8k.jpg</a></li>
-                            <li><a href="data/textures/ssc/mars.jpg">mars.jpg</a></li>
-                            <li><a href="data/textures/ssc/mars_8k.jpg">mars_8k.jpg</a></li>
-                            <li><a href="data/textures/ssc/jupiter.jpg">jupiter.jpg</a></li>
-                            <li><a href="data/textures/ssc/jupiter_8k.jpg">jupiter_8k.jpg</a></li>
-                            <li><a href="data/textures/ssc/saturn.jpg">saturn.jpg</a></li>
-                            <li><a href="data/textures/ssc/saturn_8k.jpg">saturn_8k.jpg</a></li>
-                            <li><a href="data/textures/ssc/uranus.jpg">uranus.jpg</a></li>
-                            <li><a href="data/textures/ssc/neptune.jpg">neptune.jpg</a></li>
+                            <li><a href='data/textures/ssc/sun.jpg'>sun.jpg</a></li>
+                            <li><a href='data/textures/ssc/sun_8k.jpg'>sun_8k.jpg</a></li>
+                            <li><a href='data/textures/ssc/mercury.jpg'>mercury.jpg</a></li>
+                            <li><a href='data/textures/ssc/mercury_8k.jpg'>mercury_8k.jpg</a></li>
+                            <li><a href='data/textures/ssc/venus_atmosphere.jpg'>venus_atmosphere.jpg</a></li>
+                            <li><a href='data/textures/ssc/venus_atmosphere_4k.jpg'>venus_atmosphere_4k.jpg</a></li>
+                            <li><a href='data/textures/ssc/earth.jpg'>earth.jpg</a></li>
+                            <li><a href='data/textures/ssc/earth_8k.jpg'>earth_8k.jpg</a></li>
+                            <li><a href='data/textures/ssc/moon.jpg'>moon.jpg</a></li>
+                            <li><a href='data/textures/ssc/moon_8k.jpg'>moon_8k.jpg</a></li>
+                            <li><a href='data/textures/ssc/mars.jpg'>mars.jpg</a></li>
+                            <li><a href='data/textures/ssc/mars_8k.jpg'>mars_8k.jpg</a></li>
+                            <li><a href='data/textures/ssc/jupiter.jpg'>jupiter.jpg</a></li>
+                            <li><a href='data/textures/ssc/jupiter_8k.jpg'>jupiter_8k.jpg</a></li>
+                            <li><a href='data/textures/ssc/saturn.jpg'>saturn.jpg</a></li>
+                            <li><a href='data/textures/ssc/saturn_8k.jpg'>saturn_8k.jpg</a></li>
+                            <li><a href='data/textures/ssc/uranus.jpg'>uranus.jpg</a></li>
+                            <li><a href='data/textures/ssc/neptune.jpg'>neptune.jpg</a></li>
                         </ul>
                     </li>
                     <li>
-                        These textures are from <a href="https://github.com/nasa/NASA-3D-Resources/">NASA</a> and are provided without copyright.
+                        These textures are from <a href='https://github.com/nasa/NASA-3D-Resources/'>NASA</a> and are provided without copyright.
                         <ul>
-                            <li><a href="data/textures/nasa/phobos.jpg">phobos.jpg</a></li>
-                            <li><a href="data/textures/nasa/deimos.jpg">deimos.jpg</a></li>
-                            <li><a href="data/textures/nasa/io.jpg">io.jpg</a></li>
-                            <li><a href="data/textures/nasa/europa.jpg">europa.jpg</a></li>
-                            <li><a href="data/textures/nasa/ganymede.jpg">ganymede.jpg</a></li>
-                            <li><a href="data/textures/nasa/callisto.jpg">callisto.jpg</a></li>
-                            <li><a href="data/textures/nasa/mimas.jpg">mimas.jpg</a></li>
-                            <li><a href="data/textures/nasa/enceladus.jpg">enceladus.jpg</a></li>
-                            <li><a href="data/textures/nasa/tethys.jpg">tethys.jpg</a></li>
-                            <li><a href="data/textures/nasa/dione.jpg">dione.jpg</a></li>
-                            <li><a href="data/textures/nasa/rhea.jpg">rhea.jpg</a></li>
-                            <li><a href="data/textures/nasa/titan.jpg">titan.jpg</a></li>
-                            <li><a href="data/textures/nasa/iapetus.jpg">iapetus.jpg</a></li>
-                            <li><a href="data/textures/nasa/ariel.jpg">ariel.jpg</a></li>
-                            <li><a href="data/textures/nasa/umbriel.jpg">umbriel.jpg</a></li>
-                            <li><a href="data/textures/nasa/titania.jpg">titania.jpg</a></li>
-                            <li><a href="data/textures/nasa/oberon.jpg">oberon.jpg</a></li>
-                            <li><a href="data/textures/nasa/miranda.jpg">miranda.jpg</a></li>
-                            <li><a href="data/textures/nasa/triton.jpg">triton.jpg</a></li>
-                            <li><a href="data/textures/nasa/pluto.jpg">pluto.jpg</a></li>
-                            <li><a href="data/textures/nasa/charon.jpg">charon.jpg</a></li>
+                            <li><a href='data/textures/nasa/phobos.jpg'>phobos.jpg</a></li>
+                            <li><a href='data/textures/nasa/deimos.jpg'>deimos.jpg</a></li>
+                            <li><a href='data/textures/nasa/io.jpg'>io.jpg</a></li>
+                            <li><a href='data/textures/nasa/europa.jpg'>europa.jpg</a></li>
+                            <li><a href='data/textures/nasa/ganymede.jpg'>ganymede.jpg</a></li>
+                            <li><a href='data/textures/nasa/callisto.jpg'>callisto.jpg</a></li>
+                            <li><a href='data/textures/nasa/mimas.jpg'>mimas.jpg</a></li>
+                            <li><a href='data/textures/nasa/enceladus.jpg'>enceladus.jpg</a></li>
+                            <li><a href='data/textures/nasa/tethys.jpg'>tethys.jpg</a></li>
+                            <li><a href='data/textures/nasa/dione.jpg'>dione.jpg</a></li>
+                            <li><a href='data/textures/nasa/rhea.jpg'>rhea.jpg</a></li>
+                            <li><a href='data/textures/nasa/titan.jpg'>titan.jpg</a></li>
+                            <li><a href='data/textures/nasa/iapetus.jpg'>iapetus.jpg</a></li>
+                            <li><a href='data/textures/nasa/ariel.jpg'>ariel.jpg</a></li>
+                            <li><a href='data/textures/nasa/umbriel.jpg'>umbriel.jpg</a></li>
+                            <li><a href='data/textures/nasa/titania.jpg'>titania.jpg</a></li>
+                            <li><a href='data/textures/nasa/oberon.jpg'>oberon.jpg</a></li>
+                            <li><a href='data/textures/nasa/miranda.jpg'>miranda.jpg</a></li>
+                            <li><a href='data/textures/nasa/triton.jpg'>triton.jpg</a></li>
+                            <li><a href='data/textures/nasa/pluto.jpg'>pluto.jpg</a></li>
+                            <li><a href='data/textures/nasa/charon.jpg'>charon.jpg</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -248,14 +300,12 @@ function EscapeMenu(): ReactNode {
 function MainMenu(): ReactNode {
     return (
         <MenuSection name='main'>
-            <div className='menu-main'>
-                <div className='title'>Space</div>
-                <SwitchMenuButton menu='singleplayer'>Singleplayer</SwitchMenuButton>
-                <SwitchMenuButton menu='multiplayer'>Multiplayer</SwitchMenuButton>
-                <SwitchMenuButton menu='settings'>Settings</SwitchMenuButton>
-                <SwitchMenuButton menu='about'>About</SwitchMenuButton>
-                <div className='small-text lower-left'>v0.4.0</div>
-            </div>
+            <div className='title'>Space</div>
+            <SwitchMenuButton menu='singleplayer'>Singleplayer</SwitchMenuButton>
+            <SwitchMenuButton menu='multiplayer'>Multiplayer</SwitchMenuButton>
+            <SwitchMenuButton menu='settings'>Settings</SwitchMenuButton>
+            <SwitchMenuButton menu='about'>About</SwitchMenuButton>
+            <div className='small-text lower-left'>v0.4.0</div>
         </MenuSection>
     )
 }
@@ -276,8 +326,8 @@ function Menu({worlds, enterWorld, resume, saveAndQuitToTitle, menu, setMenu, sh
                 <MainMenu />
                 <SingleplayerMenu worlds={worlds} />
                 <MultiplayerMenu />
-                <Settings />
-                <About />
+                <SettingsMenu />
+                <AboutMenu />
                 <EscapeMenu />
             </MenuContext.Provider>
         </div>

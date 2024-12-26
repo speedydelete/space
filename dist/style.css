@@ -189,17 +189,80 @@ html, body {
     border-top: 2px solid #ffffff;
 }
 
-div:has(> .menu-about) {
+.menu-content {
+    overflow-y: scroll;
+    padding: 50px 10px;
+    width: 100%;
     display: flex;
     flex-direction: column;
+    justify-content: flex-start;
+    align-items: start;
+    font-size: 16px;
+}
+
+.menu-settings {
+    overflow-y: scroll;
+    padding: 50px 30%;
+    font-size: 16px;
+}
+
+.menu-settings .menu-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 16px;
+    font-size: 24px;
+}
+
+.menu-settings .menu-content div {
+    width: 100%;
+}
+
+.menu-settings input {
+    font-size: 20px;
+    padding: 3px;
+    border: 2px solid gray;
+    background-color: black;
+    &:invalid {
+        border-color: red;
+    }
+    &:focus {
+        outline: none;
+        border-color: lightblue;
+    }
+}
+
+.menu-settings input[type=number] {
+    appearance: textfield;
+}
+
+.menu-settings :is(input::-webkit-outer-spin-button, input::-webkit-inner-spin-button) {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.menu-settings :has(> input[type=checkbox]) {
+    display: flex;
+    flex-direction: row;
     align-items: center;
 }
 
+.menu-settings input[type=checkbox] {
+    appearance: none;
+    height: 24px;
+    width: 24px;
+}
+
+.menu-settings input[type=checkbox]:checked {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 16 16'><line x1='2' y1='9' x2='6' y2='13' stroke='white' /><line x1='6' y1='13' x2='14' y2='3' stroke='white' /></svg>");
+}
+
 .menu-about {
-    overflow-y: scroll;
-    padding: 50px 0;
-    margin: 0 300px;
-    font-size: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 20%;
 }
 
 .menu-escape {

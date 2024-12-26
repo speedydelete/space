@@ -17,14 +17,22 @@ interface Settings {
     controlsMaxDistance: number,
 }
 
+type SettingsKey = keyof Settings;
+type SettingsValue = Settings[SettingsKey];
+
 const defaultSettings: Settings = {
-    fov: 75,
+    fov: 70,
     renderDistance: 150000000000,
     unitSize: 150000000000,
     cameraMinDistance: 0.00000001,
     cameraMaxDistance: 300000000,
     controlsMinDistance: 0.00001,
     controlsMaxDistance: Number.MAX_SAFE_INTEGER,
+}
+
+function getSettings(): Settings {
+    const storageSettings = localStorage.getItem('space-game-settings');
+    return storageSettings !== null ? JSON.parse(storageSettings) : defaultSettings;
 }
 
 class Client {
@@ -65,10 +73,10 @@ class Client {
     boundHandleKeyDown: (event: KeyboardEvent) => void;
     boundHandleMessage: (event: MessageEvent) => void;
 
-    constructor(send: (data: SentRequest) => void, recv: () => SentResponse[], settings: Settings) {
+    constructor(send: (data: SentRequest) => void, recv: () => SentResponse[]) {
         this.syncSend = send;
         this.syncRecv = recv;
-        this.settings = settings;
+        this.settings = getSettings();
         this.renderer = new three.WebGLRenderer();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.scene = new three.Scene();
@@ -348,18 +356,17 @@ class Client {
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
         if (mesh) this.oldMeshPos = mesh.position.clone();
-        if (!this.initialStartComplete) {
-            setTimeout(async () => {
-                this.target = this.world.config.initialTarget;
-                const object: Obj = await this.send<GetObjectRequest>('get-object', this.target);
-                const mesh = this.getObjectMesh(this.target);
-                if (object && mesh) {
-                    this.camera.position.set(mesh.position.x + object.radius/this.unitSize*10, mesh.position.y, mesh.position.z);
-                }
-                this.initialStartComplete = true;
-            }, 0);
-        }
         this.animateRequest = requestAnimationFrame(this.animate.bind(this));
+    }
+
+    async initialStart(): Promise<void> {
+        this.target = this.world.config.initialTarget;
+        const object: Obj = await this.send<GetObjectRequest>('get-object', this.target);
+        const mesh = this.getObjectMesh(this.target);
+        if (object && mesh) {
+            this.camera.position.set(mesh.position.x + object.radius/this.unitSize*10, mesh.position.y, mesh.position.z);
+        }
+        this.initialStartComplete = true;
     }
 
     async start(): Promise<void> {
@@ -379,7 +386,9 @@ class Client {
         this.animateRequest = requestAnimationFrame(this.animate.bind(this));
         this.intervals.push(window.setInterval(this.resyncTime.bind(this), 10));
         this.intervals.push(window.setInterval(this.resyncObjects.bind(this), 1000));
+        if (!this.initialStartComplete) setInterval(() => {if (this.frames > 2) this.initialStart()}, 10);
         this.running = true;
+        console.log('Expansion Loading Complete!');
     }
 
     async stop(): Promise<void> {
@@ -403,6 +412,9 @@ class Client {
 
 export {
     Settings,
+    SettingsKey,
+    SettingsValue,
     defaultSettings,
+    getSettings,
     Client,
 }
