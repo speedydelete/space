@@ -35,6 +35,11 @@ function getSettings(): Settings {
     return storageSettings !== null ? JSON.parse(storageSettings) : defaultSettings;
 }
 
+const helpMessage = `
+Use the "[" and "]" keys to select different objects, or just click on an object.
+Use the "," and "." keys to control the time warp, and use the "/" key to reset it.
+Use the "+" and "-" keys to do telescopic zoom, and use Shift-+ to reset it.`;
+
 class Client {
 
     world: World = emptyWorld;
@@ -66,6 +71,7 @@ class Client {
     blurred: boolean = false;
     animateRequest: null | number = null;
     intervals: number[] = [];
+    initialStartInterval: null | number = null;
     initialStartComplete: boolean = false;
 
     boundHandleResize: (event: Event) => void;
@@ -172,13 +178,19 @@ class Client {
             event.preventDefault();
             this.world.timeWarp = 1;
             this.send<SetTimeWarpRequest>('set-time-warp', 1);
-        } else if (event.key == '-') {
-            if (this.zoom > 1) {
-                this.zoom -= 1;
-            }
         } else if (event.key == '=' || event.key == '+') {
-            if (this.zoom < 100) {
-                this.zoom += 1;
+            if (event.shiftKey) {
+                this.zoom = 1;
+            } else {
+                this.zoom += 10**Math.floor(Math.log10(this.zoom));
+            }
+        } else if (event.key == '-') {
+            const logZoom = Math.log10(this.zoom);
+            const floorLogZoom = Math.floor(logZoom);
+            if (logZoom == Math.floor(logZoom)) {
+                this.zoom -= 10**(floorLogZoom - 1);
+            } else {
+                this.zoom -= 10**floorLogZoom;
             }
         } else if (event.key == '[') {
             const allObjects = this.world.lsObjAll();
@@ -199,6 +211,8 @@ class Client {
                 isSpace: true,
                 type: 'escape',
             }, origin);
+        } else if (event.key == 'h') {
+            alert(helpMessage);
         }
     };
 
@@ -252,7 +266,8 @@ class Client {
         }
     }
 
-    updateObjects(): void {
+    updateObjects(): number {
+        let renderedObjects = 0;
         for (const filename of this.world.lsObjAll()) {
             const path = join(filename);
             const object = this.world.readObj(path);
@@ -276,10 +291,12 @@ class Client {
                 if (object.type == 'star') {
                     
                 }
+                renderedObjects += 1;
             } else if (mesh) {
                 mesh.visible = false;
             }
         }
+        return renderedObjects;
     }
 
     async resyncTime(): Promise<void> {
@@ -297,7 +314,7 @@ class Client {
     }
 
     animate(): void {
-        this.updateObjects();
+        const renderedObjects = this.updateObjects();
         if (document.hidden || document.visibilityState == 'hidden') {
             this.blurred = true;
             this.animateRequest = requestAnimationFrame(this.animate.bind(this));
@@ -328,12 +345,12 @@ class Client {
             Camera X: ${util.formatLength(this.camera.position.x*this.unitSize)}
             Camera Y: ${util.formatLength(this.camera.position.y*this.unitSize)}
             Camera Z: ${util.formatLength(this.camera.position.z*this.unitSize)}
-            Zoom: ${Math.round(this.zoom*10)/10}
+            Telescopic Zoom: ${Math.round(this.zoom*10)/10}
             Total Objects: ${this.world.lsObjAll().length}
+            Rendered Objects: ${renderedObjects}
             Time: ${this.world.time ? util.formatDate(this.world.time) : 'undefined'}
             Time Warp: ${this.world.timeWarp}x (${util.formatTime(this.world.timeWarp)}/s)
-            Click on objects to select them, or use [ and ] to move around.
-            Use ,./ to control time warp, and +- to zoom.`;
+            Press H for help.`;
         }
         if (this.rightInfoElt && targetObj !== undefined && mesh !== undefined) {
             this.rightInfoElt.innerText = `Name: ${targetObj.name}
@@ -342,7 +359,6 @@ class Client {
             X: ${util.formatLength(mesh.position.x*this.unitSize)}
             Y: ${util.formatLength(mesh.position.y*this.unitSize)}
             Z: ${util.formatLength(mesh.position.z*this.unitSize)}\n` + (targetObj.orbit ?
-            
             `\tSMA: ${util.formatLength(targetObj.orbit.sma)}
             \tECC: ${targetObj.orbit.ecc}
             \tMNA: ${targetObj.orbit.mna?.toFixed(3)}
@@ -386,7 +402,17 @@ class Client {
         this.animateRequest = requestAnimationFrame(this.animate.bind(this));
         this.intervals.push(window.setInterval(this.resyncTime.bind(this), 10));
         this.intervals.push(window.setInterval(this.resyncObjects.bind(this), 1000));
-        if (!this.initialStartComplete) setInterval(() => {if (this.frames > 2) this.initialStart()}, 10);
+        if (!this.initialStartComplete) {
+            this.initialStartInterval = window.setInterval((() => {
+                if (this.frames > 10) {
+                    this.initialStart();
+                    if (this.initialStartInterval) {
+                        window.clearInterval(this.initialStartInterval);
+                    }
+                }
+            }).bind(this), 10);
+            this.intervals.push(this.initialStartInterval);
+        }
         this.running = true;
         console.log('Expansion Loading Complete!');
     }
