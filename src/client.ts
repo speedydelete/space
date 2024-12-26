@@ -393,6 +393,7 @@ class Client {
                 mesh.add(light);
             }
             mesh.material.side = three.DoubleSide;
+            mesh.visible = true;
             this.scene.add(mesh);
             this.objMeshes[path] = mesh;
         }
@@ -423,13 +424,13 @@ class Client {
         if (!this.initialStartComplete) {
             this.initialStartInterval = window.setInterval((async () => {
                 if (this.frames > 10) {
+                    this.initialStartComplete = true;
                     this.target = this.world.config.initialTarget;
-                    const object: Obj = await this.send<GetObjectRequest>('get-object', this.target);
+                    let object = await this.send<GetObjectRequest>('get-object', this.target);
                     const mesh = this.getObjectMesh(this.target);
-                    if (object && mesh) {
+                    if (mesh && object) {
                         this.camera.position.set(mesh.position.x + object.radius/this.unitSize*10, mesh.position.y, mesh.position.z);
                     }
-                    this.initialStartComplete = true;
                     if (this.initialStartInterval) {
                         window.clearInterval(this.initialStartInterval);
                     }
