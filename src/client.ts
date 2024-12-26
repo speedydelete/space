@@ -241,7 +241,6 @@ class Client {
             const object = this.world.readObj(path);
             const mesh = this.getObjectMesh(path);
             if (object !== undefined && mesh !== undefined && (object.alwaysVisible || mesh.position.distanceTo(this.camera.position) < this.settings.renderDistance/this.settings.unitSize)) {
-                mesh.visible = true;
                 const [x, y, z] = object.position;
                 mesh.position.set(x/this.unitSize, y/this.unitSize, z/this.unitSize);
                 mesh.rotation.set(0, 0, 0);
@@ -260,6 +259,7 @@ class Client {
                     
                 }
                 renderedObjects += 1;
+                mesh.visible = true;
             } else if (mesh) {
                 mesh.visible = false;
             }
