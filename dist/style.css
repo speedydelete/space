@@ -279,3 +279,11 @@ html, body {
     min-width: 312px;
     max-width: 312px;
 }
+
+.menu-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    color: white;
+}

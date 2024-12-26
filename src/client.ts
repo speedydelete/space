@@ -72,6 +72,7 @@ class Client {
     intervals: number[] = [];
     initialStartInterval: null | number = null;
     initialStartComplete: boolean = false;
+    closeLoadingScreenInterval: null | number = null;
 
     boundHandleResize: (event: Event) => void;
     boundHandleClick: (event: MouseEvent) => void;
@@ -110,6 +111,16 @@ class Client {
 
     get unitSize(): number {
         return this.settings.unitSize;
+    }
+
+    postMessage(type: string, data: any = undefined): void {
+        if (window.top) {
+            window.top.postMessage({
+                isSpace: true,
+                type: type,
+                data: data,
+            }, window.origin);
+        }
     }
 
     checkMessages(): void {
@@ -205,11 +216,8 @@ class Client {
                 index = -1;
             }
             this.target = allObjects[(index + 1) % allObjects.length];
-        } else if (event.key == 'Escape' && window.top) {
-            window.top.postMessage({
-                isSpace: true,
-                type: 'escape',
-            }, origin);
+        } else if (event.key == 'Escape') {
+            this.postMessage('escape');
         } else if (event.key == 'h') {
             alert(helpMessage);
         }
@@ -223,45 +231,6 @@ class Client {
             } else if (type == 'stop') {
                 this.stop();
             }
-        }
-    }
-
-    async init(): Promise<void> {
-        const textureLoader = new three.TextureLoader();;
-        for (const {path, object} of await this.send<GetAllObjectsRequest>('get-all-objects')) {
-            if (object === undefined) continue;
-            this.world.writeObj(path, object);
-        }
-        this.world.init();
-        for (const path of this.world.lsObjAll()) {
-            const object = this.world.readObj(path);
-            if (object === undefined || object instanceof RootObj) continue;
-            let material = new three.MeshStandardMaterial();
-            if (object.texture) {
-                material.map = textureLoader.load(object.texture);
-            }
-            material.opacity = 1;
-            material.transparent = true;
-            if (object.albedo) {
-                material.color = new three.Color(object.albedo, object.albedo, object.albedo);
-            }
-            if (object.$type == 'star') {
-                if (material.map) material.emissiveMap = material.map;
-                material.emissive = new three.Color(object.color);
-                material.emissiveIntensity = 2;
-            }
-            const geometry = new three.SphereGeometry(object.radius/this.unitSize, 512, 512);
-            const mesh = new three.Mesh(geometry, material);
-            mesh.position.set(...object.position);
-            if (object.$type == 'star') {
-                const light = new three.PointLight(object.color);
-                light.power = this.world.config.lC / 10**(0.4 * object.magnitude) / this.unitSize**2 / 20000;
-                light.castShadow = true;
-                mesh.add(light);
-            }
-            mesh.material.side = three.DoubleSide;
-            this.scene.add(mesh);
-            this.objMeshes[path] = mesh;
         }
     }
 
@@ -374,37 +343,93 @@ class Client {
         this.animateRequest = requestAnimationFrame(this.animate.bind(this));
     }
 
-    async initialStart(): Promise<void> {
-        this.target = this.world.config.initialTarget;
-        const object: Obj = await this.send<GetObjectRequest>('get-object', this.target);
-        const mesh = this.getObjectMesh(this.target);
-        if (object && mesh) {
-            this.camera.position.set(mesh.position.x + object.radius/this.unitSize*10, mesh.position.y, mesh.position.z);
+    setLoadingScreenMessage(message: string): Promise<void> {
+        console.log(message);
+        // @ts-ignore
+        const {promise, resolve} = Promise.withResolvers();
+        function handleMessage(event: MessageEvent) {
+            if (event.source === window.top && event.data.isSpace === true) {
+                resolve(true);
+                window.removeEventListener('message', handleMessage);   
+            }
         }
-        this.initialStartComplete = true;
+        window.addEventListener('message', handleMessage);
+        this.postMessage('set-loading-screen-message', message);
+        return promise;
+    }
+    
+    async init(): Promise<void> {
+        const textureLoader = new three.TextureLoader();;
+        for (const {path, object} of await this.send<GetAllObjectsRequest>('get-all-objects')) {
+            if (object === undefined) continue;
+            this.world.writeObj(path, object);
+        }
+        this.world.init();
+        for (const path of this.world.lsObjAll()) {
+            await this.setLoadingScreenMessage(`Loading ${path}`);
+            const object = this.world.readObj(path);
+            if (object === undefined || object instanceof RootObj) continue;
+            let material = new three.MeshStandardMaterial();
+            if (object.texture) {
+                material.map = textureLoader.load(object.texture);
+            }
+            material.opacity = 1;
+            material.transparent = true;
+            if (object.albedo) {
+                material.color = new three.Color(object.albedo, object.albedo, object.albedo);
+            }
+            if (object.$type == 'star') {
+                if (material.map) material.emissiveMap = material.map;
+                material.emissive = new three.Color(object.color);
+                material.emissiveIntensity = 2;
+            }
+            const geometry = new three.SphereGeometry(object.radius/this.unitSize, 512, 512);
+            const mesh = new three.Mesh(geometry, material);
+            mesh.position.set(...object.position);
+            if (object.$type == 'star') {
+                const light = new three.PointLight(object.color);
+                light.power = this.world.config.lC / 10**(0.4 * object.magnitude) / this.unitSize**2 / 20000;
+                light.castShadow = true;
+                mesh.add(light);
+            }
+            mesh.material.side = three.DoubleSide;
+            this.scene.add(mesh);
+            this.objMeshes[path] = mesh;
+        }
     }
 
     async start(): Promise<void> {
+        await this.setLoadingScreenMessage('Adding event listeners');
         this.intervals.push(window.setInterval(this.checkMessages.bind(this), 1));
         window.addEventListener('resize', this.boundHandleResize);
         window.addEventListener('click', this.boundHandleClick);
         window.addEventListener('keydown', this.boundHandleKeyDown);
         window.addEventListener('message', this.boundHandleMessage);
+        await this.setLoadingScreenMessage('Starting server');
         await this.send<StartRequest>('start');
         this.world = emptyWorld;
+        await this.setLoadingScreenMessage('Syncing time');
         const time = await this.send<GetTimeRequest>('get-time');
         this.world.timeWarp = await this.send<GetTimeWarpRequest>('get-time-warp');
         this.world.fs.writejson('/etc/config', await this.send<GetConfigRequest>('get-config'));
         if (time !== undefined) this.world.time = time;
+        await this.setLoadingScreenMessage('Loading objects');
         await this.init();
         this.world.start();
+        await this.setLoadingScreenMessage('Starting animation loop');
         this.animateRequest = requestAnimationFrame(this.animate.bind(this));
         this.intervals.push(window.setInterval(this.resyncTime.bind(this), 10));
         this.intervals.push(window.setInterval(this.resyncObjects.bind(this), 1000));
         if (!this.initialStartComplete) {
-            this.initialStartInterval = window.setInterval((() => {
+            this.initialStartInterval = window.setInterval((async () => {
                 if (this.frames > 10) {
-                    this.initialStart();
+                    this.target = this.world.config.initialTarget;
+                    const object: Obj = await this.send<GetObjectRequest>('get-object', this.target);
+                    const mesh = this.getObjectMesh(this.target);
+                    if (object && mesh) {
+                        this.camera.position.set(mesh.position.x + object.radius/this.unitSize*10, mesh.position.y, mesh.position.z);
+                    }
+                    this.initialStartComplete = true;
                     if (this.initialStartInterval) {
                         window.clearInterval(this.initialStartInterval);
                     }
@@ -412,6 +437,15 @@ class Client {
             }).bind(this), 10);
             this.intervals.push(this.initialStartInterval);
         }
+        this.closeLoadingScreenInterval = window.setInterval((() => {
+            if (this.frames > 1) {
+                this.postMessage('close-loading-screen');
+                if (this.closeLoadingScreenInterval) {
+                    window.clearInterval(this.closeLoadingScreenInterval);
+                }
+            }
+        }).bind(this), 10);
+        this.intervals.push(this.closeLoadingScreenInterval);
         this.running = true;
         console.log('Expansion Loading Complete!');
     }

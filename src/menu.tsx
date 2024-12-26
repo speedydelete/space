@@ -297,6 +297,10 @@ function EscapeMenu(): ReactNode {
     );
 }
 
+function LoadingScreenMenu({message}: {message: string}): ReactNode {
+    return <MenuSection name='loading'>{message}</MenuSection>;
+}
+
 function MainMenu(): ReactNode {
     return (
         <MenuSection name='main'>
@@ -310,8 +314,7 @@ function MainMenu(): ReactNode {
     )
 }
 
-function Menu({worlds, enterWorld, resume, saveAndQuitToTitle, menu, setMenu, showStars}: {worlds: WorldInfo[], enterWorld: (world: WorldInfo) => void, resume, saveAndQuitToTitle, menu: string, setMenu: (menu: string) => void, showStars?: boolean}): ReactNode {
-    if (showStars === undefined) showStars = true;
+function Menu({worlds, enterWorld, resume, saveAndQuitToTitle, menu, setMenu, showStars, loadingScreenMessage}: {worlds: WorldInfo[], enterWorld: (world: WorldInfo) => void, resume: () => void, saveAndQuitToTitle: () => void, menu: string, setMenu: (menu: string) => void, showStars: boolean, loadingScreenMessage: string}): ReactNode {
     const contextData = {
         menu: menu,
         setMenu: setMenu,
@@ -329,6 +332,7 @@ function Menu({worlds, enterWorld, resume, saveAndQuitToTitle, menu, setMenu, sh
                 <SettingsMenu />
                 <AboutMenu />
                 <EscapeMenu />
+                <LoadingScreenMenu message={loadingScreenMessage} />
             </MenuContext.Provider>
         </div>
     );
