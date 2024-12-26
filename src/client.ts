@@ -35,8 +35,7 @@ function getSettings(): Settings {
     return storageSettings !== null ? JSON.parse(storageSettings) : defaultSettings;
 }
 
-const helpMessage = `
-Use the "[" and "]" keys to select different objects, or just click on an object.
+const helpMessage = `Use the "[" and "]" keys to select different objects, or just click on an object.
 Use the "," and "." keys to control the time warp, and use the "/" key to reset it.
 Use the "+" and "-" keys to do telescopic zoom, and use Shift-+ to reset it.`;
 
