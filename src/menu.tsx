@@ -11,10 +11,12 @@ interface WorldInfo {
 
 const MenuContext = createContext({
     menu: 'main',
-    setMenu: (menu: string): void => {},
-    enterWorld: (world: WorldInfo): void => {},
-    resume: (): void => {},
-    saveAndQuitToTitle: ():  void => {},
+    setMenu: (menu: string) => {},
+    enterWorld: (world: WorldInfo) => {},
+    resume: () => {},
+    saveAndQuitToTitle: () => {},
+    settingsBack: () => {},
+    setSettingsBack: (settingsBack: () => void) => {},
 });
 
 const starSizes: number[] = [1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3];
@@ -42,7 +44,7 @@ function StarCanvas(): ReactNode {
             ctx.fillRect(x, y, size, size);
         }
     }
-    useEffect((): (() => void) => {
+    useEffect(() => {
         // @ts-ignore
         let ctx: CanvasRenderingContext2D = canvasRef.current.getContext('2d');
         // @ts-ignore
@@ -51,7 +53,7 @@ function StarCanvas(): ReactNode {
         requestRef.current = requestAnimationFrame(() => animate(ctx, fakeCtx));
         const setupResizeFunc = () => setup(ctx, fakeCtx);
         window.addEventListener('resize', setupResizeFunc);
-        return (): void => {
+        return () => {
             if (requestRef.current !== null) {
                 cancelAnimationFrame(requestRef.current);
             }
@@ -170,9 +172,10 @@ function Setting({type, setting, name}: {type: string, setting: SettingsKey, nam
 
 function SettingsMenu(): ReactNode {
     const [settings, setSettings] = useState(getSettings());
+    const {settingsBack} = useContext(MenuContext);
     return (
         <MenuSection name='settings'>
-            <div className='lower-left'><SwitchMenuButton menu='main'>Back</SwitchMenuButton></div>
+            <div className='lower-left'><button onClick={settingsBack}>Back</button></div>
             <div className='menu-content'>
                 <h1>Settings</h1>
                 <SettingsContext.Provider value={[settings, setSettings]}>
@@ -200,6 +203,12 @@ function AboutMenu(): ReactNode {
                 <br />
                 <h2>Version History</h2>
                 <ul>
+                    <li>v0.4.0 - x-x-x
+                        <ul>
+                            <li>Added a settings menu.</li>
+                            <li>Added a loading screen.</li>
+                        </ul>
+                    </li>
                     <li>v0.3.1 - 2024-12-23
                         <ul>
                             <li>Fixed the lag.</li>
@@ -285,7 +294,13 @@ function AboutMenu(): ReactNode {
 }
 
 function EscapeMenu(): ReactNode {
-    const {resume, saveAndQuitToTitle} = useContext(MenuContext);
+    const {resume, saveAndQuitToTitle, setSettingsBack, setMenu} = useContext(MenuContext);
+    useEffect(() => {
+        setSettingsBack(() => resume);
+        return () => {
+           setSettingsBack(() => () => setMenu('main'));
+        }
+    });
     return (
         <MenuSection name='escape'>
             <div className='menu-escape'>
@@ -315,12 +330,15 @@ function MainMenu(): ReactNode {
 }
 
 function Menu({worlds, enterWorld, resume, saveAndQuitToTitle, menu, setMenu, showStars, loadingScreenMessage}: {worlds: WorldInfo[], enterWorld: (world: WorldInfo) => void, resume: () => void, saveAndQuitToTitle: () => void, menu: string, setMenu: (menu: string) => void, showStars: boolean, loadingScreenMessage: string}): ReactNode {
+    const [settingsBack, setSettingsBack] = useState(() => () => setMenu('main'));
     const contextData = {
         menu: menu,
         setMenu: setMenu,
         enterWorld: enterWorld,
         resume: resume,
         saveAndQuitToTitle: saveAndQuitToTitle,
+        settingsBack: settingsBack,
+        setSettingsBack: setSettingsBack,
     };
     return (
         <div className='menu'>

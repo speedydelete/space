@@ -59,7 +59,10 @@ function Game(): ReactNode {
                     setMenu('loading');
                     setVisible(true);
                 }}
-                resume={() => setVisible(true)}
+                resume={() => {
+                    setInMenu(false);
+                    setVisible(true);
+                }}
                 saveAndQuitToTitle={() => {
                     setVisible(false);
                     setInMenu(true);
