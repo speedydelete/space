@@ -1,7 +1,7 @@
 
-import {Server} from './server';
-import {Client} from './client';
-import {defaultWorld} from './default_world';
+import {Server} from './server.ts';
+import {Client} from './client.ts';
+import {defaultWorld} from './default_world.ts';
 
 const server = new Server(defaultWorld);
 const client = new Client(server.recv.bind(server), server.clientRecv.bind(server));

@@ -1,6 +1,6 @@
 
-import {Obj} from './obj';
-import {type Config, World} from './world';
+import {Obj} from './obj.ts';
+import {type Config, World} from './world.ts';
 
 type GetTimeRequest = {type: 'get-time', data: undefined};
 type GetTimeResponse = {type: 'get-time', data: Date | undefined};

@@ -35,6 +35,40 @@ button {
     }
 }
 
+input {
+    font-size: 20px;
+    width: 190px;
+    padding: 3px;
+    border: 2px solid gray;
+    background-color: black;
+    &:invalid {
+        border-color: red;
+    }
+    &:focus {
+        outline: none;
+        border-color: lightblue;
+    }
+}
+
+input[type=number] {
+    appearance: textfield;
+}
+
+:is(input::-webkit-outer-spin-button, input::-webkit-inner-spin-button) {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type=checkbox] {
+    appearance: none;
+    height: 24px;
+    width: 24px;
+}
+
+input[type=checkbox]:checked {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 16 16'><line x1='2' y1='9' x2='6' y2='13' stroke='white' /><line x1='6' y1='13' x2='14' y2='3' stroke='white' /></svg>");
+}
+
 button.unavailable {
     background-color: #1f1f1f;
 }
@@ -132,7 +166,7 @@ div:has(> .scroll) {
 }
 
 .worlds {
-    width: 200px;
+    max-width: 550px;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
@@ -144,7 +178,7 @@ div:has(> .scroll) {
 
 .world {
     height: 90px;
-    width: 600px;
+    max-width: 550px;
     padding: 10px;
     display: flex;
     flex-direction: row;
@@ -233,44 +267,10 @@ div:has(> .scroll) {
     width: 100%;
 }
 
-.settings input {
-    font-size: 20px;
-    width: 190px;
-    padding: 3px;
-    border: 2px solid gray;
-    background-color: black;
-    &:invalid {
-        border-color: red;
-    }
-    &:focus {
-        outline: none;
-        border-color: lightblue;
-    }
-}
-
-.settings input[type=number] {
-    appearance: textfield;
-}
-
-.settings :is(input::-webkit-outer-spin-button, input::-webkit-inner-spin-button) {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
 .settings :has(> input[type=checkbox]) {
     display: flex;
     flex-direction: row;
     align-items: center;
-}
-
-.settings input[type=checkbox] {
-    appearance: none;
-    height: 24px;
-    width: 24px;
-}
-
-.settings input[type=checkbox]:checked {
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 16 16'><line x1='2' y1='9' x2='6' y2='13' stroke='white' /><line x1='6' y1='13' x2='14' y2='3' stroke='white' /></svg>");
 }
 
 .about-content {

@@ -1,7 +1,6 @@
 
-import {type Time, timeDiff} from './util';
-import type {Obj, OrbitObj} from './obj';
-import type {World} from './world';
+import type {Obj, OrbitObj} from './obj.ts';
+import type {World} from './world.ts';
 
 type Position = [number, number, number];
 

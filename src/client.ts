@@ -1,11 +1,11 @@
 
 import * as three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
-import * as util from './util';
-import {RootObj, type Obj} from './obj';
-import {join, World} from './world';
-import {emptyWorld} from './default_world';
-import type {GetTimeRequest, GetTimeWarpRequest, GetObjectRequest, GetAllObjectsRequest, GetConfigRequest, StartRequest, StopRequest, Request, ResponseForRequest, SentRequest, SentResponse, SetTimeWarpRequest} from './server';
+import * as util from './util.ts';
+import {RootObj, type Obj} from './obj.ts';
+import {join, World} from './world.ts';
+import {emptyWorld} from './default_world.ts';
+import type {GetTimeRequest, GetTimeWarpRequest, GetObjectRequest, GetAllObjectsRequest, GetConfigRequest, StartRequest, StopRequest, Request, ResponseForRequest, SentRequest, SentResponse, SetTimeWarpRequest} from './server.ts';
 
 interface Settings {
     fov: number,

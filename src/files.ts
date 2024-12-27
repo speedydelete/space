@@ -1,5 +1,5 @@
 
-import {type ObjType, type Obj, type ObjParamsMap, obj} from './obj';
+import type {Obj} from './obj.ts';
 
 const pathSep = /(?<!\\)\//;
 

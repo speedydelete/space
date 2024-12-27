@@ -2,7 +2,7 @@
 import type {ReactNode, RefObject} from 'react';
 import React, {StrictMode, useRef, useState, useEffect} from 'react';
 import {createRoot} from 'react-dom/client';
-import {type WorldInfo, Menu} from './menu';
+import {type WorldInfo, Menu} from './menu.tsx';
 
 function GameIframe({doEscape, setLoadingScreenMessage, closeLoadingScreen}: {doEscape: () => void, setLoadingScreenMessage: (value: string) => void, closeLoadingScreen: () => void}): ReactNode {
     let iframeRef: RefObject<null | HTMLIFrameElement> = useRef(null);

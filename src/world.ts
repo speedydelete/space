@@ -1,8 +1,8 @@
 
-import {timeDiff} from './util';
-import {type Cycle, type Position, type Obj, obj} from './obj';
-import {join, type Directory, FileSystem} from './files';
-import {getPosition, getPeriod} from './orbits';
+import {timeDiff} from './util.ts';
+import {type Cycle, type Obj, obj} from './obj.ts';
+import {join, type Directory, FileSystem} from './files.ts';
+import {getPosition, getPeriod} from './orbits.ts';
 
 interface Config {
     tps: number,

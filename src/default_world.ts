@@ -1,8 +1,8 @@
 
-import type {Axis, BaseObjType, Obj, ObjParamsMap} from './obj';
-import {objTypeMap} from './obj';
-import {type BaseFile, File, Directory, Link} from './files';
-import {World} from './world';
+import type {Axis, BaseObjType, Obj, ObjParamsMap} from './obj.ts';
+import {objTypeMap} from './obj.ts';
+import {type BaseFile, File, Directory, Link} from './files.ts';
+import {World} from './world.ts';
 
 function file(data: string | Obj | any): File {
     return new File(data);
