@@ -35,6 +35,10 @@ button {
     }
 }
 
+button.unavailable {
+    background-color: #1f1f1f;
+}
+
 div:has(> .scroll) {
     height: 100%;
 }
@@ -140,6 +144,7 @@ div:has(> .scroll) {
 
 .world {
     height: 90px;
+    width: 400px;
     padding: 10px;
     display: flex;
     flex-direction: row;
@@ -200,7 +205,7 @@ div:has(> .scroll) {
     font-size: 16px;
 }
 
-.settingst {
+.settings {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -215,6 +220,7 @@ div:has(> .scroll) {
 
 .settings input {
     font-size: 20px;
+    width: 190px;
     padding: 3px;
     border: 2px solid gray;
     background-color: black;

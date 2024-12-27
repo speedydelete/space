@@ -12,6 +12,7 @@ interface WorldInfo {
 const MenuContext = createContext({
     menu: 'main',
     setMenu: (menu: string) => {},
+    worlds: [{}],
     enterWorld: (world: WorldInfo) => {},
     resume: () => {},
     saveAndQuitToTitle: () => {},
@@ -77,9 +78,18 @@ function LeftCentered({children, width, className}: {children: ReactNode, width?
     );
 }
 
-function SwitchMenuButton({menu, children}: {menu: string, children: ReactNode}): ReactNode {
+function UnavailableIfButton({children, cond, onClick}: {children: ReactNode, cond: boolean, onClick?: React.EventHandler<React.MouseEvent<HTMLButtonElement>>}): ReactNode {
+    const eltRef: RefObject<HTMLButtonElement | null> = useRef(null);
+    return <button ref={eltRef} className={cond ? '' : 'unavailable'} onClick={onClick}>{children}</button>;
+}
+
+function SwitchMenuButton({menu, children, cond}: {menu: string, children: ReactNode, cond?: boolean}): ReactNode {
     const setMenu = useContext(MenuContext).setMenu;
-    return <button onClick={() => setMenu(menu)}>{children}</button>;
+    if (cond === undefined) {
+        return <button onClick={() => setMenu(menu)}>{children}</button>;
+    } else {
+        return <UnavailableIfButton onClick={() => setMenu(menu)} cond={cond}>{children}</UnavailableIfButton>
+    }
 }
 
 function MenuSection({name, children}: {name: string, children: ReactNode}): ReactNode {
@@ -134,16 +144,24 @@ function WorldSelectionBottom({children}: {children: ReactNode}): ReactNode {
     return <div className='worlds-bottom'>{children}</div>;
 }
 
+function EditWorldMenu(): ReactNode {
+    return (
+        <MenuSection name='edit-world'>
+            <></>
+        </MenuSection>
+    ); 
+}
+
 function SingleplayerMenu({worlds}: {worlds: WorldInfo[]}): ReactNode {
     const {enterWorld, selectedWorld} = useContext(MenuContext);
     return (
         <MenuSection name='singleplayer'>
             <WorldSelection>{worlds.map((world, i) => <MenuWorld world={world} key={i} index={i} />)}</WorldSelection>
             <WorldSelectionBottom>
-                <button onClick={() => enterWorld(worlds[selectedWorld])}>Play Selected World</button>
+                <UnavailableIfButton cond={selectedWorld != -1} onClick={() => enterWorld(worlds[selectedWorld])}>Play Selected World</UnavailableIfButton>
                 <button>Create New World</button>
-                <button>Edit</button>
-                <button>Delete</button>
+                <SwitchMenuButton menu='edit-world' cond={selectedWorld != -1}>Edit</SwitchMenuButton>
+                <UnavailableIfButton cond={selectedWorld != -1}>Delete</UnavailableIfButton>
                 <SwitchMenuButton menu='main'>Cancel</SwitchMenuButton>
             </WorldSelectionBottom>
         </MenuSection>
@@ -204,7 +222,7 @@ function SettingsMenu(): ReactNode {
     return (
         <MenuSection name='settings'>
             <div className='lower-left'><button onClick={settingsBack}>Back</button></div>
-            <LeftCentered width='75%' className='scroll settings'>
+            <LeftCentered width='min(75%, 600px)' className='scroll settings'>
                 <h1>Settings</h1>
                 <SettingsContext.Provider value={[settings, setSettings]}>
                     <Setting type='number' setting='fov' name='FOV' />
@@ -367,6 +385,7 @@ function Menu({worlds, enterWorld, resume, saveAndQuitToTitle, menu, setMenu, sh
     const contextData = {
         menu: menu,
         setMenu: setMenu,
+        worlds: worlds,
         enterWorld: enterWorld,
         resume: resume,
         saveAndQuitToTitle: saveAndQuitToTitle,
