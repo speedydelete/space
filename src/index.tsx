@@ -43,6 +43,10 @@ function Game(): ReactNode {
             name: 'New World',
             desc: '2024-12-13 00:00:00\nCreative Mode, v0.2.0',
         },
+        {
+            name: 'Old World',
+            desc: '2000-12-13 00:00:00\nCreative Mode, v0.-1.0',
+        },
     ];
     const [inMenu, setInMenu] = useState(true);
     const [menu, setMenu] = useState('main');
@@ -55,6 +59,7 @@ function Game(): ReactNode {
             {inMenu && <Menu 
                 worlds={worlds}
                 enterWorld={(world: WorldInfo) => {
+                    console.log(world);
                     currentWorldRef.current = world;
                     setMenu('loading');
                     setVisible(true);

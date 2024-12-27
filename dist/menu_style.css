@@ -1,0 +1,276 @@
+
+* {
+    user-select: none;
+    box-sizing: border-box;
+    font-family: Consolas, 'Courier New', Courier, monospace;
+    background-color: transparent;
+    color: #ffffff;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    overflow: hidden;
+    font-family: Consolas, 'Courier New', Courier, monospace;
+    color: #ffffff;
+}
+
+a {
+    text-decoration: none;
+    color: #0078d4;
+}
+
+button {
+    appearance: none;
+    height: 50px;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 24px;
+    background-color: #5f5f5f;
+    border: 1px solid #ffffff;
+    color: inherit;
+    &:hover {
+        background-color: #3f3f3f;
+    }
+}
+
+div:has(> .scroll) {
+    height: 100%;
+}
+
+.scroll {
+    overflow-y: auto;
+}
+
+.small-text {
+    font-size: 14px;
+}
+
+.lower-left {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+}
+
+.left-centered-wrapper {
+    display: flex;
+    flex-direction: row;
+}
+
+.centering-space {
+    flex-grow: 1;
+}
+
+#root, #root > *, #root > * > * {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: block;
+    height: 100%;
+    width: 100%;
+    border: none;
+}
+
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+    font-size: 14px;
+    background-color: transparent;
+    z-index: 2;
+}
+
+.wrapper > * {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.wrapper > canvas {
+    background-color: black;
+    z-index: -1;
+}
+
+.submenu {
+    z-index: 1;
+}
+
+.main-menu {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 25px;
+}
+
+.main-menu button {
+    width: 300px;
+}
+
+.main-menu .title {
+    margin-bottom: 48px;
+    font-size: 48px;
+}
+
+.submenu :has(> .worlds) {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.worlds {
+    width: 100%;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: left;
+    padding-top: 25px;
+    overflow-y: scroll;
+}
+
+.world {
+    height: 90px;
+    padding: 10px;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    font-size: 20px;
+    border: 2px solid black;
+}
+
+.selected-world {
+    border-color: white;
+}
+
+.world div:has(img) {
+    position: relative;
+    height: 64px;
+    width: 64px;
+}
+
+.world img {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    width: 64px;
+    z-index: 0;
+    background-color: transparent;
+}
+
+.world img.enter-arrow {
+    z-index: 1;
+    opacity: 0;
+}
+
+.world div:has(img):hover img.enter-arrow {
+    opacity: 1;
+}
+
+.world-desc {
+    white-space: pre-wrap;
+    color: #cccccc;
+}
+
+.worlds-bottom {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 25px;
+    display: flex;
+    flex-direction: row;
+    gap: 25px;
+    border-top: 2px solid #ffffff;
+}
+
+.settings-menu {
+    font-size: 16px;
+}
+
+.settingst {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 16px;
+    font-size: 24px;
+}
+
+.settings div {
+    width: 100%;
+}
+
+.settings input {
+    font-size: 20px;
+    padding: 3px;
+    border: 2px solid gray;
+    background-color: black;
+    &:invalid {
+        border-color: red;
+    }
+    &:focus {
+        outline: none;
+        border-color: lightblue;
+    }
+}
+
+.settings input[type=number] {
+    appearance: textfield;
+}
+
+.settings :is(input::-webkit-outer-spin-button, input::-webkit-inner-spin-button) {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.settings :has(> input[type=checkbox]) {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.settings input[type=checkbox] {
+    appearance: none;
+    height: 24px;
+    width: 24px;
+}
+
+.settings input[type=checkbox]:checked {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 16 16'><line x1='2' y1='9' x2='6' y2='13' stroke='white' /><line x1='6' y1='13' x2='14' y2='3' stroke='white' /></svg>");
+}
+
+.escape-menu {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 25px;
+}
+
+.escape-menu button {
+    min-width: 312px;
+    max-width: 312px;
+}
+
+.loading-menu {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    color: white;
+}

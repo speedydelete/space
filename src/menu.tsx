@@ -17,6 +17,8 @@ const MenuContext = createContext({
     saveAndQuitToTitle: () => {},
     settingsBack: () => {},
     setSettingsBack: (settingsBack: () => void) => {},
+    selectedWorld: -1,
+    setSelectedWorld: (world: number) => {},
 });
 
 const starSizes: number[] = [1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3];
@@ -65,54 +67,80 @@ function StarCanvas(): ReactNode {
     );
 }
 
-function SwitchMenuButton({menu, children}: {menu: string, children: ReactNode}) {
+function LeftCentered({children, width, className}: {children: ReactNode, width?: string, className?: string}): ReactNode {
+    return (
+        <div className='left-centered-wrapper'>
+            <div className='centering-space'></div>
+            <div style={{width: width === undefined ? 0 : width}} className={className}>{children}</div>
+            <div className='centering-space'></div>
+        </div>
+    );
+}
+
+function SwitchMenuButton({menu, children}: {menu: string, children: ReactNode}): ReactNode {
     const setMenu = useContext(MenuContext).setMenu;
     return <button onClick={() => setMenu(menu)}>{children}</button>;
 }
 
 function MenuSection({name, children}: {name: string, children: ReactNode}): ReactNode {
     const menu = useContext(MenuContext).menu;
-    return menu == name && <div className={'menu-section menu-' + name}>{children}</div>;
+    return menu == name && <div className={`submenu ${name}-menu`}>{children}</div>;
 }
 
-function MenuWorld({world}: {world: WorldInfo}): ReactNode {
-    const enterWorld = useContext(MenuContext).enterWorld;
+function MenuWorld({world, index}: {world: WorldInfo, index: number}): ReactNode {
+    const {enterWorld, selectedWorld, setSelectedWorld} = useContext(MenuContext);
     let thumbnail = world.thumbnail;
     let style = {};
     if (thumbnail === undefined) {
         thumbnail = 'data/img/pack.png';
         style = {filter: 'grayscale(100%)'};
     }
+    function handleClick(): void {
+        if (selectedWorld === index) {
+            setSelectedWorld(-1);
+        } else {
+            setSelectedWorld(index);
+        }
+    }
+    let divRef: RefObject<HTMLDivElement | null> = useRef(null);
+    useEffect(() => {
+        if (divRef.current !== null) {
+            if (selectedWorld === index) {
+                divRef.current.classList.add('selected-world');
+            } else {
+                divRef.current.classList.remove('selected-world');
+            }
+        }
+    }, [selectedWorld]);
     return (
-        <div className='menu-world'>
+        <div className='world' onClick={handleClick} ref={divRef}>
             <div onClick={() => enterWorld(world)}>
                 <img src={thumbnail} style={style} />
                 <img className='enter-arrow' src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 16 16'><polygon points='8,2 8,14 14,8' style='fill: white;' /></svg>" />
             </div>
             <div>
                 <div>{world.name}</div>
-                <div className='menu-world-desc'>{world.desc}</div>
+                <div className='world-desc'>{world.desc}</div>
             </div>
         </div>
     );
 }
 
 function WorldSelection({children}: {children: ReactNode}): ReactNode {
-    return <div className='menu-worlds'>{children}</div>;
+    return <LeftCentered className='worlds'>{children}</LeftCentered>;
 }
 
 function WorldSelectionBottom({children}: {children: ReactNode}): ReactNode {
-    return <div className='menu-worlds-bottom'>{children}</div>;
+    return <div className='worlds-bottom'>{children}</div>;
 }
 
 function SingleplayerMenu({worlds}: {worlds: WorldInfo[]}): ReactNode {
+    const {enterWorld, selectedWorld} = useContext(MenuContext);
     return (
         <MenuSection name='singleplayer'>
-            <WorldSelection>
-                {worlds.map((world: WorldInfo, i: number) => <MenuWorld world={world} key={i} />)}
-            </WorldSelection>
+            <WorldSelection>{worlds.map((world, i) => <MenuWorld world={world} key={i} index={i} />)}</WorldSelection>
             <WorldSelectionBottom>
-                <button>Play Selected World</button>
+                <button onClick={() => enterWorld(worlds[selectedWorld])}>Play Selected World</button>
                 <button>Create New World</button>
                 <button>Edit</button>
                 <button>Delete</button>
@@ -176,7 +204,7 @@ function SettingsMenu(): ReactNode {
     return (
         <MenuSection name='settings'>
             <div className='lower-left'><button onClick={settingsBack}>Back</button></div>
-            <div className='menu-content'>
+            <LeftCentered width='75%' className='scroll settings'>
                 <h1>Settings</h1>
                 <SettingsContext.Provider value={[settings, setSettings]}>
                     <Setting type='number' setting='fov' name='FOV' />
@@ -187,7 +215,7 @@ function SettingsMenu(): ReactNode {
                     <Setting type='number' setting='controlsMinDistance' name='Zoom Minimum Distance' />
                     <Setting type='number' setting='controlsMaxDistance' name='Zoom Maximum Distance' />
                 </SettingsContext.Provider>
-            </div>
+            </LeftCentered>
         </MenuSection>
     );
 }
@@ -196,7 +224,7 @@ function AboutMenu(): ReactNode {
     return (
         <MenuSection name='about'>
             <div className='lower-left'><SwitchMenuButton menu='main'>Back</SwitchMenuButton></div>
-            <div className='menu-content'>
+            <LeftCentered width='90%' className='scroll'>
                 <h1>About</h1>
                 Space is an open-source space simulation game licensed under the <a href='https://www.gnu.org/licenses/gpl-3.0.en.html#license-text'>GPLv3.0</a>. Here is its <a href='https://github.com/speedydelete/space'>GitHub</a>.
                 <br />
@@ -288,28 +316,32 @@ function AboutMenu(): ReactNode {
                         </ul>
                     </li>
                 </ul>
-            </div>
+            </LeftCentered>
         </MenuSection>
     );
 }
 
-function EscapeMenu(): ReactNode {
+function InnerEscapeMenu(): ReactNode {
     const {resume, saveAndQuitToTitle, setSettingsBack, setMenu} = useContext(MenuContext);
     useEffect(() => {
+        console.log('setting settings back to resume');
         setSettingsBack(() => resume);
         return () => {
+            console.log('setting settings back to main');
            setSettingsBack(() => () => setMenu('main'));
         }
     });
     return (
-        <MenuSection name='escape'>
-            <div className='menu-escape'>
-                <button onClick={resume}>Back to Game</button>
-                <SwitchMenuButton menu='settings'>Options</SwitchMenuButton>
-                <button onClick={saveAndQuitToTitle}>Save and Quit to Title</button>
-            </div>
-        </MenuSection>
+        <>
+            <button onClick={resume}>Back to Game</button>
+            <SwitchMenuButton menu='settings'>Options</SwitchMenuButton>
+            <button onClick={saveAndQuitToTitle}>Save and Quit to Title</button>
+        </>
     );
+}
+
+function EscapeMenu(): ReactNode {
+    return <MenuSection name='escape'><InnerEscapeMenu /></MenuSection>
 }
 
 function LoadingScreenMenu({message}: {message: string}): ReactNode {
@@ -331,6 +363,7 @@ function MainMenu(): ReactNode {
 
 function Menu({worlds, enterWorld, resume, saveAndQuitToTitle, menu, setMenu, showStars, loadingScreenMessage}: {worlds: WorldInfo[], enterWorld: (world: WorldInfo) => void, resume: () => void, saveAndQuitToTitle: () => void, menu: string, setMenu: (menu: string) => void, showStars: boolean, loadingScreenMessage: string}): ReactNode {
     const [settingsBack, setSettingsBack] = useState(() => () => setMenu('main'));
+    const [selectedWorld, setSelectedWorld] = useState(-1);
     const contextData = {
         menu: menu,
         setMenu: setMenu,
@@ -339,9 +372,11 @@ function Menu({worlds, enterWorld, resume, saveAndQuitToTitle, menu, setMenu, sh
         saveAndQuitToTitle: saveAndQuitToTitle,
         settingsBack: settingsBack,
         setSettingsBack: setSettingsBack,
+        selectedWorld: selectedWorld,
+        setSelectedWorld: setSelectedWorld,
     };
     return (
-        <div className='menu'>
+        <div className='wrapper'>
             {showStars && <StarCanvas />}
             <MenuContext.Provider value={contextData}>
                 <MainMenu />
