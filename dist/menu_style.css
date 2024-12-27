@@ -132,7 +132,7 @@ div:has(> .scroll) {
 }
 
 .worlds {
-    width: 100%;
+    width: 200px;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
@@ -144,7 +144,7 @@ div:has(> .scroll) {
 
 .world {
     height: 90px;
-    width: 400px;
+    width: 600px;
     padding: 10px;
     display: flex;
     flex-direction: row;
@@ -189,16 +189,30 @@ div:has(> .scroll) {
     color: #cccccc;
 }
 
-.worlds-bottom {
+.worlds-bottom-wrapper {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
+    border-top: 2px solid #ffffff;
+}
+
+.worlds-bottom {
+    width: 600px;
     padding: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.worlds-bottom > div {
     display: flex;
     flex-direction: row;
     gap: 25px;
-    border-top: 2px solid #ffffff;
+}
+
+.worlds-bottom > div > * {
+    flex-grow: 1;
 }
 
 .settings-menu {
@@ -206,6 +220,7 @@ div:has(> .scroll) {
 }
 
 .settings {
+    width: min(75%, 600px);
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -256,6 +271,11 @@ div:has(> .scroll) {
 
 .settings input[type=checkbox]:checked {
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 16 16'><line x1='2' y1='9' x2='6' y2='13' stroke='white' /><line x1='6' y1='13' x2='14' y2='3' stroke='white' /></svg>");
+}
+
+.about-content {
+    width: 75%;
+    padding-bottom: 20px;
 }
 
 .escape-menu {

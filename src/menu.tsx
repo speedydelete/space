@@ -68,11 +68,11 @@ function StarCanvas(): ReactNode {
     );
 }
 
-function LeftCentered({children, width, className}: {children: ReactNode, width?: string, className?: string}): ReactNode {
+function LeftCentered({children, className}: {children: ReactNode, className?: string}): ReactNode {
     return (
         <div className='left-centered-wrapper'>
             <div className='centering-space'></div>
-            <div style={{width: width === undefined ? 0 : width}} className={className}>{children}</div>
+            <div className={className}>{children}</div>
             <div className='centering-space'></div>
         </div>
     );
@@ -141,13 +141,16 @@ function WorldSelection({children}: {children: ReactNode}): ReactNode {
 }
 
 function WorldSelectionBottom({children}: {children: ReactNode}): ReactNode {
-    return <div className='worlds-bottom'>{children}</div>;
+    return (
+        <div className='worlds-bottom-wrapper'>
+            <LeftCentered className='worlds-bottom'>{children}</LeftCentered>
+        </div>
+    );
 }
 
 function EditWorldMenu(): ReactNode {
     return (
         <MenuSection name='edit-world'>
-            <></>
         </MenuSection>
     ); 
 }
@@ -158,11 +161,15 @@ function SingleplayerMenu({worlds}: {worlds: WorldInfo[]}): ReactNode {
         <MenuSection name='singleplayer'>
             <WorldSelection>{worlds.map((world, i) => <MenuWorld world={world} key={i} index={i} />)}</WorldSelection>
             <WorldSelectionBottom>
-                <UnavailableIfButton cond={selectedWorld != -1} onClick={() => enterWorld(worlds[selectedWorld])}>Play Selected World</UnavailableIfButton>
-                <button>Create New World</button>
-                <SwitchMenuButton menu='edit-world' cond={selectedWorld != -1}>Edit</SwitchMenuButton>
-                <UnavailableIfButton cond={selectedWorld != -1}>Delete</UnavailableIfButton>
-                <SwitchMenuButton menu='main'>Cancel</SwitchMenuButton>
+                <div>
+                    <UnavailableIfButton cond={selectedWorld != -1} onClick={() => enterWorld(worlds[selectedWorld])}>Play Selected World</UnavailableIfButton>
+                    <button>Create New World</button>
+                </div>
+                <div>
+                    <SwitchMenuButton menu='edit-world' cond={selectedWorld != -1}>Edit</SwitchMenuButton>
+                    <UnavailableIfButton cond={selectedWorld != -1}>Delete</UnavailableIfButton>
+                    <SwitchMenuButton menu='main'>Cancel</SwitchMenuButton>
+                </div>
             </WorldSelectionBottom>
         </MenuSection>
     );
@@ -222,7 +229,7 @@ function SettingsMenu(): ReactNode {
     return (
         <MenuSection name='settings'>
             <div className='lower-left'><button onClick={settingsBack}>Back</button></div>
-            <LeftCentered width='min(75%, 600px)' className='scroll settings'>
+            <LeftCentered className='scroll settings'>
                 <h1>Settings</h1>
                 <SettingsContext.Provider value={[settings, setSettings]}>
                     <Setting type='number' setting='fov' name='FOV' />
@@ -242,7 +249,7 @@ function AboutMenu(): ReactNode {
     return (
         <MenuSection name='about'>
             <div className='lower-left'><SwitchMenuButton menu='main'>Back</SwitchMenuButton></div>
-            <LeftCentered width='90%' className='scroll'>
+            <LeftCentered className='scroll about-content'>
                 <h1>About</h1>
                 Space is an open-source space simulation game licensed under the <a href='https://www.gnu.org/licenses/gpl-3.0.en.html#license-text'>GPLv3.0</a>. Here is its <a href='https://github.com/speedydelete/space'>GitHub</a>.
                 <br />
