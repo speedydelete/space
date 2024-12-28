@@ -77,28 +77,6 @@ class _BaseObj<T extends BaseObjType = BaseObjType> {
         return false;
     }
 
-    export(): object {
-        let proto = Object.getPrototypeOf(this);
-        let out: object = {};
-        while (proto && proto.constructor && proto.constructor.name !== 'Object') {
-            Object.assign(out, this['export' + this.constructor.name]());
-            proto = Object.getPrototypeOf(proto);
-        }
-        return out;
-    }
-
-    toJSON(): object {
-        return this.export();
-    }
-
-    export_BaseObj(): object {
-        return {
-            't': this.$type,
-            'n': this.name,
-            'd': this.designation,
-        };
-    }
-
 }
 
 class RootObj extends _BaseObj<'root'> {
@@ -132,20 +110,6 @@ class _Obj<T extends ObjType = ObjType> extends _BaseObj {
 
     hasOrbit(): this is OrbitObj {
         return this.orbit !== undefined;
-    }
-
-    export_Obj(): object {
-        return {
-            x: this.position[0],
-            y: this.position[1],
-            z: this.position[2],
-            orbit: this.orbit === undefined ? null : this.orbit,
-            r: this.radius,
-            m: this.mass,
-            a: this.axis === undefined ? null : this.axis,
-
-            v: this.alwaysVisible,
-        };
     }
 
 }

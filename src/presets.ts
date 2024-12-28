@@ -820,7 +820,7 @@ solarSystemWorld.setDirectory('/home/objects', objdir('root', 'root', 'special:r
 class Preset {
 
     name: string;
-    data: string;
+    data: Promise<string>;
     isDefault: boolean;
 
     constructor(name: string, world: World, isDefault: boolean = false) {
@@ -834,7 +834,7 @@ class Preset {
 const presets: Preset[] = [
     new Preset('Empty', emptyWorld),
     new Preset('Solar System', solarSystemWorld),
-]
+];
 
 export {
     emptyWorld,

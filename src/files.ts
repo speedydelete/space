@@ -1,4 +1,6 @@
 
+import type {Obj} from './obj.ts';
+
 const pathSep = /(?<!\\)\//;
 
 function split(path: string): string[] {
@@ -33,46 +35,36 @@ class BaseFile {
         this.type = type;
     }
 
+    static fromJSON(data: string): BaseFile {
+        switch (JSON.parse(data).type) {
+            case 'regular':
+                return File.fromJSON(data);
+            case 'directory':
+                return Directory.fromJSON(data);
+            case 'link':
+                return Link.fromJSON(data);
+            default:
+                throw new TypeError('cannot extract BaseFile from JSON, invalid type')
+        }
+    }
+
 }
 
 class File extends BaseFile {
 
-    _json: boolean = false;
-    _data: any;
+    data: string;
 
-    constructor(data: any, json: boolean = false) {
+    constructor(data: string) {
         super('regular');
-        if (json) {
-            this.jsonData = data;
-        } else {
-            this.data = data;
-        }
-    }
-
-    get data(): string {
-        if (this._json) {
-            return JSON.stringify(this._data);
-        } else {
-            return this._data;
-        }
+        this.data = data;
     }
 
     get jsonData(): any {
-        if (this._json) {
-            return this._data;
-        } else {
-            return JSON.parse(this._data);
-        }
-    }
-
-    set data(value: string) {
-        this._data = value;
-        this._json = false;
+        return JSON.parse(this.data);
     }
 
     set jsonData(value: any) {
-        this.data = value;
-        this._json = true;
+        this.data = JSON.stringify(value);
     }
 
 }
@@ -103,8 +95,12 @@ class FileSystem {
 
     files: {[key: string]: BaseFile} = {};
 
-    constructor(files: Directory) {
-        this.setDirectory('/', files);
+    constructor(files: Directory | {[key: string]: BaseFile}) {
+        if (files instanceof Directory) {
+            this.setDirectory('/', files);
+        } else {
+            this.files = files;
+        }
     }
 
     setDirectory(dirPath: string, dir: Directory): void {
@@ -172,7 +168,7 @@ class FileSystem {
                 const dir = splitPath.slice(0, i).join('/');
                 if (!this.exists(dir)) this.mkdir(dir);
             }
-            this.files[resolvedPath] = new File(value, true);
+            this.files[resolvedPath] = new File(value);
         } else if (this.files[resolvedPath] instanceof File) {
             this.files[resolvedPath].jsonData = value;
         }
@@ -213,6 +209,14 @@ class FileSystem {
 
     isdir(path: string): boolean {
         return this.getFile(path)[1] instanceof Directory;
+    }
+
+    toJSON(): object {
+        return this.files;
+    }
+    
+    static fromJSON(data: string): FileSystem {
+        return new FileSystem(Object.fromEntries(Object.entries(JSON.parse(data)).map(([x, y]) => [x, BaseFile.fromJSON(JSON.stringify(y))])));
     }
 
 }

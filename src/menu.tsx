@@ -198,7 +198,7 @@ function CreateWorldMenu(): ReactNode {
             <Centered className='thin-menu-content'>
                 <h1>Create New World</h1>
                 <div>World Name:&nbsp;<input type="text" value={name} /></div>
-                <div>Preset:&nbsp;<select>{presets.map(x => <option>{x.name}</option>)}</select></div>
+                <div>Preset:&nbsp;<select>{presets.map((x, i) => <option key={i}>{x.name}</option>)}</select></div>
                 <div className='bottom'>
                     <button onClick={create}>Create</button>
                     <SwitchMenuButton menu='singleplayer'>Cancel</SwitchMenuButton>

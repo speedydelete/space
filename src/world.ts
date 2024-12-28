@@ -1,7 +1,7 @@
 
 import {timeDiff} from './util.ts';
 import {type Cycle, type Obj, obj} from './obj.ts';
-import {join, type Directory, FileSystem} from './files.ts';
+import {join, type BaseFile, type Directory, FileSystem} from './files.ts';
 import {getPosition, getPeriod} from './orbits.ts';
 
 interface Config {
@@ -17,7 +17,7 @@ class World extends FileSystem {
     timeWarp: number = 1;
     tickInterval: number | null = null;
 
-    constructor(files: Directory) {
+    constructor(files: Directory | {[key: string]: BaseFile}) {
         super(files);
     }
 
@@ -172,6 +172,62 @@ class World extends FileSystem {
     stop(): void {
         if (this.tickInterval !== null) window.clearInterval(this.tickInterval);
         this.tickInterval = null;
+    }
+
+    async export(): Promise<string> {
+        const stream = new Blob([JSON.stringify(this)], {type: 'application/json'}).stream();
+        const compStream = stream.pipeThrough(new CompressionStream('deflate'));
+        const data = new Uint8Array(await (new Response(compStream)).arrayBuffer());
+        return 'space world file (format version 1)\n' + (new Blob([data]).text());
+        // let out = 'space world file (format version 2)\n';
+        // let buffer = 0;
+        // for (let i = 0; i < Math.ceil(data.length/7)*7; i++) {
+        //     const byte = data[i];
+        //     out += String.fromCharCode(byte & 0x7F);
+        //     buffer += (byte & 0x80) >> ((7 - i % 7) % 7);
+        //     if (i % 7 === 6) {
+        //         out += String.fromCharCode(buffer);
+        //         buffer = 0;
+        //     }
+        // }
+        // return out;
+    }
+
+    static async import(data: string): Promise<World> {
+        if (!data.startsWith('space world file (format version ')) {
+            throw new TypeError('invalid world to import');
+        }
+        data = data.slice('space world file (format version '.length);
+        const version = parseInt(data.slice(0, data.indexOf(')')));
+        data = data.slice(data.indexOf('\n'));
+        if (version === 1) {
+            const stream = new Blob([Uint8Array.from(Array.from(data).map(x => x.charCodeAt(0)))]).stream();
+            const decompStream = stream.pipeThrough(new DecompressionStream('deflate'));
+            return World.fromJSON(await (new Response(decompStream)).text());
+        } else if (version === 2) {
+            let array = new Uint8Array(data.length - Math.floor(data.length/8));
+            let buffer = [data.charCodeAt(0)];
+            for (let i = 1; i < data.length; i++) {
+                let value = data.charCodeAt(i);
+                if (i % 8 === 7) {
+                    for (let j = 6; j >= 0; j--) {
+                        array[i - Math.floor(i/8) - 7 + j] = buffer[j] | ((value & (1 << j)) << (7 - j));
+                    }
+                    buffer = [];
+                } else {
+                    buffer.push(value);
+                }
+            }
+            const stream = new Blob([array]).stream();
+            const decompStream = stream.pipeThrough(new DecompressionStream('deflate'));
+            return World.fromJSON(await (new Response(decompStream)).text());
+        } else {
+            throw new TypeError('invalid world to import');
+        }
+    }
+
+    static fromJSON(data: string): World {
+        return new World(FileSystem.fromJSON(data).files);
     }
 
 }
