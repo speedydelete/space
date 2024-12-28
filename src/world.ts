@@ -12,17 +12,13 @@ interface Config {
     initialTarget: string,
 }
 
-class World {
+class World extends FileSystem {
 
-    fs: FileSystem;
     timeWarp: number = 1;
-    tps: number;
-
     tickInterval: number | null = null;
 
     constructor(files: Directory) {
-        this.fs = new FileSystem(files);
-        this.tps = this.config.tps;
+        super(files);
     }
 
     cycle(cycle: Cycle): number {
@@ -45,26 +41,26 @@ class World {
     }
 
     readObj(path: string): Obj | undefined {
-        let data: any | undefined = this.fs.readjson(join('/home/objects', path, 'object'));
+        let data: any | undefined = this.readjson(join('/home/objects', path, 'object'));
         if (data === undefined) return undefined;
         return obj(data.$type, data);
     }
 
     writeObj(path: string, object: Obj): void {
-        this.fs.writejson(join('/home/objects', path, 'object'), object);
+        this.writejson(join('/home/objects', path, 'object'), object);
     }
 
     isdirObj(path: string): boolean {
-        return this.fs.isdir(join('/home/objects', path));
+        return this.isdir(join('/home/objects', path));
     }
 
     lsObj(path: string): string[] {
-        return this.fs.ls(join('/home/objects', path)).map((x) => x.replace('object', '').replace(/\/$/, '')).filter((x) => x !== 'object' && x !== '');
+        return this.ls(join('/home/objects', path)).map((x) => x.replace('object', '').replace(/\/$/, '')).filter((x) => x !== 'object' && x !== '');
     }
 
     lsObjAll(): string[] {
         let out: string[] = [];
-        for (const path in this.fs.files) {
+        for (const path in this.files) {
             if (path.startsWith('/home/objects/') && path.endsWith('/object')) {
                 out.push(path.slice('/home/objects/'.length, -'/object'.length));
             }
@@ -89,11 +85,15 @@ class World {
     }
 
     get config(): Config {
-        return this.fs.readjson('/etc/config');
+        return this.readjson('/etc/config');
+    }
+
+    get tps(): number {
+        return this.config.tps;
     }
 
     get time(): Date | undefined {
-        const out = this.fs.read('/etc/time');
+        const out = this.read('/etc/time');
         if (out === undefined) {
             return undefined
         } else {
@@ -102,7 +102,7 @@ class World {
     }
 
     set time(value: Date) {
-        this.fs.write('/etc/time', value.toISOString());
+        this.write('/etc/time', value.toISOString());
     }
 
     updateObjects(basePath: string = '', parent: Obj | null = null): void {

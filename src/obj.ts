@@ -1,4 +1,16 @@
 
+function storeNumber(value: number): string {
+    const view = new DataView(new ArrayBuffer(8));
+    view.setFloat64(0, value, false);
+    return Array(8).map((_, i) => String.fromCharCode(view.getUint8(i))).join('');
+}
+
+function loadNumber(value: string): number {
+    const view = new DataView(new ArrayBuffer(8));
+    for (let i = 0; i < 8; i++) view.setUint8(i, value.charCodeAt(i));
+    return view.getFloat64(0, false);
+}
+
 type FixedCycle = {
     type: 'fixed',
     value: number,
@@ -54,7 +66,6 @@ class _BaseObj<T extends BaseObjType = BaseObjType> {
     $type: T;
     name: string;
     designation: string;
-    alwaysVisible: boolean = false;
 
     constructor(type: T, name: string, designation: string, data: {} = {}) {
         this.$type = type;
@@ -65,12 +76,35 @@ class _BaseObj<T extends BaseObjType = BaseObjType> {
     hasOrbit(): this is OrbitObj {
         return false;
     }
+
+    export(): object {
+        let proto = Object.getPrototypeOf(this);
+        let out: object = {};
+        while (proto && proto.constructor && proto.constructor.name !== 'Object') {
+            Object.assign(out, this['export' + this.constructor.name]());
+            proto = Object.getPrototypeOf(proto);
+        }
+        return out;
+    }
+
+    toJSON(): object {
+        return this.export();
+    }
+
+    export_BaseObj(): object {
+        return {
+            't': this.$type,
+            'n': this.name,
+            'd': this.designation,
+        };
+    }
+
 }
 
 class RootObj extends _BaseObj<'root'> {
 
     constructor(name: string, designation: string, data: {} = {}) {
-        super('root', name, designation, data);
+        super('root', name, designation);
     }
 
 }
@@ -98,6 +132,20 @@ class _Obj<T extends ObjType = ObjType> extends _BaseObj {
 
     hasOrbit(): this is OrbitObj {
         return this.orbit !== undefined;
+    }
+
+    export_Obj(): object {
+        return {
+            x: this.position[0],
+            y: this.position[1],
+            z: this.position[2],
+            orbit: this.orbit === undefined ? null : this.orbit,
+            r: this.radius,
+            m: this.mass,
+            a: this.axis === undefined ? null : this.axis,
+
+            v: this.alwaysVisible,
+        };
     }
 
 }

@@ -1,6 +1,7 @@
 
 import type {ReactNode, RefObject} from 'react';
 import React, {useRef, useState, useEffect, useContext, createContext} from 'react';
+import {type Preset, presets} from './presets.ts';
 import {type Settings, type SettingsKey, type SettingsValue, getSettings, defaultSettings} from './client.ts';
 import {About} from './about.tsx';
 
@@ -186,8 +187,6 @@ function EditWorldMenu(): ReactNode {
     ); 
 }
 
-const presets: Preset[] = [];
-
 function CreateWorldMenu(): ReactNode {
     const {worlds, setWorlds} = useContext(MenuContext);
     const [name, setName] = useState('');
@@ -199,9 +198,9 @@ function CreateWorldMenu(): ReactNode {
             <Centered className='thin-menu-content'>
                 <h1>Create New World</h1>
                 <div>World Name:&nbsp;<input type="text" value={name} /></div>
+                <div>Preset:&nbsp;<select>{presets.map(x => <option>{x.name}</option>)}</select></div>
                 <div className='bottom'>
                     <button onClick={create}>Create</button>
-                    Preset: <select>{presets.map(x => <option>{x.name}</option>)}</select>
                     <SwitchMenuButton menu='singleplayer'>Cancel</SwitchMenuButton>
                 </div>
             </Centered>

@@ -4,7 +4,7 @@ import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import * as util from './util.ts';
 import {RootObj, type Obj} from './obj.ts';
 import {join, World} from './world.ts';
-import {emptyWorld} from './default_world.ts';
+import {emptyWorld} from './presets.ts';
 import type {GetTimeRequest, GetTimeWarpRequest, GetObjectRequest, GetAllObjectsRequest, GetConfigRequest, StartRequest, StopRequest, Request, ResponseForRequest, SentRequest, SentResponse, SetTimeWarpRequest} from './server.ts';
 
 interface Settings {
@@ -412,7 +412,7 @@ class Client {
         await this.setLoadingScreenMessage('Syncing time');
         const time = await this.send<GetTimeRequest>('get-time');
         this.world.timeWarp = await this.send<GetTimeWarpRequest>('get-time-warp');
-        this.world.fs.writejson('/etc/config', await this.send<GetConfigRequest>('get-config'));
+        this.world.writejson('/etc/config', await this.send<GetConfigRequest>('get-config'));
         if (time !== undefined) this.world.time = time;
         await this.setLoadingScreenMessage('Loading objects');
         await this.init();
