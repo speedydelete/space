@@ -1,7 +1,7 @@
 
 import type {ReactNode, RefObject} from 'react';
 import React, {useRef, useState, useEffect, useContext, createContext} from 'react';
-import {type Preset, presets} from './presets.ts';
+import {presets} from './presets.ts';
 import {type Settings, type SettingsKey, type SettingsValue, getSettings, defaultSettings} from './client.ts';
 import {About} from './about.tsx';
 
@@ -9,6 +9,7 @@ interface WorldInfo {
     name: string,
     desc: string,
     thumbnail?: string,
+    data: string,
 }
 
 const MenuContext = createContext<{
@@ -123,9 +124,9 @@ function MenuWorld({world, index}: {world: WorldInfo, index: number}): ReactNode
     useEffect(() => {
         if (divRef.current !== null) {
             if (selectedWorld === index) {
-                divRef.current.classList.add('selected-world');
+                divRef.current.classList.add('selected-menu-world');
             } else {
-                divRef.current.classList.remove('selected-world');
+                divRef.current.classList.remove('selected-menu-world');
             }
         }
     }, [selectedWorld]);
@@ -188,17 +189,32 @@ function EditWorldMenu(): ReactNode {
 }
 
 function CreateWorldMenu(): ReactNode {
-    const {worlds, setWorlds} = useContext(MenuContext);
-    const [name, setName] = useState('');
-    function create() {
-        
+    const {worlds, setWorlds, setMenu} = useContext(MenuContext);
+    const [name, setName] = useState('New World');
+    const [preset, setPreset] = useState('1');
+    async function create() {
+        const presetObj = presets[parseInt(preset)];
+        const newWorlds = worlds.concat({
+            name: name,
+            desc: `Preset: ${presetObj.name}`,
+            data: await presetObj.data,
+        });
+        setWorlds(newWorlds);
+        localStorage.setItem('space-game-worlds', JSON.stringify(newWorlds));
+        setMenu('singleplayer');
     }
     return (
         <MenuSection name='create-world'>
             <Centered className='thin-menu-content'>
                 <h1>Create New World</h1>
-                <div>World Name:&nbsp;<input type="text" value={name} /></div>
-                <div>Preset:&nbsp;<select>{presets.map((x, i) => <option key={i}>{x.name}</option>)}</select></div>
+                <div>World Name:&nbsp;
+                    <input type="text" defaultValue={name} onChange={(event) => setName(event.target.value)} />
+                </div>
+                <div>Preset:&nbsp;
+                    <select value={preset} onChange={(event) => setPreset(event.target.value)}>
+                        {presets.map((x, i) => <option value={String(i)} key={i}>{x.name}</option>)}
+                    </select>
+                </div>
                 <div className='bottom'>
                     <button onClick={create}>Create</button>
                     <SwitchMenuButton menu='singleplayer'>Cancel</SwitchMenuButton>
@@ -206,6 +222,10 @@ function CreateWorldMenu(): ReactNode {
             </Centered>
         </MenuSection>
     );
+}
+
+function DeleteWorldMenu(): ReactNode {
+    
 }
 
 function SingleplayerMenu(): ReactNode {

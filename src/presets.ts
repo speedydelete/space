@@ -826,14 +826,13 @@ class Preset {
     constructor(name: string, world: World, isDefault: boolean = false) {
         this.name = name;
         this.data = world.export();
-        this.isDefault = isDefault;
     }
 
 }
 
 const presets: Preset[] = [
     new Preset('Empty', emptyWorld),
-    new Preset('Solar System', solarSystemWorld),
+    new Preset('Solar System', solarSystemWorld, true),
 ];
 
 export {
