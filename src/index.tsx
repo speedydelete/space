@@ -14,12 +14,12 @@ function GameIframe({doEscape, setLoadingScreenMessage, closeLoadingScreen}: {do
     function handleMessage(event: MessageEvent): void {
         if (iframeRef.current && event.source === iframeRef.current.contentWindow && event.data.isSpace === true) {
             const {type, data} = event.data;
-            if (type == 'escape') {
+            if (type === 'escape') {
                 doEscape();
-            } else if (type == 'set-loading-screen-message') {
+            } else if (type === 'set-loading-screen-message') {
                 setLoadingScreenMessage(data);
                 sendMessage('loading-screen-message-set');
-            } else if (type == 'close-loading-screen') {
+            } else if (type === 'close-loading-screen') {
                 closeLoadingScreen();
             }
         }
@@ -38,16 +38,6 @@ function GameIframe({doEscape, setLoadingScreenMessage, closeLoadingScreen}: {do
 }
 
 function Game(): ReactNode {
-    const worlds = [
-        {
-            name: 'New World',
-            desc: '2024-12-13 00:00:00\nCreative Mode, v0.2.0',
-        },
-        {
-            name: 'Old World',
-            desc: '2000-12-13 00:00:00\nCreative Mode, v0.-1.0',
-        },
-    ];
     const [inMenu, setInMenu] = useState(true);
     const [menu, setMenu] = useState('main');
     const [visible, setVisible] = useState(false);
@@ -57,7 +47,6 @@ function Game(): ReactNode {
     return (
         <div>
             {inMenu && <Menu 
-                worlds={worlds}
                 enterWorld={(world: WorldInfo) => {
                     console.log(world);
                     currentWorldRef.current = world;

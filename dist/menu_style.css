@@ -21,6 +21,10 @@ a {
     color: #0078d4;
 }
 
+h1 {
+    text-align: center;
+}
+
 button {
     appearance: none;
     height: 50px;
@@ -91,7 +95,18 @@ div:has(> .scroll) {
     left: 10px;
 }
 
+.bottom {
+    margin-top: auto;
+}
+
+.centered {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 .left-centered-wrapper {
+    height: 100%;
     display: flex;
     flex-direction: row;
 }
@@ -137,6 +152,7 @@ div:has(> .scroll) {
 
 .submenu {
     z-index: 1;
+    height: 100%;
 }
 
 .main-menu {
@@ -158,15 +174,15 @@ div:has(> .scroll) {
     font-size: 48px;
 }
 
-.submenu :has(> .worlds) {
+.submenu :has(> .menu-worlds) {
     height: 100%;
     width: 100%;
     display: flex;
     justify-content: flex-start;
 }
 
-.worlds {
-    max-width: 550px;
+.menu-worlds {
+    max-width: 650px;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
@@ -176,9 +192,9 @@ div:has(> .scroll) {
     overflow-y: scroll;
 }
 
-.world {
+.menu-world {
     height: 90px;
-    max-width: 550px;
+    max-width: 650px;
     padding: 10px;
     display: flex;
     flex-direction: row;
@@ -187,17 +203,17 @@ div:has(> .scroll) {
     border: 2px solid black;
 }
 
-.selected-world {
+.selected-menu-world {
     border-color: white;
 }
 
-.world div:has(img) {
+.menu-world div:has(img) {
     position: relative;
     height: 64px;
     width: 64px;
 }
 
-.world img {
+.menu-world img {
     position: absolute;
     top: 0;
     bottom: 0;
@@ -209,21 +225,21 @@ div:has(> .scroll) {
     background-color: transparent;
 }
 
-.world img.enter-arrow {
+.menu-world img.enter-arrow {
     z-index: 1;
     opacity: 0;
 }
 
-.world div:has(img):hover img.enter-arrow {
+.menu-world div:has(img):hover img.enter-arrow {
     opacity: 1;
 }
 
-.world-desc {
+.menu-world-desc {
     white-space: pre-wrap;
     color: #cccccc;
 }
 
-.worlds-bottom-wrapper {
+.menu-worlds-bottom-wrapper {
     position: absolute;
     bottom: 0;
     left: 0;
@@ -231,22 +247,82 @@ div:has(> .scroll) {
     border-top: 2px solid #ffffff;
 }
 
-.worlds-bottom {
-    width: 600px;
+.menu-worlds-bottom {
+    width: min(700px, 100%);
     padding: 25px;
     display: flex;
     flex-direction: column;
     gap: 25px;
 }
 
-.worlds-bottom > div {
+.menu-worlds-bottom > div {
     display: flex;
     flex-direction: row;
     gap: 25px;
 }
 
-.worlds-bottom > div > * {
+.menu-worlds-bottom > div > * {
     flex-grow: 1;
+}
+
+.centered:has(> .thin-menu-content) {
+    height: 100%;
+}
+
+.thin-menu-content {
+    height: 100%;
+    width: min(600px, 100%);
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    font-size: 24px;
+}
+
+.thin-menu-content div {
+    width: min(550px, 100%);
+    display: flex;
+    flex-direction: row;
+}
+
+.thin-menu-content input[type=text] {
+    flex-grow: 1;
+}
+
+.thin-menu-content .bottom {
+    justify-content: space-evenly;
+    gap: 25px;
+    * {
+        width: 50%;
+    }
+}
+
+.thin-menu-content {
+    height: 100%;
+    width: min(600px, 100%);
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    font-size: 24px;
+}
+
+.thin-menu-content div {
+    width: min(550px, 100%);
+    display: flex;
+    flex-direction: row;
+}
+
+.thin-menu-content input[type=text] {
+    flex-grow: 1;
+}
+
+.thin-menu-content .bottom {
+    justify-content: space-evenly;
+    gap: 25px;
+    * {
+        width: 50%;
+    }
 }
 
 .settings-menu {
@@ -289,8 +365,7 @@ div:has(> .scroll) {
 }
 
 .escape-menu button {
-    min-width: 312px;
-    max-width: 312px;
+    width: min(312px, 100%);
 }
 
 .loading-menu {

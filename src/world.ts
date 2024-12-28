@@ -30,10 +30,10 @@ class World {
             return cycle.map((c) => this.cycle(c)).reduce((x, y) => x + y);
         } else if (cycle === null) {
             return 0;
-        } else if (typeof cycle == 'object' && 'type' in cycle) {
-            if (cycle.type == 'fixed') {
+        } else if (typeof cycle === 'object' && 'type' in cycle) {
+            if (cycle.type === 'fixed') {
                 return cycle.value;
-            } else if (cycle.type == 'linear') {
+            } else if (cycle.type === 'linear') {
                 return this.cycle(cycle.min) + timeDiff(this.time, cycle.epoch)/this.cycle(cycle.period) * this.cycle(cycle.max);
             } else {
                 // @ts-ignore
@@ -59,7 +59,7 @@ class World {
     }
 
     lsObj(path: string): string[] {
-        return this.fs.ls(join('/home/objects', path)).map((x) => x.replace('object', '').replace(/\/$/, '')).filter((x) => x != 'object' && x !== '');
+        return this.fs.ls(join('/home/objects', path)).map((x) => x.replace('object', '').replace(/\/$/, '')).filter((x) => x !== 'object' && x !== '');
     }
 
     lsObjAll(): string[] {
@@ -147,7 +147,7 @@ class World {
                         object.orbit.mna %= 360;
                     }
                 }
-                if (object.axis && object.axis.period == 'sync') {
+                if (object.axis && object.axis.period === 'sync') {
                     object.axis.period = getPeriod(this.config.G, object, parent);
                 }
             }

@@ -8,15 +8,15 @@ function type(value: any): string {
         return 'null';
     }
     const type = typeof value;
-    if (type == 'number') {
+    if (type === 'number') {
         return 'number';
-    } else if (type == 'string') {
+    } else if (type === 'string') {
         return 'string';
-    } else if (type == 'bigint') {
+    } else if (type === 'bigint') {
         return 'bigint';
-    } else if (type == 'symbol') {
+    } else if (type === 'symbol') {
         return 'symbol';
-    } else if (type == 'object') {
+    } else if (type === 'object') {
         if (value[Symbol.toStringTag]) {
             return value[Symbol.toStringTag];
         } else if (Array.isArray(value)) {
@@ -28,13 +28,13 @@ function type(value: any): string {
         } else {
             return 'object';
         }
-    } else if (type == 'function') {
+    } else if (type === 'function') {
         if (Function.prototype.toString.call(value).startsWith('class')) {
             return 'class';
         } else {
             return 'function';
         }
-    } else if (type == 'undefined' && value == undefined && value !== undefined) {
+    } else if (type === 'undefined' && value == undefined && value !== undefined) {
         return 'document.all';
     } else {
         return 'unknown';
@@ -44,7 +44,7 @@ function type(value: any): string {
 type Time = number | undefined | string | Date;
 
 function getTime(time?: Time): number {
-    if (typeof time == 'number') {
+    if (typeof time === 'number') {
         return time;
     } else if (time === undefined) {
         return (new Date()).getTime() / 1000;

@@ -80,27 +80,27 @@ class Server {
 
     recv({id, data: request}: SentRequest): void {
         const {type, data} = request;
-        if (type == 'get-time') {
+        if (type === 'get-time') {
             this.respond<GetTimeResponse>(id, 'get-time', this.world.time);
-        } else if (type == 'get-time-warp') {
+        } else if (type === 'get-time-warp') {
             this.respond<GetTimeWarpResponse>(id, 'get-time-warp', this.world.timeWarp);
-        } else if (type == 'set-time-warp') {
+        } else if (type === 'set-time-warp') {
             this.world.timeWarp = data;
             this.respond<SetTimeWarpResponse>(id, 'set-time-warp');
-        } else if (type == 'get-object') {
+        } else if (type === 'get-object') {
             this.respond<GetObjectResponse>(id, 'get-object', this.world.readObj(data));
-        } else if (type == 'get-all-objects') {
+        } else if (type === 'get-all-objects') {
             this.respond<GetAllObjectsResponse>(id, 'get-all-objects', this.world.lsObjAll().map(x => {return {path: x, object: this.world.readObj(x)}}));
-        } else if (type == 'get-all-object-paths') {
+        } else if (type === 'get-all-object-paths') {
             this.respond<GetAllObjectPathsResponse>(id, 'get-all-object-paths', this.world.lsObjAll());
-        } else if (type == 'get-object-count') {
+        } else if (type === 'get-object-count') {
             this.respond<GetObjectCountResponse>(id, 'get-object-count', this.world.lsObjAll().length);
-        } else if (type == 'get-config') {
+        } else if (type === 'get-config') {
             this.respond<GetConfigResponse>(id, 'get-config', this.world.config);
-        } else if (type == 'start') {
+        } else if (type === 'start') {
             this.world.start();
             this.respond<StartResponse>(id, 'start');
-        } else if (type == 'stop') {
+        } else if (type === 'stop') {
             this.world.stop();
             this.respond<StopResponse>(id, 'stop');
         }

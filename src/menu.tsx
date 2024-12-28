@@ -10,18 +10,19 @@ interface WorldInfo {
     thumbnail?: string,
 }
 
-const MenuContext = createContext({
-    menu: 'main',
-    setMenu: (menu: string) => {},
-    worlds: [{}],
-    enterWorld: (world: WorldInfo) => {},
-    resume: () => {},
-    saveAndQuitToTitle: () => {},
-    settingsBack: () => {},
-    setSettingsBack: (settingsBack: () => void) => {},
-    selectedWorld: -1,
-    setSelectedWorld: (world: number) => {},
-});
+const MenuContext = createContext<{
+    menu: string;
+    setMenu: (menu: string) => void;
+    worlds: WorldInfo[];
+    setWorlds: (worlds: WorldInfo[]) => void;
+    enterWorld: (world: WorldInfo) => void;
+    resume: () => void;
+    saveAndQuitToTitle: () => void;
+    settingsBack: () => void;
+    setSettingsBack: (settingsBack: () => void) => void;
+    selectedWorld: number;
+    setSelectedWorld: (world: number) => void;
+}>({menu: '', setMenu: x => {}, worlds: [], setWorlds: x => {}, enterWorld: x => {}, resume: () => {}, saveAndQuitToTitle: () => {}, settingsBack: () => {}, setSettingsBack: x => {}, selectedWorld: 0, setSelectedWorld: x => {}});
 
 const starSizes: number[] = [1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3];
 const starColors: string[] = Object.values({...await (await fetch('./data/spectral_type_colors.json')).json(), info: undefined, '~': undefined}).filter((x): x is string => x !== undefined);
@@ -69,6 +70,10 @@ function StarCanvas(): ReactNode {
     );
 }
 
+function Centered({children, className}: {children: ReactNode, className?: string}): ReactNode {
+    return <div className='centered'><div className={className}>{children}</div></div>;
+}
+
 function LeftCentered({children, className}: {children: ReactNode, className?: string}): ReactNode {
     return (
         <div className='left-centered-wrapper'>
@@ -95,7 +100,7 @@ function SwitchMenuButton({menu, children, cond}: {menu: string, children: React
 
 function MenuSection({name, children}: {name: string, children: ReactNode}): ReactNode {
     const menu = useContext(MenuContext).menu;
-    return menu == name && <div className={`submenu ${name}-menu`}>{children}</div>;
+    return menu === name && <div className={`submenu ${name}-menu`}>{children}</div>;
 }
 
 function MenuWorld({world, index}: {world: WorldInfo, index: number}): ReactNode {
@@ -124,52 +129,99 @@ function MenuWorld({world, index}: {world: WorldInfo, index: number}): ReactNode
         }
     }, [selectedWorld]);
     return (
-        <div className='world' onClick={handleClick} ref={divRef}>
+        <div className='menu-world' onClick={handleClick} ref={divRef}>
             <div onClick={() => enterWorld(world)}>
                 <img src={thumbnail} style={style} />
                 <img className='enter-arrow' src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 16 16'><polygon points='8,2 8,14 14,8' style='fill: white;' /></svg>" />
             </div>
             <div>
                 <div>{world.name}</div>
-                <div className='world-desc'>{world.desc}</div>
+                <div className='menu-world-desc'>{world.desc}</div>
             </div>
         </div>
     );
 }
 
 function WorldSelection({children}: {children: ReactNode}): ReactNode {
-    return <LeftCentered className='worlds'>{children}</LeftCentered>;
+    return <LeftCentered className='menu-worlds'>{children}</LeftCentered>;
 }
 
 function WorldSelectionBottom({children}: {children: ReactNode}): ReactNode {
     return (
-        <div className='worlds-bottom-wrapper'>
-            <LeftCentered className='worlds-bottom'>{children}</LeftCentered>
+        <div className='menu-worlds-bottom-wrapper'>
+            <Centered className='menu-worlds-bottom'>{children}</Centered>
         </div>
     );
 }
 
 function EditWorldMenu(): ReactNode {
+    const {selectedWorld, worlds, setWorlds} = useContext(MenuContext);
+    const [name, setName] = useState('');
+    const [iconReset, setIconReset] = useState(false);
+    useEffect(() => {
+        if (selectedWorld !== -1) {
+            const world = worlds[selectedWorld];
+            setName(world.name);
+        }
+    }, [selectedWorld]);
+    function save() {
+        let world = worlds[selectedWorld];
+        world.name = name;
+        if (iconReset) world.thumbnail = undefined;
+        setWorlds(worlds.slice(0, selectedWorld).concat(world, worlds.slice(selectedWorld)));
+        localStorage.setItem('space-game-worlds', JSON.stringify(worlds));
+    }
     return (
         <MenuSection name='edit-world'>
-
+            <Centered className='thin-menu-content'>
+                <h1>Edit World</h1>
+                <div>World Name:&nbsp;<input type="text" value={name} /></div>
+                <button onClick={() => setIconReset(true)}>Reset World Icon</button>
+                <div className='bottom'>
+                    <button onClick={save}>Save</button>
+                    <SwitchMenuButton menu='singleplayer'>Cancel</SwitchMenuButton>
+                </div>
+            </Centered>
         </MenuSection>
     ); 
 }
 
-function SingleplayerMenu({worlds}: {worlds: WorldInfo[]}): ReactNode {
-    const {enterWorld, selectedWorld} = useContext(MenuContext);
+const presets: Preset[] = [];
+
+function CreateWorldMenu(): ReactNode {
+    const {worlds, setWorlds} = useContext(MenuContext);
+    const [name, setName] = useState('');
+    function create() {
+        
+    }
+    return (
+        <MenuSection name='create-world'>
+            <Centered className='thin-menu-content'>
+                <h1>Create New World</h1>
+                <div>World Name:&nbsp;<input type="text" value={name} /></div>
+                <div className='bottom'>
+                    <button onClick={create}>Create</button>
+                    Preset: <select>{presets.map(x => <option>{x.name}</option>)}</select>
+                    <SwitchMenuButton menu='singleplayer'>Cancel</SwitchMenuButton>
+                </div>
+            </Centered>
+        </MenuSection>
+    );
+}
+
+function SingleplayerMenu(): ReactNode {
+    const {worlds, enterWorld, selectedWorld} = useContext(MenuContext);
     return (
         <MenuSection name='singleplayer'>
             <WorldSelection>{worlds.map((world, i) => <MenuWorld world={world} key={i} index={i} />)}</WorldSelection>
             <WorldSelectionBottom>
                 <div>
-                    <UnavailableIfButton cond={selectedWorld != -1} onClick={() => enterWorld(worlds[selectedWorld])}>Play Selected World</UnavailableIfButton>
-                    <button>Create New World</button>
+                    <UnavailableIfButton cond={selectedWorld !== -1} onClick={() => enterWorld(worlds[selectedWorld])}>Play Selected World</UnavailableIfButton>
+                    <SwitchMenuButton menu='create-world'>Create New World</SwitchMenuButton>
                 </div>
                 <div>
-                    <SwitchMenuButton menu='edit-world' cond={selectedWorld != -1}>Edit</SwitchMenuButton>
-                    <UnavailableIfButton cond={selectedWorld != -1}>Delete</UnavailableIfButton>
+                    <SwitchMenuButton menu='edit-world' cond={selectedWorld !== -1}>Edit</SwitchMenuButton>
+                    <UnavailableIfButton cond={selectedWorld !== -1}>Delete</UnavailableIfButton>
                     <SwitchMenuButton menu='main'>Cancel</SwitchMenuButton>
                 </div>
             </WorldSelectionBottom>
@@ -195,18 +247,19 @@ function Setting({type, setting, name}: {type: string, setting: SettingsKey, nam
     function handleChange(event: React.FormEvent<HTMLInputElement>) {
         const target = event.currentTarget;
         let newValue: SettingsValue;
-        if (target.type == 'checkbox') {
-            newValue = target.checked;
-        } else if (target.type == 'number') {
+        // if (target.type === 'checkbox') {
+        //     newValue = target.checked;
+        // } else if (target.type === 'number') {
             newValue = target.valueAsNumber;
-        } else {
-            newValue = target.value;
-        }
+            if (Number.isNaN(newValue)) {
+                // @ts-ignore
+                setValue(target.value);
+                return;
+            }
+        // } else {
+        //    newValue = target.value;
+        // }
         setValue(newValue);
-        if (Number.isNaN(newValue)) {
-            // @ts-ignore
-            setValue(target.value);
-        }
         settings[setting] = newValue;
         setSettings(settings);
         localStorage.setItem('space-game-settings', JSON.stringify(settings));
@@ -217,8 +270,8 @@ function Setting({type, setting, name}: {type: string, setting: SettingsKey, nam
             <input
                 type={type}
                 onChange={handleChange}
-                value={typeof value == 'number' || typeof value == 'string' ? value : ''}
-                checked={typeof value == 'boolean' ? value : undefined}
+                value={typeof value === 'number' || typeof value === 'string' ? value : ''}
+                checked={typeof value === 'boolean' ? value : undefined}
                 name={setting}
             />
         </div>
@@ -296,28 +349,20 @@ function MainMenu(): ReactNode {
     )
 }
 
-function Menu({worlds, enterWorld, resume, saveAndQuitToTitle, menu, setMenu, showStars, loadingScreenMessage}: {worlds: WorldInfo[], enterWorld: (world: WorldInfo) => void, resume: () => void, saveAndQuitToTitle: () => void, menu: string, setMenu: (menu: string) => void, showStars: boolean, loadingScreenMessage: string}): ReactNode {
+function Menu({enterWorld, resume, saveAndQuitToTitle, menu, setMenu, showStars, loadingScreenMessage}: {enterWorld: (world: WorldInfo) => void, resume: () => void, saveAndQuitToTitle: () => void, menu: string, setMenu: (menu: string) => void, showStars: boolean, loadingScreenMessage: string}): ReactNode {
     const [settingsBack, setSettingsBack] = useState(() => () => setMenu('main'));
     const [selectedWorld, setSelectedWorld] = useState(-1);
-    const contextData = {
-        menu: menu,
-        setMenu: setMenu,
-        worlds: worlds,
-        enterWorld: enterWorld,
-        resume: resume,
-        saveAndQuitToTitle: saveAndQuitToTitle,
-        settingsBack: settingsBack,
-        setSettingsBack: setSettingsBack,
-        selectedWorld: selectedWorld,
-        setSelectedWorld: setSelectedWorld,
-    };
+    const storageWorlds = localStorage.getItem('space-game-worlds');
+    const [worlds, setWorlds] = useState(storageWorlds !== null ? JSON.parse(storageWorlds) : []);
+    const contextData = {menu, setMenu, worlds, setWorlds, enterWorld, resume, saveAndQuitToTitle, settingsBack, setSettingsBack, selectedWorld, setSelectedWorld};
     return (
         <div className='wrapper'>
             {showStars && <StarCanvas />}
             <MenuContext.Provider value={contextData}>
                 <MainMenu />
-                <SingleplayerMenu worlds={worlds} />
+                <SingleplayerMenu />
                 <EditWorldMenu />
+                <CreateWorldMenu />
                 <MultiplayerMenu />
                 <SettingsMenu />
                 <AboutMenu />

@@ -160,13 +160,13 @@ class Client {
             -(event.clientY / window.innerHeight) * 2 + 1), this.camera);
         const intersects = this.raycaster.intersectObjects(Object.values(this.objMeshes));
         if (intersects.length > 0) {
-            this.target = Object.entries(this.objMeshes).filter((x) => x[1] == intersects[0].object)[0][0];
+            this.target = Object.entries(this.objMeshes).filter((x) => x[1] === intersects[0].object)[0][0];
             this.controls.target.copy(intersects[0].object.position);
         }
     };
 
     async handleKeyDown(event: KeyboardEvent): Promise<void> {
-        if (event.key == ',') {
+        if (event.key === ',') {
             let timeWarp = this.world.timeWarp;
             if (Math.log10(timeWarp) % 1 === 0) {
                 timeWarp /= 2;
@@ -175,7 +175,7 @@ class Client {
             }
             this.world.timeWarp = timeWarp;
             this.send<SetTimeWarpRequest>('set-time-warp', timeWarp);
-        } else if (event.key == '.') {
+        } else if (event.key === '.') {
             let timeWarp = this.world.timeWarp;
             if (Math.log10(timeWarp) % 1 === 0) {
                 timeWarp *= 5;
@@ -184,41 +184,41 @@ class Client {
             }
             this.world.timeWarp = timeWarp;
             this.send<SetTimeWarpRequest>('set-time-warp', timeWarp);
-        } else if (event.key == '/') {
+        } else if (event.key === '/') {
             event.preventDefault();
             this.world.timeWarp = 1;
             this.send<SetTimeWarpRequest>('set-time-warp', 1);
-        } else if (event.key == '=' || event.key == '+') {
+        } else if (event.key === '=' || event.key === '+') {
             if (event.shiftKey) {
                 this.zoom = 1;
             } else {
                 this.zoom += 10**Math.floor(Math.log10(this.zoom));
             }
-        } else if (event.key == '-') {
+        } else if (event.key === '-') {
             const logZoom = Math.log10(this.zoom);
             const floorLogZoom = Math.floor(logZoom);
-            if (logZoom == Math.floor(logZoom)) {
+            if (logZoom === Math.floor(logZoom)) {
                 this.zoom -= 10**(floorLogZoom - 1);
             } else {
                 this.zoom -= 10**floorLogZoom;
             }
-        } else if (event.key == '[') {
+        } else if (event.key === '[') {
             const allObjects = this.world.lsObjAll();
             let index = allObjects.indexOf(this.target);
             if (index === 0) {
                 index = allObjects.length;
             }
             this.target = allObjects[(index - 1) % allObjects.length];
-        } else if (event.key == ']') {
+        } else if (event.key === ']') {
             const allObjects = this.world.lsObjAll();
             let index = allObjects.indexOf(this.target);
-            if (index == allObjects.length - 1) {
+            if (index === allObjects.length - 1) {
                 index = -1;
             }
             this.target = allObjects[(index + 1) % allObjects.length];
-        } else if (event.key == 'Escape') {
+        } else if (event.key === 'Escape') {
             this.postMessage('escape');
-        } else if (event.key == 'h') {
+        } else if (event.key === 'h') {
             alert(helpMessage);
         }
     };
@@ -226,9 +226,9 @@ class Client {
     handleMessage(event: MessageEvent): void {
         if (event.source === window.top && event.data.isSpace === true) {
             const {type} = event.data;
-            if (type == 'start') {
+            if (type === 'start') {
                 this.start();
-            } else if (type == 'stop') {
+            } else if (type === 'stop') {
                 this.stop();
             }
         }
@@ -247,7 +247,7 @@ class Client {
                 if (object.axis) {
                     mesh.rotateX(object.axis.tilt * Math.PI / 180);
                     if (object.axis.epoch !== null) {
-                        if (object.axis.period == 'sync') {
+                        if (object.axis.period === 'sync') {
                             console.error('period is sync for', object, 'path:', path);
                         } else if (this.world.time) {
                             const diff = (this.world.time.getTime() - new Date(object.axis.epoch).getTime())/1000;
@@ -255,7 +255,7 @@ class Client {
                         }
                     }
                 }
-                if (object.type == 'star') {
+                if (object.type === 'star') {
                     
                 }
                 renderedObjects += 1;
@@ -283,7 +283,7 @@ class Client {
 
     animate(): void {
         const renderedObjects = this.updateObjects();
-        if (document.hidden || document.visibilityState == 'hidden') {
+        if (document.hidden || document.visibilityState === 'hidden') {
             this.blurred = true;
             this.animateRequest = requestAnimationFrame(this.animate.bind(this));
             return;
@@ -378,7 +378,7 @@ class Client {
             if (object.albedo) {
                 material.color = new three.Color(object.albedo, object.albedo, object.albedo);
             }
-            if (object.$type == 'star') {
+            if (object.$type === 'star') {
                 if (material.map) material.emissiveMap = material.map;
                 material.emissive = new three.Color(object.color);
                 material.emissiveIntensity = 2;
@@ -386,7 +386,7 @@ class Client {
             const geometry = new three.SphereGeometry(object.radius/this.unitSize, 512, 512);
             const mesh = new three.Mesh(geometry, material);
             mesh.position.set(...object.position);
-            if (object.$type == 'star') {
+            if (object.$type === 'star') {
                 const light = new three.PointLight(object.color);
                 light.power = this.world.config.lC / 10**(0.4 * object.magnitude) / this.unitSize**2 / 20000;
                 light.castShadow = true;

@@ -11,9 +11,9 @@ function join(...paths: string[]): string {
     let out: string[] = [];
     for (const path of paths) {
         for (const item of split(path)) {
-            if (item == '' || item == '.') {
+            if (item === '' || item === '.') {
                 continue;
-            } else if (item == '..') {
+            } else if (item === '..') {
                 out.pop();
             } else {
                 out.push(item);
@@ -43,7 +43,7 @@ class File extends BaseFile {
 
     constructor(data: string | Obj | any) {
         super('regular');
-        if (typeof data == 'string') {
+        if (typeof data === 'string') {
             this.data = data;
         } else {
             this.data = JSON.stringify(data);
