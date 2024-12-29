@@ -17,7 +17,7 @@ const MenuContext = createContext<{
     setMenu: (menu: string) => void;
     worlds: WorldInfo[];
     setWorlds: (worlds: WorldInfo[]) => void;
-    enterWorld: (world: WorldInfo) => void;
+    enterWorld: (worldId: number) => void;
     resume: () => void;
     saveAndQuitToTitle: () => void;
     settingsBack: () => void;
@@ -132,7 +132,7 @@ function MenuWorld({world, index}: {world: WorldInfo, index: number}): ReactNode
     }, [selectedWorld]);
     return (
         <div className='menu-world' onClick={handleClick} ref={divRef}>
-            <div onClick={() => enterWorld(world)}>
+            <div onClick={() => enterWorld(index)}>
                 <img src={thumbnail} style={style} />
                 <img className='enter-arrow' src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 16 16'><polygon points='8,2 8,14 14,8' style='fill: white;' /></svg>" />
             </div>
@@ -189,7 +189,7 @@ function EditWorldMenu(): ReactNode {
 }
 
 function CreateWorldMenu(): ReactNode {
-    const {worlds, setWorlds, setMenu} = useContext(MenuContext);
+    const {worlds, setWorlds, setMenu, enterWorld} = useContext(MenuContext);
     const [name, setName] = useState('New World');
     const [preset, setPreset] = useState('1');
     async function create() {
@@ -202,6 +202,7 @@ function CreateWorldMenu(): ReactNode {
         setWorlds(newWorlds);
         localStorage.setItem('space-game-worlds', JSON.stringify(newWorlds));
         setMenu('singleplayer');
+        enterWorld(newWorlds.length - 1);
     }
     return (
         <MenuSection name='create-world'>
@@ -237,6 +238,7 @@ function DeleteWorldMenu(): ReactNode {
     return (
         <MenuSection name='delete-world'>
             <Centered className='thin-menu-content'>
+                <h1>Delete World</h1>
                 <div>Are you sure you want to delete the world "{worlds[selectedWorld] === undefined ? '<no world selected>' : worlds[selectedWorld].name}"? It will be deleted forever! There is no way to restore a deleted world.</div>
                 <div className='bottom'><button onClick={deleteWorld}>Delete</button><SwitchMenuButton menu='singleplayer'>Cancel</SwitchMenuButton></div>
             </Centered>
@@ -251,7 +253,7 @@ function SingleplayerMenu(): ReactNode {
             <WorldSelection>{worlds.map((world, i) => <MenuWorld world={world} key={i} index={i} />)}</WorldSelection>
             <WorldSelectionBottom>
                 <div>
-                    <UnavailableIfButton cond={selectedWorld !== -1} onClick={() => enterWorld(worlds[selectedWorld])}>Play Selected World</UnavailableIfButton>
+                    <UnavailableIfButton cond={selectedWorld !== -1} onClick={() => enterWorld(selectedWorld)}>Play Selected World</UnavailableIfButton>
                     <SwitchMenuButton menu='create-world'>Create New World</SwitchMenuButton>
                 </div>
                 <div>
@@ -384,7 +386,7 @@ function MainMenu(): ReactNode {
     )
 }
 
-function Menu({enterWorld, resume, saveAndQuitToTitle, menu, setMenu, showStars, loadingScreenMessage}: {enterWorld: (world: WorldInfo) => void, resume: () => void, saveAndQuitToTitle: () => void, menu: string, setMenu: (menu: string) => void, showStars: boolean, loadingScreenMessage: string}): ReactNode {
+function Menu({enterWorld, resume, saveAndQuitToTitle, menu, setMenu, showStars, loadingScreenMessage}: {enterWorld: (worldId: number) => void, resume: () => void, saveAndQuitToTitle: () => void, menu: string, setMenu: (menu: string) => void, showStars: boolean, loadingScreenMessage: string}): ReactNode {
     const [settingsBack, setSettingsBack] = useState(() => () => setMenu('main'));
     const [selectedWorld, setSelectedWorld] = useState(-1);
     const storageWorlds = localStorage.getItem('space-game-worlds');

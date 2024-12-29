@@ -217,6 +217,7 @@ class Client {
             }
             this.target = allObjects[(index + 1) % allObjects.length];
         } else if (event.key === 'Escape') {
+            this.postMessage('save', await this.world.export());
             this.postMessage('escape');
         } else if (event.key === 'h') {
             alert(helpMessage);
@@ -447,6 +448,9 @@ class Client {
             }
         }).bind(this), 10);
         this.intervals.push(this.closeLoadingScreenInterval);
+        this.intervals.push(window.setInterval(async () => {
+            this.postMessage('save', await this.world.export());
+        }), 10000);
         this.running = true;
         console.log('Expansion Loading Complete!');
     }

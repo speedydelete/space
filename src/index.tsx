@@ -4,11 +4,11 @@ import React, {StrictMode, useRef, useState, useEffect} from 'react';
 import {createRoot} from 'react-dom/client';
 import {type WorldInfo, Menu} from './menu.tsx';
 
-function GameIframe({doEscape, setLoadingScreenMessage, closeLoadingScreen}: {doEscape: () => void, setLoadingScreenMessage: (value: string) => void, closeLoadingScreen: () => void}): ReactNode {
+function GameIframe({currentWorldIdRef, doEscape, setLoadingScreenMessage, closeLoadingScreen}: {currentWorldIdRef: RefObject<number>, doEscape: () => void, setLoadingScreenMessage: (value: string) => void, closeLoadingScreen: () => void}): ReactNode {
     let iframeRef: RefObject<null | HTMLIFrameElement> = useRef(null);
-    function sendMessage(type: string): void {
+    function sendMessage(type: string, data: any = undefined): void {
         if (iframeRef.current !== null && iframeRef.current.contentWindow !== null) {
-            iframeRef.current.contentWindow.postMessage({isSpace: true, type: type,}, window.origin);
+            iframeRef.current.contentWindow.postMessage({isSpace: true, type: type, data: data}, window.origin);
         }
     }
     function handleMessage(event: MessageEvent): void {
@@ -21,14 +21,25 @@ function GameIframe({doEscape, setLoadingScreenMessage, closeLoadingScreen}: {do
                 sendMessage('loading-screen-message-set');
             } else if (type === 'close-loading-screen') {
                 closeLoadingScreen();
+            } else if (type === 'save') {
+                const storageWorlds = localStorage.getItem('space-game-worlds');
+                if (storageWorlds === null) return;
+                let worlds = JSON.parse(storageWorlds);
+                worlds[currentWorldIdRef.current] = data;
+                localStorage.setItem('space-game-worlds', JSON.stringify(storageWorlds));
             }
         }
     }
     useEffect(() => {
         setTimeout(() => {
+            const storageWorlds = localStorage.getItem('space-game-worlds');
+            if (storageWorlds === null) return;
+            let worlds = JSON.parse(storageWorlds);
+            console.log('sending init message');
+            sendMessage('init', worlds[currentWorldIdRef.current]);
             sendMessage('start');
             window.addEventListener('message', handleMessage);
-        }, 100);
+        }, 250);
         return () => {
             sendMessage('stop');
             window.removeEventListener('message', handleMessage);
@@ -44,12 +55,15 @@ function Game(): ReactNode {
     const [showStars, setShowStars] = useState(true);
     const [loadingScreenMessage, setLoadingScreenMessage] = useState('Loading');
     let currentWorldRef: RefObject<null | WorldInfo> = useRef(null);
+    let currentWorldIdRef: RefObject<number> = useRef(-1);
     return (
         <div>
             {inMenu && <Menu 
-                enterWorld={(world: WorldInfo) => {
-                    console.log(world);
-                    currentWorldRef.current = world;
+                enterWorld={(worldId: number) => {
+                    const storageWorlds = localStorage.getItem('space-game-worlds');
+                    if (storageWorlds === null) return;
+                    currentWorldRef.current = JSON.parse(storageWorlds)[worldId];
+                    currentWorldIdRef.current = worldId;
                     setMenu('loading');
                     setVisible(true);
                 }}
@@ -69,6 +83,7 @@ function Game(): ReactNode {
                 loadingScreenMessage={loadingScreenMessage}
             />}
             {visible && <GameIframe
+                currentWorldIdRef={currentWorldIdRef}
                 doEscape={() => {
                     setInMenu(true);
                     setVisible(true);
