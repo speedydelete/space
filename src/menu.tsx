@@ -225,7 +225,23 @@ function CreateWorldMenu(): ReactNode {
 }
 
 function DeleteWorldMenu(): ReactNode {
-    
+    const {worlds, setWorlds, selectedWorld, setSelectedWorld, setMenu} = useContext(MenuContext);
+    function deleteWorld() {
+        const newWorlds = worlds.slice();
+        newWorlds.splice(selectedWorld, 1);
+        setWorlds(newWorlds);
+        localStorage.setItem('space-game-worlds', JSON.stringify(newWorlds));
+        setMenu('singleplayer');
+        setSelectedWorld(-1);
+    }
+    return (
+        <MenuSection name='delete-world'>
+            <Centered className='thin-menu-content'>
+                <div>Are you sure you want to delete the world "{worlds[selectedWorld] === undefined ? '<no world selected>' : worlds[selectedWorld].name}"? It will be deleted forever! There is no way to restore a deleted world.</div>
+                <div className='bottom'><button onClick={deleteWorld}>Delete</button><SwitchMenuButton menu='singleplayer'>Cancel</SwitchMenuButton></div>
+            </Centered>
+        </MenuSection>
+    );
 }
 
 function SingleplayerMenu(): ReactNode {
@@ -240,7 +256,7 @@ function SingleplayerMenu(): ReactNode {
                 </div>
                 <div>
                     <SwitchMenuButton menu='edit-world' cond={selectedWorld !== -1}>Edit</SwitchMenuButton>
-                    <UnavailableIfButton cond={selectedWorld !== -1}>Delete</UnavailableIfButton>
+                    <SwitchMenuButton menu='delete-world' cond={selectedWorld !== -1}>Delete</SwitchMenuButton>
                     <SwitchMenuButton menu='main'>Cancel</SwitchMenuButton>
                 </div>
             </WorldSelectionBottom>
@@ -382,6 +398,7 @@ function Menu({enterWorld, resume, saveAndQuitToTitle, menu, setMenu, showStars,
                 <SingleplayerMenu />
                 <EditWorldMenu />
                 <CreateWorldMenu />
+                <DeleteWorldMenu />
                 <MultiplayerMenu />
                 <SettingsMenu />
                 <AboutMenu />
