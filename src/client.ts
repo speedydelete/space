@@ -419,10 +419,10 @@ class Client {
         this.intervals.push(window.setInterval(this.resyncObjects.bind(this), 1000));
         if (!this.initialStartComplete) {
             this.initialStartInterval = window.setInterval((async () => {
-                if (this.frames > 10) {
+                if (this.frames > 100) {
                     this.initialStartComplete = true;
                     this.target = this.world.config.initialTarget;
-                    let object = await this.send<GetObjectRequest>('get-object', this.target);
+                    const object = await this.send<GetObjectRequest>('get-object', this.target);
                     const mesh = this.getObjectMesh(this.target);
                     if (mesh && object) {
                         this.camera.position.set(mesh.position.x + object.radius/this.unitSize*10, mesh.position.y, mesh.position.z);

@@ -98,6 +98,7 @@ const baseFileStructure = directory({
 const emptyWorld = new World(baseFileStructure);
 
 const solarSystemWorld = new World(baseFileStructure);
+solarSystemWorld.config.initialTarget = 'sun/earth';
 solarSystemWorld.setDirectory('/home/objects', objdir('root', 'root', 'special:root', {}, {
     sun: objdir('star', 'Sun', 'special:sun', {
         position: [0, 0, 0],
