@@ -31,12 +31,12 @@ const defaultSettings: Settings = {
 }
 
 function loadSettings(): Settings {
-    const storageSettings = localStorage['space-game-settings'];
+    const storageSettings = localStorage.getItem('space-game-settings');
     return storageSettings !== null ? JSON.parse(storageSettings) : defaultSettings;
 }
 
 function saveSettings(settings: Settings): void {
-    localStorage['space-game-settings'] = JSON.stringify(settings);
+    localStorage.setItem('space-game-settings', JSON.stringify(settings));
 }
 
 interface WorldInfo {
@@ -47,12 +47,12 @@ interface WorldInfo {
 }
 
 function loadWorlds(): WorldInfo[] {
-    const storageWorlds = localStorage['space-game-worlds'];
+    const storageWorlds = localStorage.getItem('space-game-worlds');
     return storageWorlds === null ? [] : JSON.parse(storageWorlds);
 }
 
 function saveWorlds(worlds: WorldInfo[]): void {
-    localStorage['space-game-worlds'] = JSON.stringify(worlds);
+    localStorage.setItem('space-game-worlds', JSON.stringify(worlds));
 }
 
 const helpMessage = `Use the "[" and "]" keys to select different objects, or just click on an object.
