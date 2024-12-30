@@ -187,11 +187,11 @@ function CreateWorldMenu(): ReactNode {
     const [preset, setPreset] = useState('1');
     async function create() {
         const presetObj = presets[parseInt(preset)];
-        const newWorlds = worlds.concat({
+        const newWorlds = [{
             name: name,
             desc: `Preset: ${presetObj.name}`,
             data: await presetObj.data,
-        });
+        }].concat(worlds);
         setWorlds(newWorlds);
         saveWorlds(newWorlds);
         setMenu('singleplayer');
