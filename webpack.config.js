@@ -19,7 +19,31 @@ module.exports = {
         rules: [
             {
                 exclude: /node_modules/,
-                test: /\.[jt]sx?$/,
+                test: /\.js?$/,
+                loader: 'babel-loader',
+                options: {
+                    presets: ['@babel/preset-env'],
+                },
+            },
+            {
+                exclude: /node_modules/,
+                test: /\.jsx?$/,
+                loader: 'babel-loader',
+                options: {
+                    presets: ['@babel/preset-env', '@babel/preset-react'],
+                },
+            },
+            {
+                exclude: /node_modules/,
+                test: /\.ts$/,
+                loader: 'babel-loader',
+                options: {
+                    presets: ['@babel/preset-typescript'],
+                },
+            },
+            {
+                exclude: /node_modules/,
+                test: /\.tsx$/,
                 loader: 'babel-loader',
                 options: {
                     presets: ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'],
@@ -27,6 +51,7 @@ module.exports = {
             }
         ],
     },
+    devtool: 'inline-source-map',
     devServer: {
         static: {
             directory: path.join(__dirname, 'dist'),
@@ -35,7 +60,7 @@ module.exports = {
         port: 9000,
         hot: true,
         liveReload: true,
-        watchFiles: ['src/**/*', 'editor/**/*'],
+        watchFiles: ['src/**/*', 'dist/**/*'],
         devMiddleware: {
             writeToDisk: false,
         },
