@@ -30,9 +30,29 @@ const defaultSettings: Settings = {
     controlsMaxDistance: Number.MAX_SAFE_INTEGER,
 }
 
-function getSettings(): Settings {
-    const storageSettings = localStorage.getItem('space-game-settings');
+function loadSettings(): Settings {
+    const storageSettings = localStorage['space-game-settings'];
     return storageSettings !== null ? JSON.parse(storageSettings) : defaultSettings;
+}
+
+function saveSettings(settings: Settings): void {
+    localStorage['space-game-settings'] = JSON.stringify(settings);
+}
+
+interface WorldInfo {
+    name: string,
+    desc: string,
+    thumbnail?: string,
+    data: string,
+}
+
+function loadWorlds(): WorldInfo[] {
+    const storageWorlds = localStorage['space-game-worlds'];
+    return storageWorlds === null ? [] : JSON.parse(storageWorlds);
+}
+
+function saveWorlds(worlds: WorldInfo[]): void {
+    localStorage['space-game-worlds'] = JSON.stringify(worlds);
 }
 
 const helpMessage = `Use the "[" and "]" keys to select different objects, or just click on an object.
@@ -73,16 +93,23 @@ class Client {
     initialStartInterval: null | number = null;
     initialStartComplete: boolean = false;
     closeLoadingScreenInterval: null | number = null;
+    worldIndex: number;
+    doEscape: () => void;
+    doCloseLoadingScreen: () => void;
+    setLoadingScreenMessage: (message: string) => void;
 
     boundHandleResize: (event: Event) => void;
     boundHandleClick: (event: MouseEvent) => void;
     boundHandleKeyDown: (event: KeyboardEvent) => void;
-    boundHandleMessage: (event: MessageEvent) => void;
 
-    constructor(send: (data: SentRequest) => void, recv: () => SentResponse[]) {
+    constructor(send: (data: SentRequest) => void, recv: () => SentResponse[], worldIndex: number, doEscape: () => void, doCloseLoadingScreen: () => void, setLoadingScreenMessage: (message: string) => void) {
         this.syncSend = send;
         this.syncRecv = recv;
-        this.settings = getSettings();
+        this.worldIndex = worldIndex;
+        this.doEscape = doEscape;
+        this.doCloseLoadingScreen = doCloseLoadingScreen;
+        this.setLoadingScreenMessage = setLoadingScreenMessage;
+        this.settings = loadSettings();
         this.renderer = new three.WebGLRenderer();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.scene = new three.Scene();
@@ -100,27 +127,16 @@ class Client {
         this.controls.update();
         this.controls.listenToKeyEvents(window);
         this.scene.add(new three.AmbientLight(0xffffff, 0.2));
-        this.raycaster = new three.Raycaster();        
+        this.raycaster = new three.Raycaster();
         this.leftInfoElt = document.getElementById('left-info');
         this.rightInfoElt = document.getElementById('right-info');
         this.boundHandleResize = this.handleResize.bind(this);
         this.boundHandleClick = this.handleClick.bind(this);
         this.boundHandleKeyDown = this.handleKeyDown.bind(this);
-        this.boundHandleMessage = this.handleMessage.bind(this);
     }
 
     get unitSize(): number {
         return this.settings.unitSize;
-    }
-
-    postMessage(type: string, data: any = undefined): void {
-        if (window.top) {
-            window.top.postMessage({
-                isSpace: true,
-                type: type,
-                data: data,
-            }, window.origin);
-        }
     }
 
     checkMessages(): void {
@@ -141,6 +157,12 @@ class Client {
         const {promise, resolve} = Promise.withResolvers();
         this.waitingMsgs[msg.id] = resolve;
         return promise;
+    }
+    
+    async save() {
+        let worlds = loadWorlds();
+        worlds[this.worldIndex].data = await this.world.export();
+        saveWorlds(worlds);   
     }
 
     getObjectMesh(path: string): three.Mesh | undefined {
@@ -217,23 +239,12 @@ class Client {
             }
             this.target = allObjects[(index + 1) % allObjects.length];
         } else if (event.key === 'Escape') {
-            this.postMessage('save', await this.world.export());
-            this.postMessage('escape');
+            this.save();
+            this.doEscape();
         } else if (event.key === 'h') {
             alert(helpMessage);
         }
     };
-
-    handleMessage(event: MessageEvent): void {
-        if (event.source === window.top && event.data.isSpace === true) {
-            const {type} = event.data;
-            if (type === 'start') {
-                this.start();
-            } else if (type === 'stop') {
-                this.stop();
-            }
-        }
-    }
 
     updateObjects(): number {
         let renderedObjects = 0;
@@ -343,21 +354,6 @@ class Client {
         if (mesh) this.oldMeshPos = mesh.position.clone();
         this.animateRequest = requestAnimationFrame(this.animate.bind(this));
     }
-
-    setLoadingScreenMessage(message: string): Promise<void> {
-        console.log(message);
-        // @ts-ignore
-        const {promise, resolve} = Promise.withResolvers();
-        function handleMessage(event: MessageEvent) {
-            if (event.source === window.top && event.data.isSpace === true) {
-                resolve(true);
-                window.removeEventListener('message', handleMessage);   
-            }
-        }
-        window.addEventListener('message', handleMessage);
-        this.postMessage('set-loading-screen-message', message);
-        return promise;
-    }
     
     async init(): Promise<void> {
         const textureLoader = new three.TextureLoader();;
@@ -406,7 +402,6 @@ class Client {
         window.addEventListener('resize', this.boundHandleResize);
         window.addEventListener('click', this.boundHandleClick);
         window.addEventListener('keydown', this.boundHandleKeyDown);
-        window.addEventListener('message', this.boundHandleMessage);
         await this.setLoadingScreenMessage('Starting server');
         await this.send<StartRequest>('start');
         this.world = emptyWorld;
@@ -441,16 +436,14 @@ class Client {
         }
         this.closeLoadingScreenInterval = window.setInterval((() => {
             if (this.frames > 1) {
-                this.postMessage('close-loading-screen');
+                this.doCloseLoadingScreen();
                 if (this.closeLoadingScreenInterval) {
                     window.clearInterval(this.closeLoadingScreenInterval);
                 }
             }
         }).bind(this), 10);
         this.intervals.push(this.closeLoadingScreenInterval);
-        this.intervals.push(window.setInterval(async () => {
-            this.postMessage('save', await this.world.export());
-        }), 10000);
+        this.intervals.push(window.setInterval(this.save.bind(this), 10000));
         this.running = true;
         console.log('Expansion Loading Complete!');
     }
@@ -469,7 +462,6 @@ class Client {
         window.removeEventListener('click', this.boundHandleClick);
         // @ts-ignore
         window.removeEventListener('keydown', this.boundHandleKeyDown);
-        window.removeEventListener('message', this.boundHandleMessage);
     }
 
 }
@@ -479,6 +471,10 @@ export {
     SettingsKey,
     SettingsValue,
     defaultSettings,
-    getSettings,
+    loadSettings,
+    saveSettings,
+    WorldInfo,
+    loadWorlds,
+    saveWorlds,
     Client,
 }

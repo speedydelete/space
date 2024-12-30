@@ -3,8 +3,7 @@ const path = require('path');
 
 module.exports = {
     entry: {
-        index: './src/index.tsx',
-        game: './src/game.ts',
+        main: './src/index.tsx',
     },
     output: {
         filename: '[name].bundle.js',
@@ -12,7 +11,7 @@ module.exports = {
         publicPath: '/',
     },
     resolve: {
-        extensions: ['.html', '.js', '.ts', '.tsx'],
+        extensions: ['.html', '.js', '.jsx', '.ts', '.tsx'],
         modules: ['node_modules'],
     },
     module: {

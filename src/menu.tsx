@@ -2,15 +2,8 @@
 import type {ReactNode, RefObject} from 'react';
 import React, {useRef, useState, useEffect, useContext, createContext} from 'react';
 import {presets} from './presets.ts';
-import {type Settings, type SettingsKey, type SettingsValue, getSettings, defaultSettings} from './client.ts';
+import {type Settings, type SettingsKey, type SettingsValue, loadSettings, saveSettings, type WorldInfo, loadWorlds, saveWorlds, defaultSettings} from './client.ts';
 import {About} from './about.tsx';
-
-interface WorldInfo {
-    name: string,
-    desc: string,
-    thumbnail?: string,
-    data: string,
-}
 
 const MenuContext = createContext<{
     menu: string;
@@ -171,7 +164,7 @@ function EditWorldMenu(): ReactNode {
         world.name = name;
         if (iconReset) world.thumbnail = undefined;
         setWorlds(worlds.slice(0, selectedWorld).concat(world, worlds.slice(selectedWorld)));
-        localStorage.setItem('space-game-worlds', JSON.stringify(worlds));
+        saveWorlds(worlds);
     }
     return (
         <MenuSection name='edit-world'>
@@ -200,7 +193,7 @@ function CreateWorldMenu(): ReactNode {
             data: await presetObj.data,
         });
         setWorlds(newWorlds);
-        localStorage.setItem('space-game-worlds', JSON.stringify(newWorlds));
+        saveWorlds(newWorlds);
         setMenu('singleplayer');
         enterWorld(newWorlds.length - 1);
     }
@@ -231,7 +224,7 @@ function DeleteWorldMenu(): ReactNode {
         const newWorlds = worlds.slice();
         newWorlds.splice(selectedWorld, 1);
         setWorlds(newWorlds);
-        localStorage.setItem('space-game-worlds', JSON.stringify(newWorlds));
+        saveWorlds(newWorlds);
         setMenu('singleplayer');
         setSelectedWorld(-1);
     }
@@ -299,6 +292,7 @@ function Setting({type, setting, name}: {type: string, setting: SettingsKey, nam
         setValue(newValue);
         settings[setting] = newValue;
         setSettings(settings);
+        saveSettings(settings);
         localStorage.setItem('space-game-settings', JSON.stringify(settings));
     }
     return (
@@ -316,7 +310,7 @@ function Setting({type, setting, name}: {type: string, setting: SettingsKey, nam
 }
 
 function SettingsMenu(): ReactNode {
-    const [settings, setSettings] = useState(getSettings());
+    const [settings, setSettings] = useState(loadSettings());
     const {settingsBack} = useContext(MenuContext);
     return (
         <MenuSection name='settings'>
