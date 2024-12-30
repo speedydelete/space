@@ -10,8 +10,9 @@ function About(): ReactNode {
             <br />
             <h2>Version History</h2>
             <ul>
-                <li>v0.4.0 - x-x-x
+                <li>v0.4.0 - 2024-12-30
                     <ul>
+                        <li>Made the world selection menu functional.</li>
                         <li>Added a settings menu.</li>
                         <li>Added a loading screen.</li>
                     </ul>
