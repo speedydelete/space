@@ -1,18 +1,22 @@
 
 import type {ReactNode, RefObject} from 'react';
-import React, {StrictMode, useRef, useState, useEffect} from 'react';
+import React, {useRef, useState, useEffect} from 'react';
 import {createRoot} from 'react-dom/client';
-import {type WorldInfo, Menu} from './menu.tsx';
+import {Menu} from './menu.tsx';
 import {World} from './world.ts';
 import {Server} from './server.ts';
 import {Client, loadWorlds} from './client.ts';
+
+const rootElement = document.getElementById('root');
+if (rootElement === null) throw new TypeError('cannot initiate react due to nonexistent root element');
 
 function ReactClient({currentWorldIdRef, doEscape, setLoadingScreenMessage, closeLoadingScreen}: {currentWorldIdRef: RefObject<number>, doEscape: () => void, setLoadingScreenMessage: (value: string) => void, closeLoadingScreen: () => void}): ReactNode {
     const divRef: RefObject<HTMLDivElement | null> = useRef(null);
     const serverRef: RefObject<Server | null> = useRef(null);
     const clientRef: RefObject<Client | null> = useRef(null);
+    const startGamePromiseRef: RefObject<Promise<void>> = useRef(Promise.resolve(undefined));
     useEffect(() => {
-        (async () => {
+        startGamePromiseRef.current = (async () => {
             const server = new Server(await World.import(loadWorlds()[currentWorldIdRef.current].data));
             const client = new Client(
                 server.recv.bind(server),
@@ -24,19 +28,29 @@ function ReactClient({currentWorldIdRef, doEscape, setLoadingScreenMessage, clos
             );
             serverRef.current = server;
             clientRef.current = client;
-            document.body.appendChild(client.renderer.domElement);
+            divRef.current?.appendChild(client.renderer.domElement);
             server.init();
             server.start();
             client.start();
         })();
         return () => {
-            const server = serverRef.current;
-            const client = clientRef.current;
-            server?.stop();
-            client?.stop();
+            startGamePromiseRef.current.then(() => {
+                const server = serverRef.current;
+                const client = clientRef.current;
+                server?.stop();
+                client?.stop();
+                if (client !== null) divRef.current?.removeChild(client.renderer.domElement);
+                serverRef.current = null;
+                clientRef.current = null;
+            })
         };
     }, []);
-    return <div ref={divRef}></div>;
+    return (
+        <div ref={divRef}>
+            <div id='left-info'></div>
+            <div id='right-info'></div>
+        </div>
+    );
 }
 
 function Game(): ReactNode {
@@ -45,7 +59,6 @@ function Game(): ReactNode {
     const [visible, setVisible] = useState(false);
     const [showStars, setShowStars] = useState(true);
     const [loadingScreenMessage, setLoadingScreenMessage] = useState('Loading');
-    let currentWorldRef: RefObject<null | WorldInfo> = useRef(null);
     let currentWorldIdRef: RefObject<number> = useRef(-1);
     return (
         <div>
@@ -53,7 +66,6 @@ function Game(): ReactNode {
                 enterWorld={(worldId: number) => {
                     const storageWorlds = localStorage.getItem('space-game-worlds');
                     if (storageWorlds === null) return;
-                    currentWorldRef.current = JSON.parse(storageWorlds)[worldId];
                     currentWorldIdRef.current = worldId;
                     setMenu('loading');
                     setVisible(true);
@@ -91,11 +103,5 @@ function Game(): ReactNode {
     );
 }
 
-const rootElement = document.getElementById('root');
-if (rootElement === null) throw new TypeError('cannot initiate react due to nonexistent root element');
 const root = createRoot(rootElement);
-root.render(
-    <StrictMode>
-        <Game />
-    </StrictMode>
-);
+root.render(<Game />);

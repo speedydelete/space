@@ -404,6 +404,5 @@ function Menu({enterWorld, resume, saveAndQuitToTitle, menu, setMenu, showStars,
 }
 
 export {
-    WorldInfo,
     Menu,
 }

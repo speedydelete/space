@@ -1,5 +1,3 @@
 node_modules
-index.bundle.js
-index.bundle.js.LICENSE.txt
-game.bundle.js
-game.bundle.js.LICENSE.txt
+main.bundle.js
+main.bundle.js.LICENSE.txt

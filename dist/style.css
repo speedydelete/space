@@ -1,5 +1,5 @@
 
-* {
+*:not(canvas) {
     user-select: none;
     box-sizing: border-box;
     font-family: Consolas, 'Courier New', Courier, monospace;
