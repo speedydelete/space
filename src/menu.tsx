@@ -349,10 +349,8 @@ function AboutMenu(): ReactNode {
 function InnerEscapeMenu(): ReactNode {
     const {resume, saveAndQuitToTitle, setSettingsBack, setMenu} = useContext(MenuContext);
     useEffect(() => {
-        console.log('setting settings back to resume');
         setSettingsBack(() => resume);
         return () => {
-            console.log('setting settings back to main');
            setSettingsBack(() => () => setMenu('main'));
         }
     });

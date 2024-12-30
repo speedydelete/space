@@ -31,15 +31,16 @@ function GameIframe({currentWorldIdRef, doEscape, setLoadingScreenMessage, close
         }
     }
     useEffect(() => {
-        setTimeout(() => {
+        setTimeout(async () => {
             const storageWorlds = localStorage.getItem('space-game-worlds');
             if (storageWorlds === null) return;
             let worlds = JSON.parse(storageWorlds);
-            console.log('sending init message');
-            sendMessage('init', worlds[currentWorldIdRef.current]);
-            sendMessage('start');
-            window.addEventListener('message', handleMessage);
-        }, 250);
+            sendMessage('init', await worlds[currentWorldIdRef.current].data);
+            setTimeout(() => {
+                sendMessage('start');
+                window.addEventListener('message', handleMessage);
+            }, 250);
+        }, 500);
         return () => {
             sendMessage('stop');
             window.removeEventListener('message', handleMessage);
