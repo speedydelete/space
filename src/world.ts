@@ -1,7 +1,7 @@
 
 import {timeDiff} from './util.ts';
 import {type Cycle, type Obj, obj} from './obj.ts';
-import {join, type BaseFile, type Directory, FileSystem} from './files.ts';
+import {Directory, join, type FileMap, FileSystem} from './files.ts';
 import {getPosition, getPeriod} from './orbits.ts';
 
 interface Config {
@@ -19,8 +19,14 @@ class World extends FileSystem {
     timeWarp: number = 1;
     tickInterval: number | null = null;
 
-    constructor(files: Directory | {[key: string]: BaseFile}) {
-        super(files);
+    constructor(files: Directory | FileMap) {
+        if (files instanceof Directory) {
+            super(files);
+        } else {
+            super(new Directory());
+            this.files = files;
+            console.log(this.files);
+        }
     }
 
     cycle(cycle: Cycle): number {
@@ -132,7 +138,7 @@ class World extends FileSystem {
             this.time = new Date();
         }
         for (const path of this.lsObjAll()) {
-            const object = this.readObj(path)
+            const object = this.readObj(path);
             if (object === undefined) continue;
             if (object.hasOrbit()) {
                 const parent = this.readObj(join(path, '..'));
@@ -180,7 +186,6 @@ class World extends FileSystem {
         const stream = new Blob([JSON.stringify(this)], {type: 'application/json'}).stream();
         const compStream = stream.pipeThrough(new CompressionStream('deflate'));
         const data = new Uint8Array(await (new Response(compStream)).arrayBuffer());
-        if (this.lsObjAll().includes('sun')) console.log('exported', data);
         return 'space world file (format version 1)\n' + Array.from(data).map(x => String.fromCharCode(x)).join('');
     }
 
@@ -192,7 +197,6 @@ class World extends FileSystem {
         const version = parseInt(data.slice(0, data.indexOf(')')));
         data = data.slice(data.indexOf('\n') + 1);
         if (version === 1) {
-            console.log('importing', new Uint8Array([...data].map(char => char.charCodeAt(0))));
             const stream = new Blob([new Uint8Array([...data].map(char => char.charCodeAt(0)))]).stream();
             const decompStream = stream.pipeThrough(new DecompressionStream('deflate'));
             return World.fromJSON(await (new Response(decompStream)).text());

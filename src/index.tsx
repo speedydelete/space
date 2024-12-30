@@ -25,6 +25,7 @@ function GameIframe({currentWorldIdRef, doEscape, setLoadingScreenMessage, close
                 const storageWorlds = localStorage.getItem('space-game-worlds');
                 if (storageWorlds === null) return;
                 let worlds = JSON.parse(storageWorlds);
+                console.log(worlds);
                 worlds[currentWorldIdRef.current] = data;
                 localStorage.setItem('space-game-worlds', JSON.stringify(storageWorlds));
             }

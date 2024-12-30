@@ -1,6 +1,4 @@
 
-import type {Obj} from './obj.ts';
-
 const pathSep = /(?<!\\)\//;
 
 function split(path: string): string[] {
@@ -26,6 +24,11 @@ function join(...paths: string[]): string {
 }
 
 type FileType = 'regular' | 'directory' | 'link';
+type FileMap = {[key: string]: BaseFile};
+type JSONFile = {type: 'regular', _data: string | object};
+type JSONDirectory = {type: 'directory', files: {[key: string]: JSONBaseFile}};
+type JSONLink = {type: 'link', path: string};
+type JSONBaseFile = JSONFile | JSONDirectory | JSONLink;
 
 class BaseFile {
 
@@ -36,46 +39,63 @@ class BaseFile {
     }
 
     static fromJSON(data: string): BaseFile {
-        switch (JSON.parse(data).type) {
-            case 'regular':
-                return File.fromJSON(data);
-            case 'directory':
-                return Directory.fromJSON(data);
-            case 'link':
-                return Link.fromJSON(data);
-            default:
-                throw new TypeError('cannot extract BaseFile from JSON, invalid type')
-        }
+        return new BaseFile(JSON.parse(data).type);
     }
 
 }
 
 class File extends BaseFile {
 
-    data: string;
+    _data: string | object;
 
-    constructor(data: string) {
+    constructor(data: string | object) {
         super('regular');
-        this.data = data;
+        this._data = data;
+    }
+
+    get data(): string {
+        return typeof this._data === 'string' ? this._data : JSON.stringify(this._data);
+    }
+
+    set data(value: string) {
+        this._data = value;
     }
 
     get jsonData(): any {
-        return JSON.parse(this.data);
+        return typeof this._data === 'string' ? JSON.parse(this._data) : this._data;
     }
 
     set jsonData(value: any) {
-        this.data = JSON.stringify(value);
+        this._data = value;
+    }
+
+    static fromJSON(data: string | JSONFile): File {
+        return new File(typeof data === 'string' ? JSON.parse(data)._data : data._data);
     }
 
 }
 
-class Directory<T extends {[key: string]: BaseFile} | BaseFile = {[key: string]: BaseFile}> extends BaseFile {
+class Directory<T extends FileMap | BaseFile = FileMap> extends BaseFile {
 
-    files: {[key: string]: BaseFile};
+    files: FileMap;
 
-    constructor(files: (T extends {[key: string]: BaseFile} ? T : {[key: string]: T}) | {} = {}) {
+    constructor(files: (T extends FileMap ? T : {[key: string]: T}) | {} = {}) {
         super('directory');
         this.files = files;
+    }
+
+    static fromJSON(data: string | JSONDirectory): Directory {
+        const files: {[key: string]: JSONBaseFile} = typeof data === 'string' ? JSON.parse(data).files : data.files;
+        return new Directory(Object.fromEntries(Object.entries(files).map(((([key, file]) => {
+            switch (file.type) {
+                case 'regular':
+                    return [key, File.fromJSON(file)];
+                case 'directory':
+                    return [key, Directory.fromJSON(file)];
+                case 'link':
+                    return [key, Link.fromJSON(file)];
+            }
+        })))));
     }
 
 }
@@ -89,17 +109,19 @@ class Link<T extends string = string> extends BaseFile {
         this.path = path;
     }
 
+    static fromJSON(data: string | JSONLink) {
+        return new Link(typeof data === 'string' ? JSON.parse(data).path : data.path);
+    }
+
 }
 
 class FileSystem {
 
-    files: {[key: string]: BaseFile} = {};
+    files: FileMap = {};
 
-    constructor(files: Directory | {[key: string]: BaseFile}) {
+    constructor(files: Directory) {
         if (files instanceof Directory) {
             this.setDirectory('/', files);
-        } else {
-            this.files = files;
         }
     }
 
@@ -216,7 +238,7 @@ class FileSystem {
     }
     
     static fromJSON(data: string): FileSystem {
-        return new FileSystem(Object.fromEntries(Object.entries(JSON.parse(data)).map(([x, y]) => [x, BaseFile.fromJSON(JSON.stringify(y))])));
+        return new FileSystem(Directory.fromJSON({type: 'directory', files: JSON.parse(data)}));
     }
 
 }
@@ -225,6 +247,11 @@ export {
     split,
     join,
     FileType,
+    FileMap,
+    JSONFile,
+    JSONDirectory,
+    JSONLink,
+    JSONBaseFile,
     BaseFile,
     File,
     Directory,

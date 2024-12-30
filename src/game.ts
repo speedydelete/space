@@ -13,5 +13,3 @@ window.addEventListener('message', async (event) => {
         client.start();
     }
 });
-
-console.log('listener added');
