@@ -24,7 +24,10 @@ function ReactClient({currentWorldIdRef, doEscape, setLoadingScreenMessage, clos
                 currentWorldIdRef.current,
                 doEscape,
                 closeLoadingScreen,
-                setLoadingScreenMessage,
+                async function(message: string): Promise<void> {
+                    console.log(message);
+                    setLoadingScreenMessage(message);
+                }
             );
             serverRef.current = server;
             clientRef.current = client;

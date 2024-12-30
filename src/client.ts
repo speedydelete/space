@@ -96,13 +96,13 @@ class Client {
     worldIndex: number;
     doEscape: () => void;
     doCloseLoadingScreen: () => void;
-    setLoadingScreenMessage: (message: string) => void;
+    setLoadingScreenMessage: (message: string) => Promise<void>;
 
     boundHandleResize: (event: Event) => void;
     boundHandleClick: (event: MouseEvent) => void;
     boundHandleKeyDown: (event: KeyboardEvent) => void;
 
-    constructor(send: (data: SentRequest) => void, recv: () => SentResponse[], worldIndex: number, doEscape: () => void, doCloseLoadingScreen: () => void, setLoadingScreenMessage: (message: string) => void) {
+    constructor(send: (data: SentRequest) => void, recv: () => SentResponse[], worldIndex: number, doEscape: () => void, doCloseLoadingScreen: () => void, setLoadingScreenMessage: (message: string) => Promise<void>) {
         this.syncSend = send;
         this.syncRecv = recv;
         this.worldIndex = worldIndex;
