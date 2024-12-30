@@ -12,7 +12,7 @@ module.exports = {
     },
     resolve: {
         extensions: ['.html', '.js', '.jsx', '.ts', '.tsx'],
-        modules: ['node_modules'],
+        modules: [path.resolve(__dirname, 'node_modules')],
     },
     module: {
         rules: [
@@ -50,7 +50,8 @@ module.exports = {
             }
         ],
     },
-    devtool: 'inline-source-map',
+    // comment this out in production mode it doesn't work for some reason
+    devtool: 'eval-source-map',
     devServer: {
         static: {
             directory: path.join(__dirname, 'dist'),
