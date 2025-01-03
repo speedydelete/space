@@ -1,6 +1,8 @@
 
 const path = require('path');
 
+// const {BundleAnalyzerPlugin} = require('webpack-bundle-analyzer');
+
 module.exports = {
     entry: {
         main: './src/index.tsx',
@@ -51,7 +53,7 @@ module.exports = {
         ],
     },
     // comment this out in production mode it doesn't work for some reason
-    devtool: 'eval-source-map',
+    // devtool: 'eval-source-map',
     devServer: {
         static: {
             directory: path.join(__dirname, 'dist'),
@@ -65,4 +67,7 @@ module.exports = {
             writeToDisk: false,
         },
     },
+    // plugins: [
+    //     new BundleAnalyzerPlugin(),
+    // ],
 };
