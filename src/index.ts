@@ -1,1 +1,4 @@
-alert('hi');
+
+import {World} from './world';
+
+let world = new World();

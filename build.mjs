@@ -14,9 +14,12 @@ function afterWebpack(err, stats) {
     if (stats === undefined) {
         throw new Error('stats is undefined, this error should not happen');
     }
-    fs.writeFileSync('dist/index.html', minify.minify(fs.readFileSync('src/index.html'), {
+    let code = fs.readFileSync('src/index.html').toString();
+    code = code.replace('<link rel="stylesheet" href="style.css" />', fs.readFileSync('src/style.css'));
+    code = minify.minify(Buffer.from(code), {
         keep_html_and_head_opening_tags: true,
-    }));
+    });
+    fs.writeFileSync('dist/index.html', code);
     console.log(stats.toString({colors: true}) + '\n');
     for (let file of fs.readdirSync('dist')) {
         if (file.endsWith('.before_babel.js')) {

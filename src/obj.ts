@@ -34,6 +34,7 @@ export interface ObjParams {
     children?: Object[];
 }
 
+
 class _BaseObj<T extends BaseObjType = BaseObjType> {
 
     type: T;
@@ -52,6 +53,7 @@ class _BaseObj<T extends BaseObjType = BaseObjType> {
 
 }
 
+
 export class RootObj extends _BaseObj<'root'> {
 
     constructor(name: string, designation: string, data: {} = {}) {
@@ -59,6 +61,7 @@ export class RootObj extends _BaseObj<'root'> {
     }
 
 }
+
 
 class _Obj<T extends ObjType = ObjType> extends _BaseObj {
 
@@ -87,15 +90,18 @@ class _Obj<T extends ObjType = ObjType> extends _BaseObj {
 
 }
 
+
 export interface OrbitObj extends _Obj {
     orbit: Orbit;
 }
+
 
 export type SpectralType = string;
 
 export type SpectralTypeRegexLiteral = SpectralType;
 
 export const spectralTypeColors: {[key: SpectralTypeRegexLiteral]: string} = (await (await fetch('./data/spectral_type_colors.json')).json());
+
 
 export interface StarParams extends ObjParams {
     magnitude: number;
@@ -128,6 +134,7 @@ export class Star extends _Obj<'star'> {
 
 }
 
+
 export interface PlanetParams extends ObjParams {
     texture?: string;
     type?: string;
@@ -136,15 +143,18 @@ export interface PlanetParams extends ObjParams {
 export class Planet extends _Obj<'planet'> {
 
     type: 'planet' = 'planet';
-    texture: string;
+    texture?: string;
     spectralType: string;
 
     constructor(name: string, desgn: string, data: PlanetParams) {
         super('planet', name, desgn, data);
-        if (data.texture !== undefined) this.texture = data.texture;
+        if (data.texture !== undefined) {
+            this.texture = data.texture;
+        }
         this.spectralType = data.type === undefined ? '' : data.type;
     }
 }
+
 
 export type Obj = Star | Planet;
 export type ObjIncludingRoot = RootObj | Obj;
