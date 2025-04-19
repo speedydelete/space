@@ -13,22 +13,14 @@
   "author": "speedydelete",
   "license": "GPL-3.0-only",
   "dependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "fake-system": "^0.2.1",
     "three": "^0.170.0"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.26.0",
-    "@babel/preset-react": "^7.26.3",
     "@babel/preset-typescript": "^7.26.0",
-    "@types/react": "^19.0.1",
-    "@types/react-dom": "^19.0.2",
     "@types/three": "^0.170.0",
-    "@types/webpack-bundle-analyzer": "^4.7.0",
     "babel-loader": "^9.2.1",
-    "webpack": "^5.97.1",
-    "webpack-bundle-analyzer": "^4.10.2",
-    "webpack-cli": "^6.0.1",
-    "webpack-dev-server": "^5.2.0"
+    "webpack": "^5.97.1"
   }
 }
