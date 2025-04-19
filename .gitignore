@@ -1,2 +1,4 @@
 /node_modules
-/dist/main*
+/lib
+/dist/index.html
+/dist/main.js

@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        "module": "NodeNext",
+        "rootDir": "./src",
+        "outDir": "./lib",
+        "sourceMap": true
+    },
+    "files": ["./src/index.ts"]
+}
