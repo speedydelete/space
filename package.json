@@ -13,7 +13,7 @@
     "@babel/preset-env": "^7.26.9",
     "@minify-html/node": "^0.16.4",
     "@types/three": "^0.170.0",
-    "fake-system": "^0.2.1",
+    "fake-system": "file:../fake-system",
     "three": "^0.170.0",
     "typescript": "^5.8.3",
     "webpack": "^5.97.1"
