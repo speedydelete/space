@@ -1,4 +1,11 @@
 
-import {World} from './world';
+import {getPresetIndex, loadPreset} from './preset_loader';
 
-let world = new World();
+
+(async () => {
+    let preset = (await getPresetIndex()).find(x => x.default);
+    if (!preset) {
+        throw new Error('No default preset');
+    }
+    let world = loadPreset(preset);
+});

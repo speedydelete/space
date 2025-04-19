@@ -28,8 +28,8 @@ export interface ObjParams {
     axis?: Axis;
     orbit?: Orbit;
     position?: Position;
-    tilt?: number;
     albedo?: number;
+    bondAlbedo?: number;
     alwaysVisible?: boolean;
     children?: Object[];
 }
