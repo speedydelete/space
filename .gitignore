@@ -2,3 +2,4 @@
 /lib
 /dist/index.html
 /dist/*.js
+/dist/*.js.map

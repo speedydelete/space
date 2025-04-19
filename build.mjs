@@ -20,15 +20,19 @@ function afterWebpack(err, stats) {
     console.log(stats.toString({colors: true}) + '\n');
     for (let file of fs.readdirSync('dist')) {
         if (file.endsWith('.before_babel.js')) {
-            let code = babel.transformSync(fs.readFileSync('dist/' + file), {
+            let {code, map} = babel.transformSync(fs.readFileSync('dist/' + file), {
                 presets: ['@babel/preset-env'],
                 targets: '> 1%, not dead',
+                sourceMaps: true,
                 minified: true,
-            }).code;
+                comments: false,
+            });
             if (code.startsWith('"use strict";(()=>{"use strict";')) {
                 code = code.slice(13);
             }
-            fs.writeFileSync('dist/' + file.slice(0, -16) + '.js', code);
+            let outFile = 'dist/' + file.slice(0, -16) + '.js';
+            fs.writeFileSync(outFile, code);
+            fs.writeFileSync(outFile + '.map', JSON.stringify(map));
         }
     }
     if (!stats.hasErrors()) {
