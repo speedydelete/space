@@ -78,7 +78,7 @@ function parseCSV(data: string): {[key: string]: {[key: string]: any}} {
                     value = JSON.parse(value);
                 } catch (error) {
                     if (error instanceof SyntaxError) {
-                        if (value.match(/^\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d$/)) {
+                        if (value.match(/^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(.\d+)?Z$/)) {
                             value = new Date(value);
                         }
                     } else {
