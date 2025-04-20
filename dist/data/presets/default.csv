@@ -1,4 +1,3 @@
 path,type,name,designation,mass,radius,axis.tilt,axis.period,axis.epoch,axis.ra,orbit.at,orbit.sma,orbit.ecc,orbit.mna,orbit.inc,orbit.lan,orbit.aop,position.x,position.y,position.z,albedo,bondAlbedo,alwaysVisible
-,root,Root,special:root,0,0
 sun,star,Sun,special:sun,1.9891e30,6.957e8,0,2164230,2024-01-01T09:10:00Z,286.13,286.13,,,,,,,0,0,0,0,0,true
 sun/earth,planet,Earth,planet:earth,5.9722e24,6731000,86400,23.439,1970-01-01T00:00:00Z,0,946684800,149597887155.8,0.01671022,0,0.00005,-11.26064,114.20783,0,0,0,0.434,0.294,false

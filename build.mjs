@@ -28,14 +28,17 @@ function afterWebpack(err, stats) {
                 targets: '> 1%, not dead',
                 sourceMaps: true,
                 minified: true,
-                comments: false,
+                comments: mode !== 'development',
             });
-            if (code.startsWith('"use strict";(()=>{"use strict";')) {
+            if (code.match(/^"use strict";(\/\*.*?\*\/)?\(\(\)=>{"use strict";/)) {
                 code = code.slice(13);
             }
             let outFile = 'dist/' + file.slice(0, -16) + '.js';
+            if (mode === 'development') {
+                code += '//# sourceMappingURL=' + outFile + '.map';
+                fs.writeFileSync(outFile + '.map', JSON.stringify(map));
+            }
             fs.writeFileSync(outFile, code);
-            fs.writeFileSync(outFile + '.map', JSON.stringify(map));
         }
     }
     if (!stats.hasErrors()) {

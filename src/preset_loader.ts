@@ -34,7 +34,7 @@ function addDotKey(obj: {[key: string]: any}, key: string, value: any): void {
             }
             obj[start] = {};
         }
-        addDotKey(obj[start], key.slice(index), value);
+        addDotKey(obj[start], key.slice(index + 1), value);
     }
 }
 
@@ -59,6 +59,7 @@ function parseCSV(data: string): {[key: string]: {[key: string]: any}} {
             buffer = '';
         } else if (char === '\n') {
             row.push(buffer);
+            buffer = '';
             rows.push(row);
             row = [];
         } else {
@@ -66,11 +67,11 @@ function parseCSV(data: string): {[key: string]: {[key: string]: any}} {
         }
     }
     let out: {[key: string]: {[key: string]: any}} = {};
-    let headers = rows[0].slice(1);
+    let headers = rows[0];
     for (let row of rows.slice(1)) {
         let obj: {[key: string]: any} = {};
         for (let i = 1; i < row.length; i++) {
-            let value: any = row[i + 1];
+            let value: any = row[i];
             if (value === '') {
                 value = undefined;
             } else {
@@ -100,7 +101,7 @@ export async function loadPreset(preset: Preset): Promise<World> {
         let data = parseCSV(await resp.text()) as {[key: string]: Obj};
         let out = new World();
         for (let [name, obj] of Object.entries(data)) {
-            out.write(name, obj);
+            out.setObj(name, obj);
         }
         return out;
     } else {

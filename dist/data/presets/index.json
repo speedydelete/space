@@ -1,7 +1,7 @@
 [
     {
         "name": "Default",
-        "isBuiltin": true,
-        "path": "default.csv"
+        "path": "default.csv",
+        "default": true
     }
 ]

@@ -100,7 +100,7 @@ export type SpectralType = string;
 
 export type SpectralTypeRegexLiteral = SpectralType;
 
-export const spectralTypeColors: {[key: SpectralTypeRegexLiteral]: string} = (await (await fetch('./data/spectral_type_colors.json')).json());
+export let spectralTypeColors: {[key: SpectralTypeRegexLiteral]: string} | null = null;
 
 
 export interface StarParams extends ObjParams {
@@ -123,13 +123,21 @@ export class Star extends _Obj<'star'> {
         this.texture = data.texture;
     }
 
-    get color(): number {
-        for (const [type, color] of Object.entries(spectralTypeColors)) {
-            if ((new RegExp(type)).test(this.type)) {
-                return parseInt(color.replace('#', '0x'));
+    get color(): Promise<number> {
+        return (async () => {
+            if (spectralTypeColors === null) {
+                spectralTypeColors = await (await fetch('./data/spectral_type_colors.json')).json();
             }
-        }
-        return 0x7f7f7f;
+            if (spectralTypeColors === null) {
+                throw new Error('this is here to shut up typescript, if it happens something has gone very wrong');
+            }
+            for (const [type, color] of Object.entries(spectralTypeColors)) {
+                if ((new RegExp(type)).test(this.type)) {
+                    return parseInt(color.replace('#', '0x'));
+                }
+            }
+            return 0x7f7f7f;
+        })();
     }
 
 }
