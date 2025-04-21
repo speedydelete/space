@@ -289,7 +289,7 @@ export class Renderer {
             mesh.position.set(x/this.unitSize, y/this.unitSize, z/this.unitSize);
             if (object.type === 'star') {
                 let light = new three.PointLight(await object.color);
-                light.power = this.world.config.lC / 10**(0.4 * object.magnitude) / this.unitSize**2 / 20000;
+                light.power = this.world.config.lC / 10**(0.4 * object.magnitude) / this.unitSize**2 / 5000;
                 light.castShadow = true;
                 mesh.add(light);
             }

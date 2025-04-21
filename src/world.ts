@@ -118,7 +118,7 @@ export class World {
             let obj = this.getObj(path);
             if (obj.orbit) {
                 let {sma, ecc, mna, inc, lan, aop} = obj.orbit;
-                let per = 2 * pi * sqrt((sma * 1000) ** 3 / obj.mass / this.config.G) / 86400;
+                let per = 2 * pi * sqrt(sma ** 3 / obj.mass / this.config.G) / 86400;
                 mna = normalizeAngle(mna + 360 * (this.getJD() - 2451545.0) / per) / this.config.tps;
                 obj.orbit.mna = mna;
                 let eca = mna;
