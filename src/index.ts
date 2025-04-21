@@ -1,9 +1,10 @@
 
 import presets from './presets';
-import {Renderer, DEFAULT_SETTINGS} from './renderer';
 
 
 (async () => {
+    // @ts-ignore
+    const {Renderer, DEFAULT_SETTINGS} = await import('./renderer.ts') as typeof import('./renderer');
     let world = presets.default;
     let renderer = new Renderer(world, DEFAULT_SETTINGS);
     Object.assign(globalThis, {

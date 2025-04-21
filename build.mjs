@@ -2,7 +2,6 @@
 import path from 'path';
 import fs from 'fs';
 import minify from '@minify-html/node';
-import babel from '@babel/core';
 import webpack from 'webpack';
 
 function afterWebpack(err, stats) {
@@ -15,34 +14,13 @@ function afterWebpack(err, stats) {
         throw new Error('stats is undefined, this error should not happen');
     }
     console.log(stats.toString({colors: true}) + '\n');
-    let code = fs.readFileSync('src/index.html').toString();
-    code = code.replace('<link rel="stylesheet" href="style.css" />', '<style>' + fs.readFileSync('src/style.css') + '</style>');
-    code = minify.minify(Buffer.from(code), {
-        keep_html_and_head_opening_tags: true,
-    });
-    fs.writeFileSync('dist/index.html', code);
-    for (let file of fs.readdirSync('dist')) {
-        if (file.endsWith('.before_babel.js')) {
-            let {code, map} = babel.transformSync(fs.readFileSync('dist/' + file), {
-                presets: ['@babel/preset-env'],
-                targets: '> 1%, not dead',
-                sourceMaps: true,
-                minified: true,
-                comments: mode !== 'development',
-                filename: file.slice(0, -16) + '.js',
-            });
-            if (code.match(/^"use strict";(\/\*.*?\*\/)?\(\(\)=>{"use strict";/)) {
-                code = code.slice(13);
-            }
-            let outFile = 'dist/' + file.slice(0, -16) + '.js';
-            if (mode === 'development') {
-                code += '//# sourceMappingURL=/' + outFile + '.map';
-                fs.writeFileSync(outFile + '.map', JSON.stringify(map));
-            }
-            fs.writeFileSync(outFile, code);
-        }
-    }
     if (!stats.hasErrors()) {
+        let code = fs.readFileSync('src/index.html').toString();
+        code = code.replace('<link rel="stylesheet" href="style.css" />', '<style>' + fs.readFileSync('src/style.css') + '</style>');
+        code = minify.minify(Buffer.from(code), {
+            keep_html_and_head_opening_tags: true,
+        });
+        fs.writeFileSync('dist/index.html', code);
         console.log('build: complete');
     }
     if (compiler !== undefined && !compiler.watching) {
@@ -55,17 +33,25 @@ let mode = process.argv.includes('dev') ? 'development' : 'production';
 let compiler = webpack({
     mode: mode,
     entry: {
-        main: './lib/index.js',
+        main: './src/index.ts',
     },
     output: {
         path: path.resolve(import.meta.dirname, 'dist'),
-        filename: '[name].before_babel.js',
+        filename: '[name].js',
+    },
+    resolve: {
+        extensions: ['.js', '.ts'],
     },
     module: {
         rules: [
             {
-                test: /\.js$/,
-                use: ['source-map-loader'],
+                test: /\.[jt]s$/,
+                exclude: /node_modules/,
+                loader: 'babel-loader',
+                options: {
+                    presets: ['@babel/preset-typescript', '@babel/preset-env'],
+                    targets: '> 0.5%, not dead',
+                }
             },
         ],
     },
