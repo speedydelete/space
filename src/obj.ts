@@ -2,20 +2,20 @@
 export type Position = [number, number, number];
 
 export interface Orbit {
-    at?: Date | string,
+    at?: number,
     sma: number,
-    ecc?: number,
-    mna?: number,
-    inc?: number,
-    lan?: number,
-    aop?: number,
+    ecc: number,
+    mna: number,
+    inc: number,
+    lan: number,
+    aop: number,
     retrograde?: boolean;
 }
 
 export interface Axis {
     tilt: number,
     period: number | 'sync',
-    epoch: Date,
+    epoch: number,
     ra: number,
 }
 
@@ -84,10 +84,6 @@ class _Obj<T extends ObjType = ObjType> extends _BaseObj {
         this.alwaysVisible = data.alwaysVisible === undefined ? false : data.alwaysVisible;
     }
 
-    hasOrbit(): this is OrbitObj {
-        return this.orbit !== undefined;
-    }
-
 }
 
 
@@ -126,10 +122,10 @@ export class Star extends _Obj<'star'> {
     get color(): Promise<number> {
         return (async () => {
             if (spectralTypeColors === null) {
-                spectralTypeColors = await (await fetch('./data/spectral_type_colors.json')).json();
-            }
-            if (spectralTypeColors === null) {
-                throw new Error('this is here to shut up typescript, if it happens something has gone very wrong');
+                spectralTypeColors = await (await fetch('data/spectral_type_colors.json')).json();
+                if (spectralTypeColors === null) {
+                    throw new Error('this is here to shut up typescript, if it happens something has gone very wrong');
+                }
             }
             for (const [type, color] of Object.entries(spectralTypeColors)) {
                 if ((new RegExp(type)).test(this.type)) {
@@ -167,7 +163,7 @@ export class Planet extends _Obj<'planet'> {
 export type Obj = Star | Planet;
 export type ObjIncludingRoot = RootObj | Obj;
 
-export const objTypeMap = {
+export const OBJ_TYPE_MAP = {
     'root': RootObj,
     'star': Star,
     'planet': Planet,

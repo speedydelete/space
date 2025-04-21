@@ -1,2 +1,0 @@
-path,type,name,designation,mass,radius,axis.tilt,axis.period,axis.epoch,axis.ra,orbit.at,orbit.sma,orbit.ecc,orbit.mna,orbit.inc,orbit.lan,orbit.aop,position,albedo,bondAlbedo,alwaysVisible,texture
-sun,planet,Earth,planet:earth,5.9722e24,6371000,86400,23.439,1970-01-01T00:00:00Z,0,946684800,149597887155.8,0.01671022,0,0.00005,-11.26064,114.20783,"[150000000000,0,0]",0.434,0.294,false,data/textures/ssc/earth_8k.jpg

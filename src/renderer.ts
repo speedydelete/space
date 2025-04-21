@@ -266,9 +266,7 @@ export class Renderer {
 
     async init(): Promise<void> {
         let textureLoader = new three.TextureLoader();;
-        this.world.init();
         for (let path of this.world.getObjPaths('', true)) {
-            // await this.setLoadingScreenMessage(`Loading ${path}`);
             let object = this.world.getObj(path);
             if (object === undefined || object instanceof RootObj) continue;
             let material = new three.MeshStandardMaterial();

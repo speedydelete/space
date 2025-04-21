@@ -1,6 +1,6 @@
 
 import create, {Process, System, UserSession, FileSystem, join, Directory} from 'fake-system';
-import {Obj, RootObj} from './obj';
+import {Obj, RootObj, OBJ_TYPE_MAP, ObjType} from './obj';
 
 
 export interface Config {
@@ -11,6 +11,12 @@ export interface Config {
     initialTarget: string,
 }
 
+
+const {abs, sqrt, PI: pi} = Math;
+const sin = (x: number) => Math.sin(x * pi / 180);
+const cos = (x: number) => Math.cos(x * pi / 180);
+const atan2 = (x: number, y: number) => Math.atan2(x, y) * 180 / pi;
+
 export function objJoin(...paths: string[]) {
     let out = join(...paths);
     if (out.startsWith('/')) {
@@ -20,12 +26,22 @@ export function objJoin(...paths: string[]) {
 }
 
 
+function normalizeAngle(angle: number): number {
+    angle %= 360;
+    while (angle < 0) {
+        angle += 360;
+    }
+    return angle;
+}
+
+
 export class World {
 
     system: System;
     fs: FileSystem;
     objDir: Directory;
     rootSession: UserSession;
+    tickInterval: number | null = null;
 
     time: number = 0;
     timeWarp: number = 1;
@@ -42,6 +58,7 @@ export class World {
             this.objDir.write('.object', JSON.stringify(new RootObj('', 'special:root')));
         }
         this.time = Date.now() / 1000;
+        this.tick = this.tick.bind(this);
     }
 
     run(command: string): Process {
@@ -49,7 +66,8 @@ export class World {
     }
 
     getObj(path: string): Obj {
-        return JSON.parse(this.objDir.read(objJoin(path, '.object')));
+        let data = JSON.parse(this.objDir.read(objJoin(path, '.object')));
+        return Object.assign(Object.create(OBJ_TYPE_MAP[data.type as ObjType].prototype), data);
     }
     
     setObj(path: string, data: Obj): void {
@@ -90,16 +108,49 @@ export class World {
         this.fs.write('/etc/time_warp', this.timeWarp.toString());
     }
 
-    init(): void {
+    getJD(): number {
+        return this.time / 86400 + 2440587.5;
+    }
 
+    tick(): void {
+        this.time += 1/this.config.tps;
+        for (let path of this.getObjPaths('', true)) {
+            let obj = this.getObj(path);
+            if (obj.orbit) {
+                let {sma, ecc, mna, inc, lan, aop} = obj.orbit;
+                let per = 2 * pi * sqrt((sma * 1000) ** 3 / obj.mass / this.config.G) / 86400;
+                mna = normalizeAngle(mna + 360 * (this.getJD() - 2451545.0) / per) / this.config.tps;
+                obj.orbit.mna = mna;
+                let eca = mna;
+                let delta;
+                do {
+                    delta = (eca - ecc*sin(eca) - mna) / (1 - ecc*cos(eca));
+                    eca -= delta;
+                } while (abs(delta) > 1e-6);
+                let tra = 2 * atan2(sqrt(1 + ecc) * sin(eca / 2), sqrt(1 - ecc) * cos(eca / 2));
+                let r = sma * (1 - ecc**2) / (1 - ecc * cos(tra));
+                let x = r * (cos(lan) * cos(tra + aop) - sin(lan) * sin(tra + aop) * cos(inc));
+                let y = r * (sin(lan) * cos(tra + aop) + cos(lan) * sin(tra + aop) * cos(inc));
+                let z = r * (sin(tra + aop) * sin(inc));
+                let parent = this.getObj(path.split('/').slice(0, -1).join('/'));
+                x += parent.position[0];
+                y += parent.position[1];
+                z += parent.position[2];
+                obj.position = [x, z, y];
+                this.setObj(path, obj);
+            }
+        }
     }
 
     start(): void {
-
+        // @ts-ignore
+        this.tickInterval = setInterval(this.tick, 1000/this.config.tps);
     }
 
     stop(): void {
-
+        if (this.tickInterval) {
+            clearInterval(this.tickInterval);
+        }
     }
 
     export(): Uint8Array {
