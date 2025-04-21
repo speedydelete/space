@@ -45,6 +45,8 @@ export class World {
 
     time: number = 0;
     timeWarp: number = 1;
+    
+    firstTickComplete: boolean = false;
 
     constructor(data?: Uint8Array) {
         this.system = create(data);
@@ -113,13 +115,19 @@ export class World {
     }
 
     tick(): void {
-        this.time += 1/this.config.tps;
+        let timeDiff = 1/this.config.tps * this.timeWarp;
+        this.time += timeDiff;
         for (let path of this.getObjPaths('', true)) {
             let obj = this.getObj(path);
             if (obj.orbit) {
-                let {sma, ecc, mna, inc, lan, aop} = obj.orbit;
-                let per = 2 * pi * sqrt(sma ** 3 / obj.mass / this.config.G) / 86400;
-                mna = normalizeAngle(mna + 360 * (this.getJD() - 2451545.0) / per) / this.config.tps;
+                let parent = this.getObj(path.split('/').slice(0, -1).join('/'));
+                let {at, sma, ecc, mna, inc, lan, aop} = obj.orbit;
+                let per = 2 * pi * sqrt(sma ** 3 / parent.mass / this.config.G);
+                if (this.firstTickComplete) {
+                    mna = normalizeAngle(mna + 360 / this.config.tps * this.timeWarp / per);
+                } else {
+                    mna = normalizeAngle(mna + 360 * (this.time - at) / per);
+                }
                 obj.orbit.mna = mna;
                 let eca = mna;
                 let delta;
@@ -132,13 +140,15 @@ export class World {
                 let x = r * (cos(lan) * cos(tra + aop) - sin(lan) * sin(tra + aop) * cos(inc));
                 let y = r * (sin(lan) * cos(tra + aop) + cos(lan) * sin(tra + aop) * cos(inc));
                 let z = r * (sin(tra + aop) * sin(inc));
-                let parent = this.getObj(path.split('/').slice(0, -1).join('/'));
                 x += parent.position[0];
                 y += parent.position[1];
                 z += parent.position[2];
                 obj.position = [x, z, y];
                 this.setObj(path, obj);
             }
+        }
+        if (!this.firstTickComplete) {
+            this.firstTickComplete = true;
         }
     }
 

@@ -2,7 +2,7 @@
 export type Position = [number, number, number];
 
 export interface Orbit {
-    at?: number,
+    at: number,
     sma: number,
     ecc: number,
     mna: number,
