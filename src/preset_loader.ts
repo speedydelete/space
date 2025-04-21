@@ -66,6 +66,8 @@ function parseCSV(data: string): {[key: string]: {[key: string]: any}} {
             buffer += char;
         }
     }
+    row.push(buffer);
+    rows.push(row);
     let out: {[key: string]: {[key: string]: any}} = {};
     let headers = rows[0];
     for (let row of rows.slice(1)) {

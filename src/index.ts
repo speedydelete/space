@@ -1,7 +1,6 @@
 
 import {getPresetIndex, loadPreset} from './preset_loader';
-import {Server} from './server';
-import {Client} from './client';
+import {Renderer, DEFAULT_SETTINGS} from './renderer';
 
 
 (async () => {
@@ -9,8 +8,21 @@ import {Client} from './client';
     if (!preset) {
         throw new Error('No default preset');
     }
-    let server = new Server(await loadPreset(preset));
-    let client = new Client(server.recv, server.clientRecv, 0, () => {}, () => {}, async () => {});
-    server.start();
-    client.start();
+    let world = await loadPreset(preset);
+    world.config = {
+        tps: 20,
+        c: 299792458,
+        G: 6.6743e-11,
+        lC: 3.2065e+30,
+        initialTarget: 'sun',
+    };
+    let renderer = new Renderer(world, DEFAULT_SETTINGS);
+    Object.assign(globalThis, {
+        world,
+        system: world.system,
+        fs: world.fs,
+        objDir: world.objDir,
+        renderer,
+    });
+    renderer.start();
 })();

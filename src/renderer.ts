@@ -3,12 +3,11 @@ import * as three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import {join} from 'fake-system';
 import * as units from './units';
-import {RootObj, type Obj} from './obj';
+import {Obj, RootObj} from './obj';
 import {World} from './world';
-import type {GetTimeRequest, GetTimeWarpRequest, GetObjectRequest, GetAllObjectsRequest, GetConfigRequest, StartRequest, StopRequest, Request, ResponseForRequest, SentRequest, SentResponse, SetTimeWarpRequest} from './server.ts';
 
 
-interface Settings {
+export interface Settings {
     fov: number,
     renderDistance: number,
     unitSize: number,
@@ -18,10 +17,7 @@ interface Settings {
     controlsMaxDistance: number,
 }
 
-type SettingsKey = keyof Settings;
-type SettingsValue = Settings[SettingsKey];
-
-const defaultSettings: Settings = {
+export const DEFAULT_SETTINGS: Settings = {
     fov: 70,
     renderDistance: 150000000000,
     unitSize: 150000000000,
@@ -31,48 +27,15 @@ const defaultSettings: Settings = {
     controlsMaxDistance: Number.MAX_SAFE_INTEGER,
 }
 
-function loadSettings(): Settings {
-    const storageSettings = localStorage.getItem('space-game-settings');
-    return storageSettings !== null ? JSON.parse(storageSettings) : defaultSettings;
-}
-
-function saveSettings(settings: Settings): void {
-    localStorage.setItem('space-game-settings', JSON.stringify(settings));
-}
-
-interface WorldInfo {
-    name: string,
-    desc: string,
-    thumbnail?: string,
-    data: string,
-}
-
-function loadWorlds(): WorldInfo[] {
-    const storageWorlds = localStorage.getItem('space-game-worlds');
-    return storageWorlds === null ? [] : JSON.parse(storageWorlds);
-}
-
-function saveWorlds(worlds: WorldInfo[]): void {
-    localStorage.setItem('space-game-worlds', JSON.stringify(worlds));
-}
-
-const helpMessage = `Use the "[" and "]" keys to select different objects, or just click on an object.
+let helpMessage = `Use the "[" and "]" keys to select different objects, or just click on an object.
 Use the "," and "." keys to control the time warp, and use the "/" key to reset it.
 Use the "+" and "-" keys to do telescopic zoom, and use Shift-+ to reset it.`;
 
 
-class Client {
-
-    world: World = new World();
+export class Renderer {
+    
+    world: World;
     settings: Settings;
-
-    syncSend: (data: SentRequest) => void;
-    syncRecv: () => SentResponse[];
-    waitingMsgs: {[key: number]: (value: any) => void} = {};
-    nextMsgId: number = 0;
-
-    target: string = '';
-    zoom: number = 1;
 
     renderer: three.WebGLRenderer;
     scene: three.Scene;
@@ -82,36 +45,24 @@ class Client {
     objMeshes: {[key: string]: three.Mesh} = {};
     oldMeshPos: three.Vector3 = new three.Vector3(0, 0, 0);
     
-    leftInfoElt: HTMLElement | null;
-    rightInfoElt: HTMLElement | null;
-
     running: boolean = false;
     frames: number = 0;
     prevRealTime: number = performance.now();
     fps: number = 60;
+    target: string = '';
+    zoom: number = 1;
     blurred: boolean = false;
-    animateRequest: null | number = null;
+    animateRequest: number | null = null;
     intervals: number[] = [];
     initialStartInterval: null | number = null;
     initialStartComplete: boolean = false;
     closeLoadingScreenInterval: null | number = null;
-    worldIndex: number;
-    doEscape: () => void;
-    doCloseLoadingScreen: () => void;
-    setLoadingScreenMessage: (message: string) => Promise<void>;
+    leftInfoElt: HTMLElement;
+    rightInfoElt: HTMLElement;
 
-    boundHandleResize: (event: Event) => void;
-    boundHandleClick: (event: MouseEvent) => void;
-    boundHandleKeyDown: (event: KeyboardEvent) => void;
-
-    constructor(send: (data: SentRequest) => void, recv: () => SentResponse[], worldIndex: number, doEscape: () => void, doCloseLoadingScreen: () => void, setLoadingScreenMessage: (message: string) => Promise<void>) {
-        this.syncSend = send;
-        this.syncRecv = recv;
-        this.worldIndex = worldIndex;
-        this.doEscape = doEscape;
-        this.doCloseLoadingScreen = doCloseLoadingScreen;
-        this.setLoadingScreenMessage = setLoadingScreenMessage;
-        this.settings = loadSettings();
+    constructor(world: World, settings: Settings) {
+        this.world = world;
+        this.settings = settings;
         this.renderer = new three.WebGLRenderer();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.scene = new three.Scene();
@@ -122,54 +73,31 @@ class Client {
             this.settings.cameraMaxDistance/this.unitSize,
         );
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.minDistance = this.settings.controlsMinDistance/this.unitSize;
-        this.controls.maxDistance = this.settings.controlsMaxDistance/this.unitSize;
+        this.controls.minDistance = this.settings.controlsMinDistance/this.settings.unitSize;
+        this.controls.maxDistance = this.settings.controlsMaxDistance/this.settings.unitSize;
         this.controls.keys = {LEFT: 'ArrowLeft', UP: 'ArrowUp', RIGHT: 'ArrowRight', BOTTOM: 'ArrowDown'}
         this.controls.keyPanSpeed = 2;
         this.controls.update();
         this.controls.listenToKeyEvents(window);
         this.scene.add(new three.AmbientLight(0xffffff, 0.2));
         this.raycaster = new three.Raycaster();
-        this.leftInfoElt = document.getElementById('left-info');
-        this.rightInfoElt = document.getElementById('right-info');
-        this.boundHandleResize = this.handleResize.bind(this);
-        this.boundHandleClick = this.handleClick.bind(this);
-        this.boundHandleKeyDown = this.handleKeyDown.bind(this);
+        let leftInfoElt = document.getElementById('left-info');
+        let rightInfoElt = document.getElementById('right-info');
+        if (!leftInfoElt || !rightInfoElt) {
+            throw new Error('missing info element(s)');
+        }
+        this.leftInfoElt = leftInfoElt;
+        this.rightInfoElt = rightInfoElt;
+        this.handleResize = this.handleResize.bind(this);
+        this.handleClick = this.handleClick.bind(this);
+        this.handleKeyDown = this.handleKeyDown.bind(this);
     }
 
     get unitSize(): number {
         return this.settings.unitSize;
     }
 
-    checkMessages(): void {
-        for (const msg of this.syncRecv()) {
-            if (msg.id in this.waitingMsgs) {
-                this.waitingMsgs[msg.id](msg.data.data);
-                delete this.waitingMsgs[msg.id];
-            }
-        }
-    }
-
-    async send<T extends Request>(type: T['type'], data: T['data'] = undefined): Promise<ResponseForRequest<T>['data']> {
-        // @ts-ignore
-        const msg: SentRequest = {id: this.nextMsgId, data: {type: type, data: data}};
-        this.nextMsgId += 2;
-        this.syncSend(msg);
-        // @ts-ignore
-        const {promise, resolve} = Promise.withResolvers();
-        this.waitingMsgs[msg.id] = resolve;
-        // @ts-ignore
-        return promise;
-    }
-    
-    save() {
-        let worlds = loadWorlds();
-        // @ts-ignore
-        worlds[this.worldIndex].data = String.fromCharCode.apply(undefined, this.world.export());
-        saveWorlds(worlds);   
-    }
-
-    getObjectMesh(path: string): three.Mesh | undefined {
+    getObjMesh(path: string): three.Mesh | undefined {
         if (path.startsWith('/')) path = path.slice(1);
         return this.objMeshes[path];
     }
@@ -181,15 +109,15 @@ class Client {
     }
 
     handleClick(event: MouseEvent): void {
-       this.raycaster.setFromCamera(new three.Vector2(
-            (event.clientX / window.innerWidth) * 2 - 1,
-            -(event.clientY / window.innerHeight) * 2 + 1), this.camera);
-        const intersects = this.raycaster.intersectObjects(Object.values(this.objMeshes));
-        if (intersects.length > 0) {
-            this.target = Object.entries(this.objMeshes).filter((x) => x[1] === intersects[0].object)[0][0];
-            this.controls.target.copy(intersects[0].object.position);
-        }
-    };
+        // this.raycaster.setFromCamera(new three.Vector2(
+        //     (event.clientX / window.innerWidth) * 2 - 1,
+        //     -(event.clientY / window.innerHeight) * 2 + 1), this.camera);
+        // let intersects = this.raycaster.intersectObjects(Object.values(this.objMeshes));
+        // if (intersects.length > 0) {
+        //     this.target = Object.entries(this.objMeshes).filter((x) => x[1] === intersects[0].object)[0][0];
+        //     this.controls.target.copy(intersects[0].object.position);
+        // }
+    }
 
     async handleKeyDown(event: KeyboardEvent): Promise<void> {
         if (event.key === ',') {
@@ -200,7 +128,6 @@ class Client {
                 timeWarp /= 5;
             }
             this.world.timeWarp = timeWarp;
-            this.send<SetTimeWarpRequest>('set-time-warp', timeWarp);
         } else if (event.key === '.') {
             let timeWarp = this.world.timeWarp;
             if (Math.log10(timeWarp) % 1 === 0) {
@@ -209,11 +136,9 @@ class Client {
                 timeWarp *= 2;
             }
             this.world.timeWarp = timeWarp;
-            this.send<SetTimeWarpRequest>('set-time-warp', timeWarp);
         } else if (event.key === '/') {
             event.preventDefault();
             this.world.timeWarp = 1;
-            this.send<SetTimeWarpRequest>('set-time-warp', 1);
         } else if (event.key === '=' || event.key === '+') {
             if (event.shiftKey) {
                 this.zoom = 1;
@@ -221,43 +146,40 @@ class Client {
                 this.zoom += 10**Math.floor(Math.log10(this.zoom));
             }
         } else if (event.key === '-') {
-            const logZoom = Math.log10(this.zoom);
-            const floorLogZoom = Math.floor(logZoom);
+            let logZoom = Math.log10(this.zoom);
+            let floorLogZoom = Math.floor(logZoom);
             if (logZoom === Math.floor(logZoom)) {
                 this.zoom -= 10**(floorLogZoom - 1);
             } else {
                 this.zoom -= 10**floorLogZoom;
             }
         } else if (event.key === '[') {
-            const allObjects = this.world.getObjPaths('', true);
+            let allObjects = this.world.getObjPaths('', true);
             let index = allObjects.indexOf(this.target);
             if (index === 0) {
                 index = allObjects.length;
             }
             this.target = allObjects[(index - 1) % allObjects.length];
         } else if (event.key === ']') {
-            const allObjects = this.world.getObjPaths('', true);
+            let allObjects = this.world.getObjPaths('', true);
             let index = allObjects.indexOf(this.target);
             if (index === allObjects.length - 1) {
                 index = -1;
             }
             this.target = allObjects[(index + 1) % allObjects.length];
         } else if (event.key === 'Escape') {
-            this.save();
-            this.doEscape();
         } else if (event.key === 'h') {
             alert(helpMessage);
         }
-    };
+    }
 
     updateObjects(): number {
         let renderedObjects = 0;
-        for (const filename of this.world.getObjPaths('', true)) {
-            const path = join(filename);
-            const object = this.world.getObj(path);
-            const mesh = this.getObjectMesh(path);
+        for (let path of this.world.getObjPaths('', true)) {
+            let object = this.world.getObj(path);
+            let mesh = this.getObjMesh(path);
             if (object !== undefined && mesh !== undefined && (object.alwaysVisible || mesh.position.distanceTo(this.camera.position) < this.settings.renderDistance/this.settings.unitSize)) {
-                const [x, y, z] = object.position;
+                let [x, y, z] = object.position;
                 mesh.position.set(x/this.unitSize, y/this.unitSize, z/this.unitSize);
                 mesh.rotation.set(0, 0, 0);
                 if (object.axis) {
@@ -266,13 +188,10 @@ class Client {
                         if (object.axis.period === 'sync') {
                             console.error('period is sync for', object, 'path:', path);
                         } else if (this.world.time) {
-                            const diff = (this.world.time - new Date(object.axis.epoch).getTime()/1000);
+                            let diff = (this.world.time - new Date(object.axis.epoch).getTime()/1000);
                             mesh.rotateY((diff/object.axis.period % 1) * Math.PI * 2);
                         }
                     }
-                }
-                if (object.type === 'star') {
-                    
                 }
                 renderedObjects += 1;
                 mesh.visible = true;
@@ -283,22 +202,8 @@ class Client {
         return renderedObjects;
     }
 
-    async resyncTime(): Promise<void> {
-        const newTime = await this.send<GetTimeRequest>('get-time');
-        if (newTime) this.world.time = newTime;
-        this.world.timeWarp = await this.send<GetTimeWarpRequest>('get-time-warp');
-    }
-
-    async resyncObjects(): Promise<void> {
-        for (const {path, object} of await this.send<GetAllObjectsRequest>('get-all-objects')) {
-            if (object !== undefined) {
-                this.world.setObj(path, object);
-            }
-        }
-    }
-
     animate(): void {
-        const renderedObjects = this.updateObjects();
+        let renderedObjects = this.updateObjects();
         if (document.hidden || document.visibilityState === 'hidden') {
             this.blurred = true;
             this.animateRequest = requestAnimationFrame(this.animate.bind(this));
@@ -310,14 +215,14 @@ class Client {
             this.fps = 60;
         }
         this.frames++;
-        const realTime = performance.now();
+        let realTime = performance.now();
         if (realTime >= this.prevRealTime + 1000) {
             this.fps = Math.round((this.frames * 1000)/(realTime - this.prevRealTime));
             this.frames = 0;
             this.prevRealTime = realTime;
         }
-        const targetObj: Obj | undefined = this.world.getObj(this.target);
-        const mesh: three.Mesh | undefined = this.getObjectMesh(this.target);
+        let targetObj: Obj | undefined = this.world.getObj(this.target);
+        let mesh: three.Mesh | undefined = this.getObjMesh(this.target);
         if (mesh && mesh.position) {
             this.camera.position.x += mesh.position.x - this.oldMeshPos.x;
             this.camera.position.y += mesh.position.y - this.oldMeshPos.y;
@@ -358,17 +263,13 @@ class Client {
         if (mesh) this.oldMeshPos = mesh.position.clone();
         this.animateRequest = requestAnimationFrame(this.animate.bind(this));
     }
-    
+
     async init(): Promise<void> {
-        const textureLoader = new three.TextureLoader();;
-        for (const {path, object} of await this.send<GetAllObjectsRequest>('get-all-objects')) {
-            if (object === undefined) continue;
-            this.world.setObj(path, object);
-        }
+        let textureLoader = new three.TextureLoader();;
         this.world.init();
-        for (const path of this.world.getObjPaths('', true)) {
-            await this.setLoadingScreenMessage(`Loading ${path}`);
-            const object = this.world.getObj(path);
+        for (let path of this.world.getObjPaths('', true)) {
+            // await this.setLoadingScreenMessage(`Loading ${path}`);
+            let object = this.world.getObj(path);
             if (object === undefined || object instanceof RootObj) continue;
             let material = new three.MeshStandardMaterial();
             if (object.texture) {
@@ -384,11 +285,12 @@ class Client {
                 material.emissive = new three.Color(await object.color);
                 material.emissiveIntensity = 2;
             }
-            const geometry = new three.SphereGeometry(object.radius/this.unitSize, 512, 512);
-            const mesh = new three.Mesh(geometry, material);
-            mesh.position.set(...object.position);
+            let geometry = new three.SphereGeometry(object.radius/this.unitSize, 512, 512);
+            let mesh = new three.Mesh(geometry, material);
+            let [x, y, z] = object.position;
+            mesh.position.set(x/this.unitSize, y/this.unitSize, z/this.unitSize);
             if (object.type === 'star') {
-                const light = new three.PointLight(await object.color);
+                let light = new three.PointLight(await object.color);
                 light.power = this.world.config.lC / 10**(0.4 * object.magnitude) / this.unitSize**2 / 20000;
                 light.castShadow = true;
                 mesh.add(light);
@@ -401,33 +303,19 @@ class Client {
     }
 
     async start(): Promise<void> {
-        await this.setLoadingScreenMessage('Adding event listeners');
-        this.intervals.push(window.setInterval(this.checkMessages.bind(this), 1));
-        window.addEventListener('resize', this.boundHandleResize);
-        window.addEventListener('click', this.boundHandleClick);
-        window.addEventListener('keydown', this.boundHandleKeyDown);
-        await this.setLoadingScreenMessage('Starting server');
-        await this.send<StartRequest>('start');
-        this.world = new World();
-        await this.setLoadingScreenMessage('Syncing time');
-        const time = await this.send<GetTimeRequest>('get-time');
-        this.world.timeWarp = await this.send<GetTimeWarpRequest>('get-time-warp');
-        this.world.config = await this.send<GetConfigRequest>('get-config');
-        if (time !== undefined) this.world.time = time;
-        await this.setLoadingScreenMessage('Loading objects');
+        window.addEventListener('resize', this.handleResize);
+        window.addEventListener('click', this.handleClick);
+        window.addEventListener('keydown', this.handleKeyDown);
         await this.init();
         this.world.start();
-        await this.setLoadingScreenMessage('Starting animation loop');
         this.animateRequest = requestAnimationFrame(this.animate.bind(this));
-        this.intervals.push(window.setInterval(this.resyncTime.bind(this), 10));
-        this.intervals.push(window.setInterval(this.resyncObjects.bind(this), 1000));
         if (!this.initialStartComplete) {
             this.initialStartInterval = window.setInterval((async () => {
                 if (this.frames > 100) {
                     this.initialStartComplete = true;
                     this.target = this.world.config.initialTarget;
-                    const object = await this.send<GetObjectRequest>('get-object', this.target);
-                    const mesh = this.getObjectMesh(this.target);
+                    let mesh = this.getObjMesh(this.target);
+                    let object = this.world.getObj(this.target);
                     if (mesh && object) {
                         this.camera.position.set(mesh.position.x + object.radius/this.unitSize*10, mesh.position.y, mesh.position.z);
                     }
@@ -438,47 +326,24 @@ class Client {
             }).bind(this), 10);
             this.intervals.push(this.initialStartInterval);
         }
-        this.closeLoadingScreenInterval = window.setInterval((() => {
-            if (this.frames > 1) {
-                this.doCloseLoadingScreen();
-                if (this.closeLoadingScreenInterval) {
-                    window.clearInterval(this.closeLoadingScreenInterval);
-                }
-            }
-        }).bind(this), 10);
-        this.intervals.push(this.closeLoadingScreenInterval);
-        this.intervals.push(window.setInterval(this.save.bind(this), 10000));
+        // this.intervals.push(window.setInterval(this.save.bind(this), 10000));
         this.running = true;
+        document.body.insertBefore(this.renderer.domElement, document.body.firstElementChild);
         console.log('Expansion Loading Complete!');
     }
 
     async stop(): Promise<void> {
         this.running = false;
-        for (const interval of this.intervals) {
+        for (let interval of this.intervals) {
             window.clearInterval(interval);
         }
         if (this.animateRequest !== null) cancelAnimationFrame(this.animateRequest);
         this.animateRequest = null;
         this.world.stop();
-        await this.send<StopRequest>('stop');
-        window.removeEventListener('resize', this.boundHandleResize);
-        // @ts-ignore
-        window.removeEventListener('click', this.boundHandleClick);
-        // @ts-ignore
-        window.removeEventListener('keydown', this.boundHandleKeyDown);
+        window.removeEventListener('resize', this.handleResize);
+        window.removeEventListener('click', this.handleClick);
+        window.removeEventListener('keydown', this.handleKeyDown);
     }
 
 }
 
-export {
-    Settings,
-    SettingsKey,
-    SettingsValue,
-    defaultSettings,
-    loadSettings,
-    saveSettings,
-    WorldInfo,
-    loadWorlds,
-    saveWorlds,
-    Client,
-}
