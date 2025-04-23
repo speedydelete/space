@@ -7,7 +7,6 @@ import presets from './presets';
 import renderBGStars from './bg_stars';
 
 
-
 export interface Settings {
     fov: number,
     renderDistance: number,
@@ -238,6 +237,9 @@ let prevRealTime = performance.now();
 let oldMeshPos = new three.Vector3(0, 0, 0);
 let fps = 0;
 
+const e = 23.439 * Math.PI / 180;
+const {sin, cos, tan, asin, atan2, PI: pi} = Math;
+
 function animate(): void {
     let renderedObjects = updateObjects();
     if (document.hidden || document.visibilityState === 'hidden') {
@@ -267,10 +269,10 @@ function animate(): void {
     }
     let direction = new three.Vector3();
     camera.getWorldDirection(direction);
-    let b = Math.asin(direction.y);
-    let l = Math.atan2(direction.z, direction.x);
-    let dec = Math.asin(Math.cos(b)*Math.sin(l)*Math.sin(23.439) + Math.sin(b)*Math.cos(23.439)) * 180/Math.PI;
-    let ra = Math.asin((Math.cos(b)*Math.sin(l)*Math.cos(23.439) - Math.sin(b)*Math.sin(23.439))/Math.cos(dec)) * 180/Math.PI;
+    let b = asin(direction.y);
+    let l = atan2(direction.z, direction.x);
+    let ra = atan2(sin(l)*cos(e) - tan(b)*sin(e), cos(l)) * 180/pi + 180;
+    let dec = asin(sin(b)*cos(e) + cos(b)*sin(e)*sin(l)) * 180/pi;
     leftInfoElt.innerText = `FPS: ${fps}
     Camera: ${units.formatLength(camera.position.x*unitSize)} / ${units.formatLength(camera.position.y*unitSize)} / ${units.formatLength(camera.position.z*unitSize)}
     Telescopic Zoom: ${Math.round(zoom*10)/10}

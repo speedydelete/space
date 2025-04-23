@@ -288,10 +288,10 @@ export class World {
                 let b = Sb/1000000;
                 let d = 385000560 + Sr;
                 let x = d * cos(b) * cos(l);
-                let z = d * cos(b) * sin(l);
-                let y = d * sin(b);
+                let y = d * cos(b) * sin(l);
+                let z = d * sin(b);
                 let [ex, ey, ez] = this.getObj('sun/earth').position;
-                obj.position = [x + ex, y + ey, z + ez];
+                obj.position = [x + ex, z + ey, y + ez];
             } else if (obj.orbit) {
                 let parent = this.getObj(path.split('/').slice(0, -1).join('/'));
                 let {at, sma, ecc, mna, inc, lan, aop} = obj.orbit;
