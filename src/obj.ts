@@ -1,22 +1,27 @@
 
+import SPECTRAL_TYPE_COLORS from './spectral_type_colors.json';
+
+
 export type Position = [number, number, number];
 
 export interface Orbit {
-    at: number,
-    sma: number,
-    ecc: number,
-    mna: number,
-    inc: number,
-    lan: number,
-    aop: number,
+    at: number;
+    sma: number;
+    ecc: number;
+    mna: number;
+    inc: number;
+    lan: number;
+    aop: number;
     retrograde?: boolean;
+    aopPrecession?: number;
 }
 
 export interface Axis {
-    tilt: number,
-    period: number | 'sync',
-    epoch: number,
-    ra: number,
+    tilt: number;
+    period: number | 'sync';
+    epoch: number;
+    ra: number;
+    retrograde?: boolean;
 }
 
 export type ObjType = 'star' | 'planet';
@@ -28,6 +33,7 @@ export interface ObjParams {
     axis?: Axis;
     orbit?: Orbit;
     position?: Position;
+    offset?: Position;
     albedo?: number;
     bondAlbedo?: number;
     alwaysVisible?: boolean;
@@ -66,6 +72,7 @@ export class RootObj extends _BaseObj<'root'> {
 class _Obj<T extends ObjType = ObjType> extends _BaseObj {
 
     position: Position;
+    offset?: Position;
     orbit?: Orbit;
     radius: number;
     mass: number;
@@ -76,6 +83,7 @@ class _Obj<T extends ObjType = ObjType> extends _BaseObj {
     constructor(type: T, name: string, designation: string, data: ObjParams) {
         super(type, name, designation);
         this.position = data.position === undefined ? [0, 0, 0] : data.position;
+        this.offset = data.offset;
         this.orbit = data.orbit;
         this.radius = data.radius;
         this.mass = data.mass;
@@ -95,8 +103,6 @@ export interface OrbitObj extends _Obj {
 export type SpectralType = string;
 
 export type SpectralTypeRegexLiteral = SpectralType;
-
-export let spectralTypeColors: {[key: SpectralTypeRegexLiteral]: string} | null = null;
 
 
 export interface StarParams extends ObjParams {
@@ -119,21 +125,13 @@ export class Star extends _Obj<'star'> {
         this.texture = data.texture;
     }
 
-    get color(): Promise<number> {
-        return (async () => {
-            if (spectralTypeColors === null) {
-                spectralTypeColors = await (await fetch('data/spectral_type_colors.json')).json();
-                if (spectralTypeColors === null) {
-                    throw new Error('this is here to shut up typescript, if it happens something has gone very wrong');
-                }
+    get color(): number {
+        for (const [type, color] of Object.entries(SPECTRAL_TYPE_COLORS)) {
+            if ((new RegExp(type)).test(this.type)) {
+                return parseInt((color as string).replace('#', '0x'));
             }
-            for (const [type, color] of Object.entries(spectralTypeColors)) {
-                if ((new RegExp(type)).test(this.type)) {
-                    return parseInt(color.replace('#', '0x'));
-                }
-            }
-            return 0x7f7f7f;
-        })();
+        }
+        return 0x7f7f7f;
     }
 
 }

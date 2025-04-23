@@ -1,10 +1,10 @@
 {
     "compilerOptions": {
+        "noEmit": true,
         "strict": true,
         "module": "NodeNext",
         "rootDir": "./src",
-        "outDir": "./lib",
-        "sourceMap": true
+        "resolveJsonModule": true
     },
     "files": ["./src/index.ts"]
 }

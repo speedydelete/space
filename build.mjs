@@ -6,14 +6,10 @@ import webpack from 'webpack';
 
 function afterWebpack(err, stats) {
     if (err) {
-        console.log('error while running webpack:\n');
         console.error(err);
         return;
     }
-    if (stats === undefined) {
-        throw new Error('stats is undefined, this error should not happen');
-    }
-    console.log(stats.toString({colors: true}) + '\n');
+    console.log(stats.toString({colors: true}));
     if (!stats.hasErrors()) {
         let code = fs.readFileSync('src/index.html').toString();
         code = code.replace('<link rel="stylesheet" href="style.css" />', '<style>' + fs.readFileSync('src/style.css') + '</style>');
@@ -21,7 +17,7 @@ function afterWebpack(err, stats) {
             keep_html_and_head_opening_tags: true,
         });
         fs.writeFileSync('dist/index.html', code);
-        console.log('build: complete');
+        console.log('index.html compiled');
     }
     if (compiler !== undefined && !compiler.watching) {
         compiler.close(() => {});
@@ -55,7 +51,7 @@ let compiler = webpack({
             },
         ],
     },
-    devtool: mode === 'development' ? 'eval-source-map' : undefined,
+    devtool: mode === 'development' ? 'inline-source-map' : undefined,
 });
 
 if (process.argv.includes('watch')) {
