@@ -253,29 +253,45 @@ export class World {
                 let A1 = normalizeAngle(119.75 + 131.849*T);
                 let A2 = normalizeAngle(53.09 + 479264.290*T);
                 let A3 = normalizeAngle(313.45 + 481266.484*T);
+                let E = 1 - 0.002516*T - 0.0000074*T**2;
                 let S1 = 0;
                 let Sr = 0;
                 for (let field of MOON_TABLE_1) {
                     let x = D * field[0] + M * field[1] + Mp * field[2] + F * field[3];
-                    S1 += field[4] * sin(x);
+                    let m = 1;
+                    if (field[1]) {
+                        m *= E;
+                    }
+                    if (field[1] === 2 || field[1] === -2) {
+                        m *= E;
+                    }
+                    S1 += field[4] * sin(x) * m;
                     if (field[5] !== 0) {
-                        Sr += field[5] * cos(x);
+                        Sr += field[5] * cos(x) * m;
                     }
                 }
                 let Sb = 0;
                 for (let field of MOON_TABLE_2) {
                     let x = D * field[0] + M * field[1] + Mp * field[2] + F * field[3];
+                    let m = 1;
+                    if (field[1]) {
+                        m *= E;
+                    }
+                    if (field[1] === 2 || field[1] === -2) {
+                        m *= E;
+                    }
                     Sb += field[4] * sin(x);
                 }
                 S1 += (3958*sin(A1) + 1962*sin(Lp - F) + 318*sin(A2));
                 Sb += (-2235*sin(Lp) + 382*sin(A3) + 175*sin(A1 - F) + 175*sin(A1 + F) + 127*sin(Lp - Mp) - 115*sin(Lp + Mp));
-                let l = (Lp + S1)/1000000;
+                let l = Lp + S1/1000000;
                 let b = Sb/1000000;
                 let d = 385000560 + Sr;
-                let x = d * sin(b) * cos(l);
-                let y = d * sin(b) * sin(l);
-                let z = d * cos(b);
-                obj.position = [x, y, z];
+                let x = d * cos(b) * cos(l);
+                let z = d * cos(b) * sin(l);
+                let y = d * sin(b);
+                let [ex, ey, ez] = this.getObj('sun/earth').position;
+                obj.position = [x + ex, y + ey, z + ez];
             } else if (obj.orbit) {
                 let parent = this.getObj(path.split('/').slice(0, -1).join('/'));
                 let {at, sma, ecc, mna, inc, lan, aop} = obj.orbit;

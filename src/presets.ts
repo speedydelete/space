@@ -114,7 +114,7 @@ export default {
         }));
         this.setObj('sun/earth/moon', new Planet('moon', 'moon:earth/1', {
             mass: 7.346e22,
-            radius: 1737.4,
+            radius: 1737400,
             axis: {
                 tilt: 6.68,
                 period: 2360592,
@@ -128,7 +128,7 @@ export default {
         }));
         this.setObj('sun/mars', new Planet('Mars', 'planet:mars', {
             mass: 6.4169e23,
-            radius: 3389.5,
+            radius: 3389500,
             axis: {
                 tilt: 25.19,
                 period: 88642.44,
