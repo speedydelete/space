@@ -235,7 +235,7 @@ let blurred = false;
 let frames = 0;
 let prevRealTime = performance.now();
 let oldMeshPos = new three.Vector3(0, 0, 0);
-let fps = 0;
+let fps = parseInt(localStorage['space-fps'] ?? '60');
 
 const e = 23.439 * Math.PI / 180;
 const {sin, cos, tan, asin, atan2, PI: pi} = Math;
@@ -250,7 +250,7 @@ function animate(): void {
         blurred = false;
         frames = 0;
         prevRealTime = performance.now();
-        fps = 60;
+        fps = parseInt(localStorage['space-fps']);
     }
     frames++;
     let realTime = performance.now();
@@ -258,6 +258,7 @@ function animate(): void {
         fps = Math.round((frames * 1000)/(realTime - prevRealTime));
         frames = 0;
         prevRealTime = realTime;
+        localStorage['space-fps'] = fps;
     }
     let targetObj: Obj | undefined = world.getObj(target);
     let mesh: three.Mesh | undefined = getObjMesh(target);
