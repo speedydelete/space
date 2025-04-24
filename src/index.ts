@@ -1,5 +1,4 @@
 
-import {TubeGeometry} from 'three';
 import renderBgStars from './bg_stars';
 
 
@@ -9,8 +8,6 @@ let aboutMenu = document.getElementById('about-menu') as HTMLDivElement;
 function hideExceptMain() {
     aboutMenu.style.display = 'none';
 }
-
-hideExceptMain();
 
 document.getElementById('about-menu-button')?.addEventListener('click', () => {
     mainMenu.style.display = 'none';
@@ -27,6 +24,7 @@ document.getElementById('settings-button')?.addEventListener('click', () => aler
 
 document.getElementById('play-button')?.addEventListener('click', async () => {
     (document.getElementById('menu') as HTMLDivElement).style.display = 'none';
+    (document.getElementById('game') as HTMLDivElement).style.display = 'block';
     // @ts-ignore
     let {start} = await import('./render') as typeof import('./render');
     start();

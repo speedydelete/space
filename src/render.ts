@@ -55,15 +55,15 @@ let renderer = new three.WebGLRenderer({
     alpha: true,
     logarithmicDepthBuffer: true,
 });
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.insertBefore(renderer.domElement, document.getElementById('left-info'));
+renderer.setSize(window.innerWidth, window.innerHeight - 30);
+document.getElementById('game')?.insertBefore(renderer.domElement, document.getElementById('info-bar'));
 
 let scene = new three.Scene();
 scene.add(new three.AmbientLight(0xffffff, 0.2));
 
 let camera = new three.PerspectiveCamera(
     settings.fov,
-    window.innerWidth/window.innerHeight,
+    window.innerWidth/(window.innerHeight - 30),
     settings.cameraMinDistance/unitSize,
     settings.cameraMaxDistance/unitSize,
 );
@@ -147,9 +147,9 @@ function updateObjects(): number {
 
 
 function handleResize(): void {
-    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.aspect = window.innerWidth / (window.innerHeight - 30);
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(window.innerWidth, window.innerHeight - 30);
 }
 
 let raycaster = new three.Raycaster();
@@ -162,6 +162,8 @@ function handleDoubleClick(event: MouseEvent): void {
         controls.target.copy(intersects[0].object.position);
     }
 }
+
+let showDebug = true;
 
 async function handleKeyDown(event: KeyboardEvent): Promise<void> {
     if (event.key === ',') {
@@ -231,6 +233,8 @@ async function handleKeyDown(event: KeyboardEvent): Promise<void> {
 let leftInfoElt = document.getElementById('left-info') as HTMLDivElement;
 let rightInfoElt = document.getElementById('right-info') as HTMLDivElement;
 
+let timeElt = document.getElementById('time') as HTMLSpanElement;
+
 let blurred = false;
 let frames = 0;
 let prevRealTime = performance.now();
@@ -274,28 +278,35 @@ function animate(): void {
     let l = atan2(direction.z, direction.x);
     let ra = atan2(sin(l)*cos(e) - tan(b)*sin(e), cos(l)) * 180/pi + 180;
     let dec = asin(sin(b)*cos(e) + cos(b)*sin(e)*sin(l)) * 180/pi;
-    leftInfoElt.innerText = `FPS: ${fps}
-    Camera: ${units.formatLength(camera.position.x*unitSize)} / ${units.formatLength(camera.position.y*unitSize)} / ${units.formatLength(camera.position.z*unitSize)}
-    Telescopic Zoom: ${Math.round(zoom*10)/10}
-    Objects: ${renderedObjects}/${world.getObjPaths('', true).length}
-    RA: ${ra.toFixed(3)}°, Dec: ${dec.toFixed(3)}°
-    Time: ${world.time ? units.formatDate(world.time) : 'undefined'}
-    Time Warp: ${world.timeWarp}x (${units.formatTime(world.timeWarp)}/s)
-    Press Shift-H for help.`;
-    if (targetObj !== undefined && mesh !== undefined) {
-        rightInfoElt.innerText = `Name: ${targetObj.name}
-        Designation: ${targetObj.designation}
-        Path: ${target}
-        Position: ${units.formatLength(mesh.position.x*unitSize)} / ${units.formatLength(mesh.position.y*unitSize)} / ${units.formatLength(mesh.position.z*unitSize)}
-        Mass: ${units.formatMass(targetObj.mass)}
-        Radius: ${units.formatLength(targetObj.radius)}\n` + (targetObj.orbit ?
-        `SMA: ${units.formatLength(targetObj.orbit.sma)}
-        ECC: ${targetObj.orbit.ecc}
-        MNA: ${targetObj.orbit.mna?.toFixed(3)}
-        INC: ${targetObj.orbit.inc}
-        LAN: ${targetObj.orbit.lan}
-        AOP: ${targetObj.orbit.aop}`
-        : `No orbit`);
+    timeElt.textContent = units.formatDate(world.time);
+    if (showDebug) {
+        console.log('yes');
+        leftInfoElt.innerText = `FPS: ${fps}
+        Camera: ${units.formatLength(camera.position.x*unitSize)} / ${units.formatLength(camera.position.y*unitSize)} / ${units.formatLength(camera.position.z*unitSize)}
+        Telescopic Zoom: ${Math.round(zoom*10)/10}
+        Objects: ${renderedObjects}/${world.getObjPaths('', true).length}
+        RA: ${ra.toFixed(3)}°, Dec: ${dec.toFixed(3)}°
+        Time: ${world.time ? units.formatDate(world.time) : 'undefined'}
+        Time Warp: ${world.timeWarp}x (${units.formatTime(world.timeWarp)}/s)
+        Press Shift-H for help.`;
+        if (targetObj !== undefined && mesh !== undefined) {
+            rightInfoElt.innerText = `Name: ${targetObj.name}
+            Designation: ${targetObj.designation}
+            Path: ${target}
+            Position: ${units.formatLength(mesh.position.x*unitSize)} / ${units.formatLength(mesh.position.y*unitSize)} / ${units.formatLength(mesh.position.z*unitSize)}
+            Mass: ${units.formatMass(targetObj.mass)}
+            Radius: ${units.formatLength(targetObj.radius)}\n` + (targetObj.orbit ?
+            `SMA: ${units.formatLength(targetObj.orbit.sma)}
+            ECC: ${targetObj.orbit.ecc}
+            MNA: ${targetObj.orbit.mna?.toFixed(3)}
+            INC: ${targetObj.orbit.inc}
+            LAN: ${targetObj.orbit.lan}
+            AOP: ${targetObj.orbit.aop}`
+            : `No orbit`);
+        }
+    } else {
+        leftInfoElt.innerText = '';
+        rightInfoElt.innerText = '';
     }
     camera.zoom = zoom;
     camera.updateProjectionMatrix();
