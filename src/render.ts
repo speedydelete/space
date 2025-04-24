@@ -197,18 +197,18 @@ async function handleKeyDown(event: KeyboardEvent): Promise<void> {
         }
     } else if (event.key === '[') {
         let allObjects = world.getObjPaths('', true);
-        let index = allObjects.indexOf(target);
-        if (index === 0) {
-            index = allObjects.length;
-        }
-        target = allObjects[(index - 1) % allObjects.length];
+        // Do all wraparound index logic in one line
+        // The formula is ((unboundedIndex % length) + length) % length
+        let index = (((allObjects.indexOf(target) - 1) % allObjects.length) + allObjects.length) % allObjects.length;
+
+        target = allObjects[index];
     } else if (event.key === ']') {
         let allObjects = world.getObjPaths('', true);
-        let index = allObjects.indexOf(target);
-        if (index === allObjects.length - 1) {
-            index = -1;
-        }
-        target = allObjects[(index + 1) % allObjects.length];
+        // Do all wraparound index logic in one line
+        // The formula is ((unboundedIndex % length) + length) % length
+        let index = (((allObjects.indexOf(target) + 1) % allObjects.length) + allObjects.length) % allObjects.length;
+
+        target = allObjects[index];
     } else if (event.key === 'Escape') {
     } else if (event.key === 'i') {
         camera.position.x += 100/unitSize;
