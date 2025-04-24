@@ -4,7 +4,11 @@
     font-family: 'Courier New', Courier, monospace;
 }
 
-html, body, canvas {
+html {
+    overflow: hidden;
+}
+
+html, body, canvas, #menu, #menu > * {
     position: absolute;
     top: 0;
     bottom: 0;
@@ -37,27 +41,37 @@ canvas {
 }
 
 #menu {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    background-color: transparent;
+    color: white;
+}
+
+#main-menu {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     gap: 20px;
-    background-color: transparent;
-    color: white;
-    font-size: 48px;
+    font-size: 72px;
 }
 
 #menu button {
-    background-color: gray;
+    padding: 7px;
+    background-color: #7f7f7f;
+    color: white;
     border: 1px solid white;
     border-radius: 5px;
     font-size: 24px;
-    padding: 7px;
-    color: white;
-    width: min(200px, 30%);
+}
+
+#menu button:hover {
+    background-color: #5f5f5f;
+}
+
+#main-menu button {
+    width: 250px;
+}
+
+#about-menu {
+    overflow-y: scroll;
+    padding: 50px 200px;
 }
