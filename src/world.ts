@@ -1,6 +1,6 @@
 
 import create, {Process, System, UserSession, FileSystem, join, Directory} from 'fake-system';
-import {sqrt, abs, sin, cos, atan2, pi} from './util';
+import {sqrt, sin, cos, acos, atan2, pi} from './util';
 import {Obj, RootObj, OBJ_TYPE_MAP, ObjType} from './obj';
 
 
@@ -29,130 +29,6 @@ function normalizeAngle(angle: number): number {
     }
     return angle;
 }
-
-const MOON_TABLE_1 = [
-    [0, 0, 1, 0, 6288774, -20905355],
-    [2, 0, -1, 0, 1274027, -3699111],
-    [2, 0, 0, 0, 658314, -2955968],
-    [0, 0, 2, 0, 213618, -569925],
-    [0, 1, 0, 0, -185116, 48888],
-    [0, 0, 0, 2, -114332, -3149],
-    [2, 0, -2, 0, 58793, 246158],
-    [2, -1, -1, 0, 57066, -152138],
-    [2, 0, 1, 0, 53322, -170733],
-    [2, -1, 0, 0, 45758, -204586],
-    [0, 1, -1, 0, -40923, -129620],
-    [1, 0, 0, 0, -34720, 108743],
-    [0, 1, 1, 0, -30383, 104755],
-    [2, 0, 0, -2, -12528, 0],
-    [0, 0, 1, -2, 10980, 79661],
-    [4, 0, -1, 0, 10675, -34782],
-    [0, 0, 3, 0, 10034, -23210],
-    [4, 0, -2, 0, 8548, -21636],
-    [2, 1, -1, 0, -7888, 24208],
-    [2, 1, 0, 0, -6766, 30824],
-    [1, 0, -1, 0, -5153, -8379],
-    [1, 1, 0, 0, 4987, -16675],
-    [2, -1, 1, 0, 4036, -12831],
-    [2, 0, 2, 0, 3994, -10445],
-    [4, 0, 0, 0, 3861, -11650],
-    [2, 0, -3, 0, 3665, 14403],
-    [0, 1, -2, 0, -2689, -7003],
-    [2, 0, -1, -2, -2602, 0],
-    [2, -1, -2, 0, 2390, 10056],
-    [1, 0, 1, 0, -2348, 6322],
-    [2, -2, 0, 0, 2236, -9884],
-    [0, 1, 2, 0, -2120, 5751],
-    [0, 2, 0, 0, -2069, 0],
-    [2, -2, -1, 0, 2048, -4950],
-    [2, 0, 1, -2, -1773, 4130],
-    [2, 0, 0, 2, -1595, 0],
-    [4, -1, -1, 0, 1215, -3958],
-    [0, 0, 2, 2, -1110, 0],
-    [3, 0, -1, 0, -892, 3258],
-    [2, 1, 1, 0, -810, 2616],
-    [4, -1, -2, 0, 759, -1897],
-    [2, 2, -1, 0, -700, 2354],
-    [2, 1, -2, 0, 691, 0],
-    [2, -1, 0, -2, 596, 0],
-    [4, 0, 1, 0, 549, -1423],
-    [0, 0, 4, 0, 537, -1117],
-    [4, -1, 0, 0, 520, -1571],
-    [1, 0, -2, 0, -487, -1739],
-    [2, 1, 0, -2, -399, 0],
-    [0, 0, 2, -2, -381, -4421],
-    [1, 1, 1, 0, 351, 0],
-    [3, 0, -2, 0, -340, 0],
-    [4, 0, -3, 0, 330, 0],
-    [2, -1, 2, 0, 327, 0],
-    [0, 2, 1, 0, -323, 1165],
-    [1, 1, -1, 0, 299, 0],
-    [2, 0, 3, 0, 294, 0],
-    [2, 0, -1, -2, 0, 8572],
-];
-
-const MOON_TABLE_2 = [
-    [0, 0, 0, 1, 5128122],
-    [0, 0, 1, 1, 280602],
-    [0, 0, 1, -1, 277693],
-    [2, 0, 0, -1, 173237],
-    [2, 0, -1, 1, 55143],
-    [2, 0, -1, -1, 46271],
-    [2, 0, 0, 1, 32573],
-    [0, 0, 2, 1, 17198],
-    [2, 0, 1, -1, 9266],
-    [0, 0, 2, -1, 8822],
-    [2, -1, 0, -1, 8216],
-    [2, 0, -2, -1, 4324],
-    [2, 0, 1, 1, 4200],
-    [2, 1, 0, -1, -3359],
-    [2, -1, -1, 1, 2463],
-    [2, -1, 0, 1, 2211],
-    [2, -1, -1, -1, 2065],
-    [0, 1, -1, -1, -1870],
-    [4, 0, -1, -1, 1828],
-    [0, 1, 0, 1, -1794],
-    [0, 0, 0, 3, -1749],
-    [0, 1, -1, 1, -1565],
-    [1, 0, 0, 1, -1491],
-    [0, 1, 1, 1, -1475],
-    [0, 1, 1, -1, -1410],
-    [0, 1, 0, -1, -1344],
-    [1, 0, 0, -1, -1355],
-    [0, 0, 3, 1, 1107],
-    [4, 0, 0, -1, 1021],
-    [4, 0, -1, 1, 833],
-    [0, 0, 1, -3, 777],
-    [4, 0, -2, 1, 671],
-    [2, 0, 0, -3, 607],
-    [2, 0, 2, -1, 596],
-    [2, -1, 1, -1, 491],
-    [2, 0, -2, 1, -451],
-    [0, 0, 3, -1, 439],
-    [2, 0, 2, 1, 422],
-    [2, 0, -3, -1, 421],
-    [2, 1, -1, 1, -366],
-    [2, 1, 0, 1, -351],
-    [4, 0, 0, 1, 331],
-    [2, -1, 1, 1, 315],
-    [2, -2, 0, -1, 302],
-    [0, 0, 1, 3, -283],
-    [2, 1, 1, -1, -229],
-    [1, 1, 0, -1, 223],
-    [1, 1, 0, 1, 223],
-    [0, 1, -2, -1, -220],
-    [2, 1, -1, -1, -220],
-    [1, 0, 1, 1, -185],
-    [2, -1, -2, -1, 181],
-    [0, 1, 2, 1, -177],
-    [4, 0, -2, -1, 176],
-    [4, -1, -1, -1, 166],
-    [1, 0, 1, -1, -164],
-    [4, 0, 1, -1, 132],
-    [1, 0, -1, -1, -119],
-    [4, -1, 0, -1, 115],
-    [2, -2, 0, 1, 107],
-];
 
 
 export class World {
@@ -192,6 +68,14 @@ export class World {
         let data = JSON.parse(this.objDir.read(objJoin(path, '.object')));
         return Object.assign(Object.create(OBJ_TYPE_MAP[data.type as ObjType].prototype), data);
     }
+
+    getParentPath(path: string): string {
+        return path.split('/').slice(0, -1).join('/');
+    }
+
+    getParent(path: string): Obj {
+        return this.getObj(this.getParentPath(path));
+    }
     
     setObj(path: string, data: Obj): void {
         if (!this.objDir.exists(path)) {
@@ -226,6 +110,15 @@ export class World {
         this.fs.write('/etc/config', JSON.stringify(value));
     }
 
+    setConfig<T extends keyof Config>(key: T, value: Config[T]): void {
+        let config = JSON.parse(this.fs.read('/etc/config'));
+        config[key] = value;
+        this.fs.write('/etc/config', JSON.stringify(config));
+        if (key === 'tps') {
+            this.restart();
+        }
+    }
+
     saveState(): void {
         this.fs.write('/etc/time', this.time.toString());
         this.fs.write('/etc/time_warp', this.timeWarp.toString());
@@ -236,108 +129,105 @@ export class World {
     }
 
     tick(): void {
-        let timeDiff = 1/this.config.tps * this.timeWarp;
-        this.time += timeDiff;
-        let T = (this.time/86400 - 10957.5) / 36525;
+        let dt = 1/this.config.tps * this.timeWarp;
+        this.time += dt;
         for (let path of this.getObjPaths('', true)) {
             let obj = this.getObj(path);
-            if (path === 'sun/earth/moon') {
-                let Lp = normalizeAngle(218.3164591 + 481267.88134236*T - 0.0013268*T**2 + T**3/538841 - T**4/65194000);
-                let D = normalizeAngle(297.8502402 + 445267.1115168*T - 0.0016300*T**2 + T**3/545868 - T**4/113065000);
-                let M = normalizeAngle(357.5291092 + 35999.0502909*T - 0.0001536*T**2 + T**3/24490000);
-                let Mp = normalizeAngle(134.9634114 + 477198.8676313*T + 0.0089970*T**2 + T**3/69699 - T**4/14712000);
-                let F = normalizeAngle(93.2720997 + 483202.0175273*T - 0.0034029*T**2 - T**3/3526000 + T**4/863310000);
-                let A1 = normalizeAngle(119.75 + 131.849*T);
-                let A2 = normalizeAngle(53.09 + 479264.290*T);
-                let A3 = normalizeAngle(313.45 + 481266.484*T);
-                let E = 1 - 0.002516*T - 0.0000074*T**2;
-                let S1 = 0;
-                let Sr = 0;
-                for (let field of MOON_TABLE_1) {
-                    let x = D * field[0] + M * field[1] + Mp * field[2] + F * field[3];
-                    let m = 1;
-                    if (field[1]) {
-                        m *= E;
-                    }
-                    if (field[1] === 2 || field[1] === -2) {
-                        m *= E;
-                    }
-                    S1 += field[4] * sin(x) * m;
-                    if (field[5] !== 0) {
-                        Sr += field[5] * cos(x) * m;
-                    }
-                }
-                let Sb = 0;
-                for (let field of MOON_TABLE_2) {
-                    let x = D * field[0] + M * field[1] + Mp * field[2] + F * field[3];
-                    let m = 1;
-                    if (field[1]) {
-                        m *= E;
-                    }
-                    if (field[1] === 2 || field[1] === -2) {
-                        m *= E;
-                    }
-                    Sb += field[4] * sin(x);
-                }
-                S1 += (3958*sin(A1) + 1962*sin(Lp - F) + 318*sin(A2));
-                Sb += (-2235*sin(Lp) + 382*sin(A3) + 175*sin(A1 - F) + 175*sin(A1 + F) + 127*sin(Lp - Mp) - 115*sin(Lp + Mp));
-                let l = Lp + S1/1000000;
-                let b = Sb/1000000;
-                let d = 385000560 + Sr;
-                let x = d * cos(b) * cos(l);
-                let y = d * cos(b) * sin(l);
-                let z = d * sin(b);
-                let [ex, ey, ez] = this.getObj('sun/earth').position;
-                obj.position = [x + ex, z + ey, y + ez];
-            } else if (obj.orbit) {
-                let parent = this.getObj(path.split('/').slice(0, -1).join('/'));
-                let {at, sma, ecc, mna, inc, lan, aop} = obj.orbit;
-                if (obj.orbit.aopPrecession) {
-                    aop += obj.orbit.aopPrecession * (this.time - at)
-                }
-                if (path === 'sun/earth') {
-                    ecc += 0.000042037 * cos(360 / 112000 * T * 100);
-                    lan = normalizeAngle(lan + 0.323 * T);
-                }
-                let per = 2 * pi * sqrt(sma ** 3 / parent.mass / this.config.G);
-                if (this.firstTickComplete) {
-                    mna = normalizeAngle(mna + 360 / this.config.tps * this.timeWarp / per);
-                } else {
-                    mna = normalizeAngle(mna + 360 * (this.time - at) / per);
-                }
-                obj.orbit.mna = mna;
-                let eca = mna;
-                let delta: number;
-                do {
-                    delta = (eca - ecc*sin(eca) - mna) / (1 - ecc*cos(eca));
-                    eca -= delta;
-                } while (abs(delta) > 1e-6);
-                let tra = 2 * atan2(sqrt(1 + ecc) * sin(eca / 2), sqrt(1 - ecc) * cos(eca / 2));
-                let r = sma * (1 - ecc**2) / (1 - ecc * cos(tra));
-                let x = r * (cos(lan) * cos(tra + aop) - sin(lan) * sin(tra + aop) * cos(inc));
-                let y = r * (sin(lan) * cos(tra + aop) + cos(lan) * sin(tra + aop) * cos(inc));
-                let z = r * (sin(tra + aop) * sin(inc));
-                x += parent.position[0];
-                y += parent.position[1];
-                z += parent.position[2];
-                obj.position = [x, z, y];
+            let parent = this.getParent(path);
+            // @ts-ignore
+            if (!parent || parent.type === 'root') {
+                continue;
             }
-            if (obj.offset) {
-                if (!obj.orbit) {
-                    obj.position = obj.offset;
-                } else {
-                    obj.position = [
-                        obj.position[0] + obj.offset[0],
-                        obj.position[1] + obj.offset[1],
-                        obj.position[2] + obj.offset[2],
-                    ];
-                }
-            }
+            let [x, y, z] = obj.position;
+            let r3 = (x*x + y*y + z*z) ** 1.5;
+            let accel = this.config.G * parent.mass / r3 * dt;
+            obj.velocity[0] -= x * accel;
+            obj.velocity[1] -= y * accel;
+            obj.velocity[2] -= z * accel;
+            obj.position[0] += obj.velocity[0] * dt;
+            obj.position[1] += obj.velocity[1] * dt;
+            obj.position[2] += obj.velocity[2] * dt;
             this.setObj(path, obj);
         }
         if (!this.firstTickComplete) {
             this.firstTickComplete = true;
         }
+    }
+
+    setPositionVelocityFromOrbit(path: string): void {
+        let obj = this.getObj(path);
+        if (!obj.orbit) {
+            throw new Error('this error should not occur');
+        }
+        let parent = this.getParent(path);
+        let {at, sma, ecc, mna, inc, lan, aop} = obj.orbit;
+        if (obj.orbit.aopPrecession) {
+            aop += obj.orbit.aopPrecession * (this.time - at);
+        }
+        if (path === 'sun/earth') {
+            let T = (this.time/86400 - 10957.5) / 36525;
+            ecc += 0.000042037 * cos(360 / 112000 * T * 100);
+            lan = normalizeAngle(lan + 0.323 * T);
+        }
+        let per = 2 * pi * sqrt(sma ** 3 / parent.mass / this.config.G);
+        mna = normalizeAngle(mna + 360 * (this.time - at) / per);
+        let eca = mna;
+        let delta: number;
+        do {
+            delta = (eca - ecc * sin(eca) - mna) / (1 - ecc * cos(eca));
+            eca -= delta;
+        } while (Math.abs(delta) > 1e-6);
+        let tra = 2 * atan2(sqrt(1 + ecc) * sin(eca / 2), sqrt(1 - ecc) * cos(eca / 2));
+        let dist = sma * (1 - ecc * cos(eca));
+        let x = dist * cos(tra);
+        let y = dist * sin(tra);
+        let mu = this.config.G * (obj.mass + parent.mass);
+        let vx = -sin(eca) * sqrt(mu * sma) / dist;
+        let vy = sqrt(1 - ecc**2) * cos(eca) * sqrt(mu * sma) / dist;
+        let R11 = cos(lan)*cos(aop) - sin(lan)*sin(aop)*cos(inc);
+        let R12 = -cos(lan)*sin(aop) - sin(lan)*cos(aop)*cos(inc);
+        let R21 = sin(lan)*cos(aop) + cos(lan)*sin(aop)*cos(inc);
+        let R22 = -sin(lan)*sin(aop) + cos(lan)*cos(aop)*cos(inc);
+        let R31 = sin(aop)*sin(inc);
+        let R32 = cos(aop)*sin(inc);
+        obj.position[0] = R11 * x + R12 * y;
+        obj.position[2] = R21 * x + R22 * y;
+        obj.position[1] = R31 * x + R32 * y;
+        obj.velocity[0] = R11 * vx + R12 * vy;
+        obj.velocity[2] = R21 * vx + R22 * vy;
+        obj.velocity[1] = R31 * vx + R32 * vy;
+        this.setObj(path, obj);
+    }
+
+    setOrbitFromPositionVelocity(path: string): void {
+        let obj = this.getObj(path);
+        if (!obj.orbit) {
+            obj.orbit = {at: this.time, sma: 0, ecc: 0, mna: 0, inc: 0, lan: 0, aop: 0};
+        }
+        let parent = this.getParent(path);
+        let [x, y, z] = obj.position;
+        let [vx, vy, vz] = obj.velocity;
+        let r = sqrt(x**2 + y**2 + z**2);
+        let v = sqrt(vx**2 + vy**2 + vz**2);
+        let hx = y * vz - z * vy;
+        let hy = z * vx - x * vz;
+        let hz = x * vy - y * vx;
+        let h = sqrt(hx**2 + hy**2 + hz**2);
+        obj.orbit.inc = acos(hz / h);
+        let rx = x / r, ry = y / r, rz = z / r;
+        let mu = this.config.G * (obj.mass + parent.mass);
+        let evx = (vy * hz - vz * hy) / mu - rx;
+        let evy = (vz * hx - vx * hz) / mu - ry;
+        let evz = (vx * hy - vy * hx) / mu - rz;
+        obj.orbit.ecc = sqrt(evx**2 + evy**2 + evz**2);
+        let ecc = obj.orbit.ecc;
+        obj.orbit.sma = 1 / (2 / r - v * v / mu);
+        obj.orbit.lan = atan2(hx, -hy);
+        obj.orbit.aop = atan2(-hy * evy - hx * evx, -hy * evx + hx * evy);
+        let tra = atan2(hx * (vx * ry - vy * rx) + hy * (vy * rz - vz * ry) + hz * (vz * rx - vx * rz) / (h * obj.orbit.ecc), rx * evx + ry * evy + rz * evz);
+        let eca = atan2((ecc + cos(tra)) / (1 + ecc * cos(tra)), sqrt(1 - ecc**2) * sin(tra) / (1 + ecc * cos(tra)));
+        obj.orbit.mna = eca - ecc * sin(eca);
+        this.setObj(path, obj);
     }
 
     start(): void {
@@ -351,6 +241,11 @@ export class World {
             clearInterval(this.tickInterval);
         }
         this.running = false;
+    }
+
+    restart(): void {
+        this.stop();
+        this.start();
     }
 
     export(): Uint8Array {

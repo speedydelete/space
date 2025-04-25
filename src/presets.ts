@@ -112,7 +112,7 @@ export default {
             type: 'V',
             texture: 'data/textures/ssc/earth_8k.jpg',
         }));
-        this.setObj('sun/earth/moon', new Planet('moon', 'moon:earth/1', {
+        this.setObj('sun/earth/moon', new Planet('Moon', 'moon:earth/1', {
             mass: 7.346e22,
             radius: 1737400,
             axis: {
@@ -120,6 +120,15 @@ export default {
                 period: 2360592,
                 epoch: 0,
                 ra: 0,
+            },
+            orbit: {
+                at: J2000,
+                sma: 383398000,
+                ecc: 0.0549,
+                mna: 0,
+                inc: 5.145,
+                lan: 0,
+                aop: 0,
             },
             albedo: 0.12,
             bondAlbedo: 0.11,
@@ -241,5 +250,14 @@ export default {
             type: 'P',
             texture: 'data/textures/ssc/neptune.jpg',
         }));
+        this.setPositionVelocityFromOrbit('sun/mercury');
+        this.setPositionVelocityFromOrbit('sun/venus');
+        this.setPositionVelocityFromOrbit('sun/earth');
+        this.setPositionVelocityFromOrbit('sun/earth/moon');
+        this.setPositionVelocityFromOrbit('sun/mars');
+        this.setPositionVelocityFromOrbit('sun/jupiter');
+        this.setPositionVelocityFromOrbit('sun/saturn');
+        this.setPositionVelocityFromOrbit('sun/uranus');
+        this.setPositionVelocityFromOrbit('sun/neptune');
     }),
 }

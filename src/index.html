@@ -12,33 +12,85 @@
     </head>
     <body>
         <canvas id="menu-stars"></canvas>
-        <div id="game" style="display: none;">
+        <div id="game" style="display: none">
             <canvas id="bg"></canvas>
             <canvas id="main"></canvas>
             <div id="info-bar">
-                <span id="time"></span>
-                <button id="play-pause-button">
-                    <svg id="pause-icon" width="16" height="16" viewBox="0 0 16 16">
-                        <rect x="2" y="2" width="4" height="12" fill="white" />
-                        <rect x="10" y="2" width="4" height="12" fill="white" />
-                    </svg>
-                    <svg id="play-icon" width="16" height="16" viewBox="0 0 16 16" style="display: none">
-                        <polygon points="3,2 14,8 3,14" fill="white" />
-                    </svg>
-                </button>
-                <button id="slow-button">
+                <div>
+                    <span id="time"></span>
+                    <button id="play-pause-button">
+                        <svg id="pause-icon" width="16" height="16" viewBox="0 0 16 16">
+                            <rect x="2" y="2" width="4" height="12" fill="white" />
+                            <rect x="10" y="2" width="4" height="12" fill="white" />
+                        </svg>
+                        <svg id="play-icon" width="16" height="16" viewBox="0 0 16 16" style="display: none">
+                            <polygon points="3,2 14,8 3,14" fill="white" />
+                        </svg>
+                    </button>
+                    <button id="slow-button">
+                        <svg width="16" height="16" viewBox="0 0 16 16">
+                            <polygon points="0,8 8,2 8,14" fill="white" />
+                            <polygon points="8,8 16,2 16,14" fill="white" />
+                        </svg>
+                    </button>
+                    <span id="time-warp"></span>
+                    <button id="fast-button">
+                        <svg width="16" height="16" viewBox="0 0 16 16">
+                            <polygon points="0,2 0,14 8,8" fill="white" />
+                            <polygon points="8,2 8,14 16,8" fill="white" />
+                        </svg>
+                    </button>
+                </div>
+                <button id="add-button">
                     <svg width="16" height="16" viewBox="0 0 16 16">
-                        <polygon points="0,8 8,2 8,14" fill="white" />
-                        <polygon points="8,8 16,2 16,14" fill="white" />
+                        <line x1="8" y1="0" x2="8" y2="16" stroke="white" />
+                        <line x1="0" y1="8" x2="16" y2="8" stroke="white" />
                     </svg>
                 </button>
-                <span id="time-warp"></span>
-                <button id="fast-button">
+                <div>
+                    <div id="target"></div>
+                    <button id="edit-button">
+                        <svg width="16" height="16" viewBox="0 0 16 16">
+                            <line x1="0" y1="16" x2="4" y2="8" stroke="white" />
+                            <line x1="0" y1="16" x2="8" y2="12" stroke="white" />
+                            <line x1="2" y1="12" x2="4" y2="14" stroke="white" />
+                            <line x1="4" y1="8" x2="8" y2="12" stroke="white" />
+                            <line x1="4" y1="8" x2="12" y2="0" stroke="white" />
+                            <line x1="8" y1="12" x2="16" y2="4" stroke="white" />
+                            <line x1="6" y1="10" x2="12" y2="4" stroke="white" />
+                            <line x1="10" y1="2" x2="14" y2="6" stroke="white" />
+                            <line x1="12" y1="0" x2="16" y2="4" stroke="white" />
+                        </svg>
+                    </button>
+                </div>
+                <button id="config-button">
                     <svg width="16" height="16" viewBox="0 0 16 16">
-                        <polygon points="0,2 0,14 8,8" fill="white" />
-                        <polygon points="8,2 8,14 16,8" fill="white" />
+                        <rect x="0" y="3" width="16" height="2" fill="white" />
+                        <circle cx="13" cy="4" r="4" fill="white" stroke="black" stroke-width="1" />
+                        <rect x="0" y="11" width="16" height="2" fill="white" />
+                        <circle cx="3" cy="12" r="4" fill="white" stroke="black" stroke-width="1" />
                     </svg>
                 </button>
+            </div>
+            <div id="right-panel" style="display: none">
+                <svg id="right-panel-resizer" width="30" height="20" viewBox="0 0 30 20">
+                    <line x1="5" y1="10" x2="8" y2="5" stroke="white" />
+                    <line x1="5" y1="10" x2="8" y2="15" stroke="white" />
+                    <line x1="5" y1="10" x2="13" y2="10" stroke="white" />
+                    <line x1="13" y1="5" x2="13" y2="15" stroke="white" />
+                    <line x1="17" y1="5" x2="17" y2="15" stroke="white" />
+                    <line x1="17" y1="10" x2="25" y2="10" stroke="white" />
+                    <line x1="22" y1="5" x2="25" y2="10" stroke="white" />
+                    <line x1="22" y1="15" x2="25" y2="10" stroke="white" />
+                </svg>
+                <div id="world-config" style="display: none">
+                    <h1>World Configuration</h1>
+                    <div>TPS (ticks per second): <input type="text" id="wc-tps" /></div>
+                    <div>Speed of light: <input type="text" id="wc-c" /> m/s</div>
+                    <div>Gravitational constant: <input type="text" id="wc-g" /> m^3/kg/s^2</div>
+                    <div>Luminosity constant: <input type="text" id="wc-lc" /> lm</div>
+                    <div>Initial target: <input type="text" id="wc-initial-target" /></div>
+                </div>
             </div>
             <div id="left-info"></div>
             <div id="right-info"></div>
@@ -50,7 +102,7 @@
                 <button id="about-menu-button">About</button>
                 <button id="settings-button">Settings</button>
             </div>
-            <div id="about-menu" style="display: none;">
+            <div id="about-menu" style="display: none">
                 <button class="main-menu-button">Back</button>
                 <h1>About</h1>
                 Space is an open-source space simulation game licensed under the <a href='https://www.gnu.org/licenses/gpl-3.0.en.html#license-text'>GPLv3.0</a>. Here is its <a href='https://github.com/speedydelete/space'>GitHub</a>.

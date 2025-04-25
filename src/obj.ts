@@ -3,6 +3,7 @@ import SPECTRAL_TYPE_COLORS from './spectral_type_colors.json';
 
 
 export type Position = [number, number, number];
+export type Velocity = [number, number, number];
 
 export interface Orbit {
     at: number;
@@ -33,7 +34,7 @@ export interface ObjParams {
     axis?: Axis;
     orbit?: Orbit;
     position?: Position;
-    offset?: Position;
+    velocity?: Velocity;
     albedo?: number;
     bondAlbedo?: number;
     alwaysVisible?: boolean;
@@ -53,10 +54,6 @@ class _BaseObj<T extends BaseObjType = BaseObjType> {
         this.designation = designation;
     }
 
-    hasOrbit(): this is OrbitObj {
-        return false;
-    }
-
 }
 
 
@@ -72,7 +69,7 @@ export class RootObj extends _BaseObj<'root'> {
 class _Obj<T extends ObjType = ObjType> extends _BaseObj {
 
     position: Position;
-    offset?: Position;
+    velocity: Velocity;
     orbit?: Orbit;
     radius: number;
     mass: number;
@@ -82,8 +79,8 @@ class _Obj<T extends ObjType = ObjType> extends _BaseObj {
 
     constructor(type: T, name: string, designation: string, data: ObjParams) {
         super(type, name, designation);
-        this.position = data.position === undefined ? [0, 0, 0] : data.position;
-        this.offset = data.offset;
+        this.position = data.position ?? [0, 0, 0];
+        this.velocity = data.velocity ?? [0, 0, 0];
         this.orbit = data.orbit;
         this.radius = data.radius;
         this.mass = data.mass;
@@ -92,11 +89,6 @@ class _Obj<T extends ObjType = ObjType> extends _BaseObj {
         this.alwaysVisible = data.alwaysVisible === undefined ? false : data.alwaysVisible;
     }
 
-}
-
-
-export interface OrbitObj extends _Obj {
-    orbit: Orbit;
 }
 
 

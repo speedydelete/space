@@ -28,6 +28,7 @@ canvas {
 
 #game > * {
     background-color: transparent;
+    user-select: none;
 }
 
 #left-info {
@@ -57,9 +58,17 @@ canvas {
     display: flex;
     flex-direction: row;
     align-items: center;
+    justify-content: space-between;
     gap: 5px;
     background-color: #4f4f4f;
     color: white;
+}
+
+#info-bar > div {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
 }
 
 #info-bar button {
@@ -81,8 +90,71 @@ canvas {
     margin-right: 30px;
 }
 
-#slow-button {
-    margin-right: 3px;
+#right-panel {
+    padding: 10px;
+    position: absolute;
+    top: 0;
+    bottom: 40px;
+    right: 0;
+    background-color: black;
+    border-left: 1px solid #dfdfdf;
+}
+
+#right-panel-resizer {
+    position: absolute;
+    left: -15px;
+    top: calc(50% - 10px);
+    bottom: calc(50% - 10px);
+    height: 20px;
+    width: 30px;
+    z-index: 2;
+    border: 1px solid #dfdfdf;
+    background-color: black;
+}
+
+#right-panel-resizer:hover {
+    cursor: grab;
+}
+
+#right-panel-resizer:active {
+    cursor: grabbing;
+}
+
+#right-panel > div {
+    padding-left: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+#right-panel > div > div {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1ch;
+}
+
+#right-panel input {
+    background-color: black;
+    color: white;
+    border: 1px solid gray;
+    outline: none;
+}
+
+#right-panel input.invalid {
+    border: 1px solid red;
+}
+
+#right-panel h1 {
+    text-align: center;
+}
+
+#wc-tps {
+    width: 7ch;
+}
+
+#wc-c, #wc-g, #wc-lc, #wc-initial-target {
+    width: 15ch;
 }
 
 #menu {

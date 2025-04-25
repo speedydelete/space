@@ -2,7 +2,7 @@
 import * as three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import * as format from './format';
-import {query, sin, cos, tan, asin, atan2, pi} from './util';
+import {query, sin, cos, tan, asin, atan2, stringInput, numberInput} from './util';
 import {RootObj} from './obj';
 import presets from './presets';
 
@@ -41,7 +41,7 @@ Object.assign(globalThis, {
 let settings = DEFAULT_SETTINGS;
 let unitSize = settings.unitSize;
 
-let objMeshes: {[key: string]: three.Mesh} = {};
+let objMeshes = new Map<string, three.Mesh>();
 
 let target = world.config.initialTarget;
 let zoom = 1;
@@ -52,14 +52,14 @@ let renderer = new three.WebGLRenderer({
     alpha: true,
     logarithmicDepthBuffer: true,
 });
-renderer.setSize(window.innerWidth, window.innerHeight - 30);
+renderer.setSize(window.innerWidth, window.innerHeight - 40);
 
 let scene = new three.Scene();
 scene.add(new three.AmbientLight(0xffffff, 0.2));
 
 let camera = new three.PerspectiveCamera(
     settings.fov,
-    window.innerWidth/(window.innerHeight - 30),
+    window.innerWidth/(window.innerHeight - 40),
     settings.cameraMinDistance/unitSize,
     settings.cameraMaxDistance/unitSize,
 );
@@ -73,55 +73,48 @@ controls.update();
 controls.listenToKeyEvents(window);
 
 
-function getObjMesh(path: string): three.Mesh | undefined {
-    if (path.startsWith('/')) path = path.slice(1);
-    return objMeshes[path];
-}
-
-
 let textureLoader = new three.TextureLoader();
 
 for (let path of world.getObjPaths('', true)) {
-    let object = world.getObj(path);
-    if (object === undefined || object instanceof RootObj) continue;
-    let material = new three.MeshStandardMaterial();
-    if (object.texture) {
-        material.map = textureLoader.load(object.texture);
-    }
-    material.opacity = 1;
-    material.transparent = true;
-    if (object.albedo) {
-        material.color = new three.Color(object.albedo, object.albedo, object.albedo);
-    }
-    if (object.type === 'star') {
+    let obj = world.getObj(path);
+    if (!obj || obj instanceof RootObj) continue;
+    let material = new three.MeshStandardMaterial({
+        map: obj.texture ? textureLoader.load(obj.texture) : undefined,
+        opacity: 1,
+        transparent: true,
+        color: obj.albedo ? new three.Color(obj.albedo, obj.albedo, obj.albedo) : undefined,
+    });
+    if (obj.type === 'star') {
         if (material.map) material.emissiveMap = material.map;
-        material.emissive = new three.Color(object.color);
+        material.emissive = new three.Color(obj.color);
         material.emissiveIntensity = 10;
     }
-    let geometry = new three.SphereGeometry(object.radius/unitSize, 512, 512);
+    let geometry = new three.SphereGeometry(obj.radius/unitSize, 512, 512);
     let mesh = new three.Mesh(geometry, material);
-    let [x, y, z] = object.position;
-    mesh.position.set(x/unitSize, y/unitSize, z/unitSize);
-    if (object.type === 'star') {
-        let light = new three.PointLight(object.color);
-        light.power = world.config.lC / 10**(0.4 * object.magnitude) / unitSize**2 / 5000;
+    if (obj.type === 'star') {
+        let light = new three.PointLight(obj.color);
+        light.power = world.config.lC / 10**(0.4 * obj.magnitude) / unitSize**2 / 5000;
         light.castShadow = true;
         mesh.add(light);
     }
     mesh.material.side = three.FrontSide;
     mesh.visible = true;
     scene.add(mesh);
-    objMeshes[path] = mesh;
+    objMeshes.set(path, mesh);
 }
 
 function updateObjects(): number {
     let renderedObjects = 0;
     for (let path of world.getObjPaths('', true)) {
         let object = world.getObj(path);
-        let mesh = getObjMesh(path);
+        let mesh = objMeshes.get(path);
         if (object !== undefined && mesh !== undefined && (object.alwaysVisible || mesh.position.distanceTo(camera.position) < settings.renderDistance/settings.unitSize)) {
             let [x, y, z] = object.position;
             mesh.position.set(x/unitSize, y/unitSize, z/unitSize);
+            let parentMesh = objMeshes.get(world.getParentPath(path));
+            if (parentMesh) {
+                mesh.position.add(parentMesh.position);
+            }
             mesh.rotation.set(0, 0, 0);
             if (object.axis) {
                 mesh.rotateX(object.axis.tilt * Math.PI / 180);
@@ -132,6 +125,10 @@ function updateObjects(): number {
                         mesh.rotateY(((world.time - object.axis.epoch)/object.axis.period % 1) * Math.PI * 2);
                     }
                 }
+            }
+            if (object.type === 'star' && mesh.children[0] instanceof three.PointLight) {
+                mesh.children[0].power = world.config.lC / 10**(0.4 * object.magnitude) / unitSize**2 / 5000;
+
             }
             renderedObjects += 1;
             mesh.visible = true;
@@ -146,28 +143,28 @@ function updateObjects(): number {
 let starRenderer = new three.WebGLRenderer({
     canvas: query<HTMLCanvasElement>('#bg'),
 });
-starRenderer.setSize(window.innerWidth, window.innerHeight - 30);
+starRenderer.setSize(window.innerWidth, window.innerHeight - 40);
 
 let starScene = new three.Scene();
 
 let starCamera = new three.PerspectiveCamera(
     settings.fov,
-    window.innerWidth/(window.innerHeight - 30),
+    window.innerWidth/(window.innerHeight - 40),
     settings.cameraMinDistance/unitSize,
     settings.cameraMaxDistance/unitSize,
 );
 
 let starMaterials = [
-    'data/textures/nasa/stars/px.png',
-    'data/textures/nasa/stars/nx.png',
-    'data/textures/nasa/stars/py.png',
-    'data/textures/nasa/stars/ny.png',
-    'data/textures/nasa/stars/pz.png',
-    'data/textures/nasa/stars/nz.png',
+    'https://raw.githubusercontent.com/speedydelete/space/refs/heads/main/dist/data/textures/nasa/stars/px.png',
+    'https://raw.githubusercontent.com/speedydelete/space/refs/heads/main/dist/data/textures/nasa/stars/nx.png',
+    'https://raw.githubusercontent.com/speedydelete/space/refs/heads/main/dist/data/textures/nasa/stars/py.png',
+    'https://raw.githubusercontent.com/speedydelete/space/refs/heads/main/dist/data/textures/nasa/stars/ny.png',
+    'https://raw.githubusercontent.com/speedydelete/space/refs/heads/main/dist/data/textures/nasa/stars/pz.png',
+    'https://raw.githubusercontent.com/speedydelete/space/refs/heads/main/dist/data/textures/nasa/stars/nz.png',
 ].map(path => new three.MeshBasicMaterial({
     map: textureLoader.load(path),
     side: three.BackSide,
-    color: new three.Color(0x7f7f7f)
+    color: new three.Color(0x6f6f6f),
 }));
 let starMesh = new three.Mesh(new three.BoxGeometry(1, 1, 1), starMaterials);
 starMesh.rotateX((world.getObj('sun/earth').axis?.tilt ?? 0) * Math.PI / 180);
@@ -202,7 +199,7 @@ function animate(): void {
         prevRealTime = realTime;
         localStorage['space-fps'] = fps;
     }
-    let mesh: three.Mesh | undefined = getObjMesh(target);
+    let mesh: three.Mesh | undefined = objMeshes.get(target);
     if (mesh && mesh.position) {
         camera.position.x += mesh.position.x - oldMeshPos.x;
         camera.position.y += mesh.position.y - oldMeshPos.y;
@@ -233,7 +230,7 @@ function animate(): void {
 world.start();
 requestAnimationFrame(animate);
 window.setTimeout(async () => {
-    let mesh = getObjMesh(target);
+    let mesh = objMeshes.get(target);
     let obj = world.getObj(target);
     if (mesh && obj) {
         camera.position.set(mesh.position.x + obj.radius/unitSize*10, mesh.position.y, mesh.position.z);
@@ -241,12 +238,14 @@ window.setTimeout(async () => {
 }, 100);
 
 
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / (window.innerHeight - 30);
+function resize(width: number = window.innerWidth, height: number = window.innerHeight - 40): void {
+    camera.aspect = width / height;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight - 30);
-    starRenderer.setSize(window.innerWidth, window.innerHeight - 30);
-});
+    renderer.setSize(width, height);
+    starRenderer.setSize(width, height);
+}
+
+window.addEventListener('resize', () => resize());
 
 let raycaster = new three.Raycaster();
 
@@ -316,6 +315,8 @@ window.addEventListener('keydown', (event: KeyboardEvent) => {
         camera.position.y += 100/unitSize;
     } else if (key === 'n') {
         camera.position.y -= 100/unitSize;
+    } else if (key === 'F3') {
+        showDebug = !showDebug;
     }
 });
 
@@ -325,6 +326,8 @@ let showDebug = true;
 function updateUI(renderedObjects: number, ra: number, dec: number): void {
     query('#time').textContent = format.date(world.time);
     query('#time-warp').textContent = world.timeWarp + 'x (' + format.time(world.timeWarp, 2) + '/s)';
+    query('#target').textContent = world.getObj(target).name;
+    // query('#target').textContent = format.objectName(world.getObj(target));
     if (showDebug) {
         query('#left-info').innerText = `FPS: ${fps}
         Camera: ${format.length(camera.position.x*unitSize)} / ${format.length(camera.position.y*unitSize)} / ${format.length(camera.position.z*unitSize)}
@@ -363,6 +366,48 @@ query('#fast-button').addEventListener('click', () => {
         world.timeWarp *= 2;
     }
 });
+
+
+let rightPanelWidth = window.innerWidth * 0.35;
+let rightPanel = query('#right-panel');
+rightPanel.style.width = rightPanelWidth + 'px';
+let rightPanelShown = false;
+
+query('#right-panel-resizer').addEventListener('mousedown', () => {
+    window.addEventListener('mousemove', panelResizeMouseMove);
+    window.addEventListener('mouseup', panelResizeMouseUp);
+    
+});
+
+function panelResizeMouseMove(event: MouseEvent): void {
+    rightPanelWidth = window.innerWidth - event.clientX;
+    rightPanel.style.width = rightPanelWidth + 'px';
+    resize(window.innerWidth - rightPanelWidth);
+}
+
+function panelResizeMouseUp(): void {
+    window.removeEventListener('mousemove', panelResizeMouseMove);
+    window.removeEventListener('mouseup', panelResizeMouseUp);
+}
+
+function toggleRightPanelButton(eltQuery: string, panelQuery: string): void {
+    query(eltQuery).addEventListener('click', () => {
+        rightPanelShown = !rightPanelShown;
+        let display = rightPanelShown ? 'block' : 'none';
+        rightPanel.style.display = display;
+        query(panelQuery).style.display = display;
+        resize(window.innerWidth - (rightPanelShown ? rightPanelWidth : 0));
+    });
+}
+
+toggleRightPanelButton('#config-button', '#world-config');
+numberInput('#wc-tps', world.config.tps, x => world.setConfig('tps', x));
+numberInput('#wc-c', world.config.c, x => world.setConfig('c', x));
+numberInput('#wc-g', world.config.G, x => world.setConfig('G', x));
+numberInput('#wc-lc', world.config.lC, x => world.setConfig('lC', x));
+stringInput('#wc-initial-target', world.config.initialTarget, x => world.setConfig('initialTarget', x));
+
+query('#add-button').addEventListener('click', () => alert('Sorry, you can\'t add objects yet!'));
 
 
 console.log('Expansion Loading Complete!');
