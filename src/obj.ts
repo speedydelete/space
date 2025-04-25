@@ -69,6 +69,7 @@ export class RootObj extends _BaseObj<'root'> {
 class _Obj<T extends ObjType = ObjType> extends _BaseObj {
 
     position: Position;
+    absolutePosition: Position = [0, 0, 0];
     velocity: Velocity;
     orbit?: Orbit;
     radius: number;

@@ -109,12 +109,8 @@ function updateObjects(): number {
         let object = world.getObj(path);
         let mesh = objMeshes.get(path);
         if (object !== undefined && mesh !== undefined && (object.alwaysVisible || mesh.position.distanceTo(camera.position) < settings.renderDistance/settings.unitSize)) {
-            let [x, y, z] = object.position;
+            let [x, y, z] = object.absolutePosition;
             mesh.position.set(x/unitSize, y/unitSize, z/unitSize);
-            let parentMesh = objMeshes.get(world.getParentPath(path));
-            if (parentMesh) {
-                mesh.position.add(parentMesh.position);
-            }
             mesh.rotation.set(0, 0, 0);
             if (object.axis) {
                 mesh.rotateX(object.axis.tilt * Math.PI / 180);
