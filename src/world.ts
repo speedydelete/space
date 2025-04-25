@@ -1,5 +1,6 @@
 
 import create, {Process, System, UserSession, FileSystem, join, Directory} from 'fake-system';
+import {sqrt, abs, sin, cos, atan2, pi} from './util';
 import {Obj, RootObj, OBJ_TYPE_MAP, ObjType} from './obj';
 
 
@@ -11,11 +12,6 @@ export interface Config {
     initialTarget: string,
 }
 
-
-const {abs, sqrt, PI: pi} = Math;
-const sin = (x: number) => Math.sin(x * pi / 180);
-const cos = (x: number) => Math.cos(x * pi / 180);
-const atan2 = (x: number, y: number) => Math.atan2(x, y) * 180 / pi;
 
 export function objJoin(...paths: string[]) {
     let out = join(...paths);
@@ -165,11 +161,12 @@ export class World {
     fs: FileSystem;
     objDir: Directory;
     rootSession: UserSession;
-    tickInterval: number | null = null;
+    running: boolean = false;
 
     time: number = 0;
     timeWarp: number = 1;
     
+    tickInterval: number | null = null;
     firstTickComplete: boolean = false;
 
     constructor(data?: Uint8Array) {
@@ -310,7 +307,7 @@ export class World {
                 }
                 obj.orbit.mna = mna;
                 let eca = mna;
-                let delta;
+                let delta: number;
                 do {
                     delta = (eca - ecc*sin(eca) - mna) / (1 - ecc*cos(eca));
                     eca -= delta;
@@ -346,12 +343,14 @@ export class World {
     start(): void {
         // @ts-ignore
         this.tickInterval = setInterval(this.tick, 1000/this.config.tps);
+        this.running = true;
     }
 
     stop(): void {
         if (this.tickInterval) {
             clearInterval(this.tickInterval);
         }
+        this.running = false;
     }
 
     export(): Uint8Array {

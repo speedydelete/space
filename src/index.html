@@ -11,11 +11,34 @@
         <link rel="stylesheet" href="style.css" />
     </head>
     <body>
-        <canvas id="bg-stars"></canvas>
+        <canvas id="menu-stars"></canvas>
         <div id="game" style="display: none;">
+            <canvas id="bg"></canvas>
+            <canvas id="main"></canvas>
             <div id="info-bar">
                 <span id="time"></span>
-                <button>Test</button>
+                <button id="play-pause-button">
+                    <svg id="pause-icon" width="16" height="16" viewBox="0 0 16 16">
+                        <rect x="2" y="2" width="4" height="12" fill="white" />
+                        <rect x="10" y="2" width="4" height="12" fill="white" />
+                    </svg>
+                    <svg id="play-icon" width="16" height="16" viewBox="0 0 16 16" style="display: none">
+                        <polygon points="3,2 14,8 3,14" fill="white" />
+                    </svg>
+                </button>
+                <button id="slow-button">
+                    <svg width="16" height="16" viewBox="0 0 16 16">
+                        <polygon points="0,8 8,2 8,14" fill="white" />
+                        <polygon points="8,8 16,2 16,14" fill="white" />
+                    </svg>
+                </button>
+                <span id="time-warp"></span>
+                <button id="fast-button">
+                    <svg width="16" height="16" viewBox="0 0 16 16">
+                        <polygon points="0,2 0,14 8,8" fill="white" />
+                        <polygon points="8,2 8,14 16,8" fill="white" />
+                    </svg>
+                </button>
             </div>
             <div id="left-info"></div>
             <div id="right-info"></div>
