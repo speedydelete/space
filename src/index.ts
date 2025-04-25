@@ -1,6 +1,6 @@
 
 import {query, sin, cos, tan, acos, atan2} from './util';
-import STARS from './stars.json';
+import stars from './star_data';
 
 
 function hideExceptMain() {
@@ -58,19 +58,6 @@ function multiplyColor(color: string, mul: number): string {
 
 const limit = 7.8;
 
-interface Star {
-    ra: number;
-    dec: number;
-    mag: number;
-    color: string;
-}
-
-let stars: Star[] = [];
-
-for (let star of (STARS as [number, number, number, string][]).slice(2)) {
-    stars.push({ra: star[0], dec: star[1], mag: star[2], color: star[3]});
-}
-
 export let canvas = query<HTMLCanvasElement>('#menu-stars');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
@@ -117,14 +104,11 @@ function renderMenuStars(): void {
         decChange = Math.random();
         centerDec = -90;
     }
-    let scaleHeight = canvas.height / 2 / tan(5) / 180;
-    let scaleWidth = canvas.width / 2 / tan(5) / 180;
+    let scaleHeight = canvas.height / 2 / tan(10) / 180;
+    let scaleWidth = canvas.width / 2 / tan(10) / 180;
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    for (let {ra, dec, mag, color} of stars) {
-        if (mag > limit) {
-            continue;
-        }
+    for (let [ra, dec, mag, color] of stars) {
         let rho = acos((sin(centerDec)*sin(dec) + cos(centerDec)*cos(dec)*cos(ra - centerRa)));
         let theta = atan2(cos(dec)*sin(ra - centerRa), cos(centerDec)*sin(dec) - sin(centerDec)*cos(dec)*cos(ra - centerRa));
         let x = rho * sin(theta) * scaleWidth + canvas.width/2;

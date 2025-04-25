@@ -404,6 +404,7 @@ numberInput('#wc-lc', world.config.lC, x => world.setConfig('lC', x));
 stringInput('#wc-initial-target', world.config.initialTarget, x => world.setConfig('initialTarget', x));
 
 query('#add-button').addEventListener('click', () => alert('Sorry, you can\'t add objects yet!'));
+query('#edit-button').addEventListener('click', () => alert('Sorry, you can\'t edit objects yet!'));
 
 
 console.log('Expansion Loading Complete!');
