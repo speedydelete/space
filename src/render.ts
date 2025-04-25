@@ -1,10 +1,10 @@
 
 import * as three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
-import * as units from './format';
-import {Obj, RootObj} from './obj';
+import * as format from './format';
+import {query, sin, cos, tan, asin, atan2, pi} from './util';
+import {RootObj} from './obj';
 import presets from './presets';
-import renderBGStars from './bg_stars';
 
 
 export interface Settings {
@@ -27,10 +27,6 @@ export const DEFAULT_SETTINGS: Settings = {
     controlsMaxDistance: Number.MAX_SAFE_INTEGER,
 }
 
-const HELP_MESSAGE = `Use the "[" and "]" keys to select different objects, or just click on an object.
-Use the "," and "." keys to control the time warp, and use the "/" key to reset it.
-Use the "+" and "-" keys to do telescopic zoom, and use Shift-+ to reset it.`;
-
 
 let world = presets.default;
 Object.assign(globalThis, {
@@ -51,12 +47,12 @@ let target = world.config.initialTarget;
 let zoom = 1;
 
 let renderer = new three.WebGLRenderer({
+    canvas: query<HTMLCanvasElement>('#main'),
     precision: 'highp',
     alpha: true,
     logarithmicDepthBuffer: true,
 });
 renderer.setSize(window.innerWidth, window.innerHeight - 30);
-document.getElementById('game')?.insertBefore(renderer.domElement, document.getElementById('info-bar'));
 
 let scene = new three.Scene();
 scene.add(new three.AmbientLight(0xffffff, 0.2));
@@ -84,6 +80,7 @@ function getObjMesh(path: string): three.Mesh | undefined {
 
 
 let textureLoader = new three.TextureLoader();
+
 for (let path of world.getObjPaths('', true)) {
     let object = world.getObj(path);
     if (object === undefined || object instanceof RootObj) continue;
@@ -146,98 +143,36 @@ function updateObjects(): number {
 }
 
 
-function handleResize(): void {
-    camera.aspect = window.innerWidth / (window.innerHeight - 30);
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight - 30);
-}
+let starRenderer = new three.WebGLRenderer({
+    canvas: query<HTMLCanvasElement>('#bg'),
+});
+starRenderer.setSize(window.innerWidth, window.innerHeight - 30);
 
-let raycaster = new three.Raycaster();
+let starScene = new three.Scene();
 
-function handleDoubleClick(event: MouseEvent): void {
-    raycaster.setFromCamera(new three.Vector2((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1), camera);
-    let intersects = raycaster.intersectObjects(Object.values(objMeshes));
-    if (intersects.length > 0) {
-        target = Object.entries(objMeshes).filter((x) => x[1] === intersects[0].object)[0][0];
-        controls.target.copy(intersects[0].object.position);
-    }
-}
+let starCamera = new three.PerspectiveCamera(
+    settings.fov,
+    window.innerWidth/(window.innerHeight - 30),
+    settings.cameraMinDistance/unitSize,
+    settings.cameraMaxDistance/unitSize,
+);
 
-let showDebug = true;
+let starMaterials = [
+    'data/textures/nasa/stars/px.png',
+    'data/textures/nasa/stars/nx.png',
+    'data/textures/nasa/stars/py.png',
+    'data/textures/nasa/stars/ny.png',
+    'data/textures/nasa/stars/pz.png',
+    'data/textures/nasa/stars/nz.png',
+].map(path => new three.MeshBasicMaterial({
+    map: textureLoader.load(path),
+    side: three.BackSide,
+    color: new three.Color(0x7f7f7f)
+}));
+let starMesh = new three.Mesh(new three.BoxGeometry(1, 1, 1), starMaterials);
+starMesh.rotateX((world.getObj('sun/earth').axis?.tilt ?? 0) * Math.PI / 180);
+starScene.add(starMesh);
 
-async function handleKeyDown(event: KeyboardEvent): Promise<void> {
-    if (event.key === ',') {
-        if (Math.log10(world.timeWarp) % 1 === 0) {
-            world.timeWarp /= 2;
-        } else {
-            world.timeWarp /= 5;
-        }
-    } else if (event.key === '.') {
-        if (Math.log10(world.timeWarp) % 1 === 0) {
-            world.timeWarp *= 5;
-        } else {
-            world.timeWarp *= 2;
-        }
-    } else if (event.key === '/') {
-        event.preventDefault();
-        world.timeWarp = 1;
-    } else if (event.key === '=' || event.key === '+') {
-        if (event.shiftKey) {
-            zoom = 1;
-        } else {
-            zoom += 10**Math.floor(Math.log10(zoom));
-        }
-    } else if (event.key === '-') {
-        let logZoom = Math.log10(zoom);
-        let floorLogZoom = Math.floor(logZoom);
-        // Prevent issue of zooming in too far (zoom <= 1e-31) and can't zoom out.
-        // Use .11 instead of .1 to compensate for floating point error
-        if (zoom >= .11) {
-            if (logZoom === Math.floor(logZoom)) {
-                zoom -= 10**(floorLogZoom - 1);
-            } else {
-                zoom -= 10**floorLogZoom;
-            }
-        }
-    } else if (event.key === '[') {
-        let allObjects = world.getObjPaths('', true);
-        // Do all wraparound index logic in one line
-        // The formula is ((unboundedIndex % length) + length) % length
-        let index = (((allObjects.indexOf(target) - 1) % allObjects.length) + allObjects.length) % allObjects.length;
-
-        target = allObjects[index];
-    } else if (event.key === ']') {
-        let allObjects = world.getObjPaths('', true);
-        // Do all wraparound index logic in one line
-        // The formula is ((unboundedIndex % length) + length) % length
-        let index = (((allObjects.indexOf(target) + 1) % allObjects.length) + allObjects.length) % allObjects.length;
-
-        target = allObjects[index];
-    } else if (event.key === 'Escape') {
-    } else if (event.key === 'i') {
-        camera.position.x += 100/unitSize;
-    } else if (event.key === 'k') {
-        camera.position.x -= 100/unitSize;
-    } else if (event.key === 'j') {
-        camera.position.z -= 100/unitSize;
-    } else if (event.key === 'l') {
-        camera.position.z += 100/unitSize;
-    } else if (event.key === 'h') {
-        if (event.shiftKey) {
-            alert(HELP_MESSAGE);
-        } else {
-            camera.position.y += 100/unitSize;
-        }
-    } else if (event.key === 'n') {
-        camera.position.y -= 100/unitSize;
-    }
-}
-
-
-let leftInfoElt = document.getElementById('left-info') as HTMLDivElement;
-let rightInfoElt = document.getElementById('right-info') as HTMLDivElement;
-
-let timeElt = document.getElementById('time') as HTMLSpanElement;
 
 let blurred = false;
 let frames = 0;
@@ -245,8 +180,7 @@ let prevRealTime = performance.now();
 let oldMeshPos = new three.Vector3(0, 0, 0);
 let fps = parseInt(localStorage['space-fps'] ?? '60');
 
-const e = 23.439 * Math.PI / 180;
-const {sin, cos, tan, asin, atan2, PI: pi} = Math;
+const e = 23.439;
 
 function animate(): void {
     let renderedObjects = updateObjects();
@@ -268,7 +202,6 @@ function animate(): void {
         prevRealTime = realTime;
         localStorage['space-fps'] = fps;
     }
-    let targetObj: Obj | undefined = world.getObj(target);
     let mesh: three.Mesh | undefined = getObjMesh(target);
     if (mesh && mesh.position) {
         camera.position.x += mesh.position.x - oldMeshPos.x;
@@ -280,62 +213,160 @@ function animate(): void {
     camera.getWorldDirection(direction);
     let b = asin(direction.y);
     let l = atan2(direction.z, direction.x);
-    let ra = atan2(sin(l)*cos(e) - tan(b)*sin(e), cos(l)) * 180/pi + 180;
-    let dec = asin(sin(b)*cos(e) + cos(b)*sin(e)*sin(l)) * 180/pi;
-    timeElt.textContent = units.formatDate(world.time);
-    if (showDebug) {
-        console.log('yes');
-        leftInfoElt.innerText = `FPS: ${fps}
-        Camera: ${units.formatLength(camera.position.x*unitSize)} / ${units.formatLength(camera.position.y*unitSize)} / ${units.formatLength(camera.position.z*unitSize)}
-        Telescopic Zoom: ${Math.round(zoom*10)/10}
-        Objects: ${renderedObjects}/${world.getObjPaths('', true).length}
-        RA: ${ra.toFixed(3)}°, Dec: ${dec.toFixed(3)}°
-        Time: ${world.time ? units.formatDate(world.time) : 'undefined'}
-        Time Warp: ${world.timeWarp}x (${units.formatTime(world.timeWarp)}/s)
-        Press Shift-H for help.`;
-        if (targetObj !== undefined && mesh !== undefined) {
-            rightInfoElt.innerText = `Name: ${targetObj.name}
-            Designation: ${targetObj.designation}
-            Path: ${target}
-            Position: ${units.formatLength(mesh.position.x*unitSize)} / ${units.formatLength(mesh.position.y*unitSize)} / ${units.formatLength(mesh.position.z*unitSize)}
-            Mass: ${units.formatMass(targetObj.mass)}
-            Radius: ${units.formatLength(targetObj.radius)}\n` + (targetObj.orbit ?
-            `SMA: ${units.formatLength(targetObj.orbit.sma)}
-            ECC: ${targetObj.orbit.ecc}
-            MNA: ${targetObj.orbit.mna?.toFixed(3)}
-            INC: ${targetObj.orbit.inc}
-            LAN: ${targetObj.orbit.lan}
-            AOP: ${targetObj.orbit.aop}`
-            : `No orbit`);
-        }
-    } else {
-        leftInfoElt.innerText = '';
-        rightInfoElt.innerText = '';
-    }
+    let ra = atan2(sin(l)*cos(e) - tan(b)*sin(e), cos(l)) + 180;
+    let dec = asin(sin(b)*cos(e) + cos(b)*sin(e)*sin(l));
+    updateUI(renderedObjects, ra, dec);
     camera.zoom = zoom;
     camera.updateProjectionMatrix();
     controls.update();
     renderer.render(scene, camera);
+    starCamera.quaternion.copy(camera.quaternion);
+    starCamera.position.set(0, 0, 0);
+    starRenderer.render(starScene, starCamera);
     if (mesh) {
         oldMeshPos = mesh.position.clone();
     }
-    renderBGStars(ra, dec);
     requestAnimationFrame(animate);
 }
 
 
-export function start() {
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('dblclick', handleDoubleClick);
-    window.addEventListener('keydown', handleKeyDown);
-    world.start();
-    requestAnimationFrame(animate);
-    window.setTimeout(async () => {
-        let mesh = getObjMesh(target);
-        let obj = world.getObj(target);
-        if (mesh && obj) {
-            camera.position.set(mesh.position.x + obj.radius/unitSize*10, mesh.position.y, mesh.position.z);
+world.start();
+requestAnimationFrame(animate);
+window.setTimeout(async () => {
+    let mesh = getObjMesh(target);
+    let obj = world.getObj(target);
+    if (mesh && obj) {
+        camera.position.set(mesh.position.x + obj.radius/unitSize*10, mesh.position.y, mesh.position.z);
+    }
+}, 100);
+
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / (window.innerHeight - 30);
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight - 30);
+    starRenderer.setSize(window.innerWidth, window.innerHeight - 30);
+});
+
+let raycaster = new three.Raycaster();
+
+window.addEventListener('dblclick', event => {
+    raycaster.setFromCamera(new three.Vector2((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1), camera);
+    let intersects = raycaster.intersectObjects(Object.values(objMeshes));
+    if (intersects.length > 0) {
+        target = Object.entries(objMeshes).filter((x) => x[1] === intersects[0].object)[0][0];
+        controls.target.copy(intersects[0].object.position);
+    }
+});
+
+window.addEventListener('keydown', (event: KeyboardEvent) => {
+    let key = event.key;
+    if (key === ',') {
+        if (Math.log10(world.timeWarp) % 1 === 0) {
+            world.timeWarp /= 2;
+        } else {
+            world.timeWarp /= 5;
         }
-    }, 100);
-    console.log('Expansion Loading Complete!');
+    } else if (key === '.') {
+        if (Math.log10(world.timeWarp) % 1 === 0) {
+            world.timeWarp *= 5;
+        } else {
+            world.timeWarp *= 2;
+        }
+    } else if (key === '/') {
+        event.preventDefault();
+        world.timeWarp = 1;
+    } else if (key === '=' || key === '+') {
+        if (event.shiftKey) {
+            zoom = 1;
+        } else {
+            zoom += 10**Math.floor(Math.log10(zoom));
+        }
+    } else if (key === '-') {
+        let logZoom = Math.log10(zoom);
+        let floorLogZoom = Math.floor(logZoom);
+        // Prevent issue of zooming in too far (zoom <= 1e-31) and can't zoom out.
+        // Use .11 instead of .1 to compensate for floating point error
+        if (zoom >= .11) {
+            if (logZoom === Math.floor(logZoom)) {
+                zoom -= 10**(floorLogZoom - 1);
+            } else {
+                zoom -= 10**floorLogZoom;
+            }
+        }
+    } else if (key === '[') {
+        let allObjects = world.getObjPaths('', true);
+        let index = allObjects.indexOf(target);
+        if (index === 0) {
+            index = allObjects.length;
+        }
+        target = allObjects[(index - 1) % allObjects.length];
+    } else if (key === ']') {
+        let allObjects = world.getObjPaths('', true);
+        let index = allObjects.indexOf(target);
+        if (index === allObjects.length - 1) {
+            index = -1;
+        }
+        target = allObjects[(index + 1) % allObjects.length];
+    } else if (key === 'i') {
+        camera.position.x += 100/unitSize;
+    } else if (key === 'k') {
+        camera.position.x -= 100/unitSize;
+    } else if (key === 'j') {
+        camera.position.z -= 100/unitSize;
+    } else if (key === 'l') {
+        camera.position.z += 100/unitSize;
+    } else if (key === 'h') {
+        camera.position.y += 100/unitSize;
+    } else if (key === 'n') {
+        camera.position.y -= 100/unitSize;
+    }
+});
+
+
+let showDebug = true;
+
+function updateUI(renderedObjects: number, ra: number, dec: number): void {
+    query('#time').textContent = format.date(world.time);
+    query('#time-warp').textContent = world.timeWarp + 'x (' + format.time(world.timeWarp, 2) + '/s)';
+    if (showDebug) {
+        query('#left-info').innerText = `FPS: ${fps}
+        Camera: ${format.length(camera.position.x*unitSize)} / ${format.length(camera.position.y*unitSize)} / ${format.length(camera.position.z*unitSize)}
+        Telescopic Zoom: ${Math.round(zoom*10)/10}
+        Objects: ${renderedObjects}/${world.getObjPaths('', true).length}
+        RA: ${ra.toFixed(3)}\u00b0, Dec: ${dec.toFixed(3)}\u00b0
+        Time: ${world.time ? format.date(world.time) : 'undefined'}
+        Time Warp: ${world.timeWarp}x (${format.time(world.timeWarp)}/s)`;
+    }
 }
+
+query('#play-pause-button').addEventListener('click', () => {
+    if (world.running) {
+        world.stop();
+        query('#play-icon').style.display = 'block';
+        query('#pause-icon').style.display = 'none';
+    } else {
+        world.start();
+        query('#play-icon').style.display = 'none';
+        query('#pause-icon').style.display = 'block';
+    }
+});
+
+query('#slow-button').addEventListener('click', () => {
+    if (Math.log10(world.timeWarp) % 1 === 0) {
+        world.timeWarp /= 2;
+    } else {
+        world.timeWarp /= 5;
+    }
+});
+
+query('#fast-button').addEventListener('click', () => {
+    if (Math.log10(world.timeWarp) % 1 === 0) {
+        world.timeWarp *= 5;
+    } else {
+        world.timeWarp *= 2;
+    }
+});
+
+
+console.log('Expansion Loading Complete!');

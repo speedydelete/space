@@ -1,58 +1,88 @@
 
-import renderBgStars from './bg_stars';
+import {query, sin, cos, tan, acos, atan2} from './util';
+import STARS from './stars.json';
 
-
-let mainMenu = document.getElementById('main-menu') as HTMLDivElement;
-let aboutMenu = document.getElementById('about-menu') as HTMLDivElement;
 
 function hideExceptMain() {
-    aboutMenu.style.display = 'none';
+    query('#about-menu').style.display = 'none';
 }
 
 document.getElementById('about-menu-button')?.addEventListener('click', () => {
-    mainMenu.style.display = 'none';
-    aboutMenu.style.display = 'block';
+    query('#main-menu').style.display = 'none';
+    query('#about-menu').style.display = 'block';
 });
 
 function gotoMainMenu() {
-    mainMenu.style.display = 'flex';
+    query('#manu-menu').style.display = 'flex';
     hideExceptMain();
 }
-document.querySelectorAll('.main-menu-button').forEach(elt => elt.addEventListener('click', gotoMainMenu));
 
-document.getElementById('settings-button')?.addEventListener('click', () => alert('Sorry, no settings yet!'));
+query('.main-menu-button', true).forEach(elt => {
+    elt.addEventListener('click', gotoMainMenu);
+});
 
-document.getElementById('play-button')?.addEventListener('click', async () => {
-    (document.getElementById('menu') as HTMLDivElement).style.display = 'none';
-    (document.getElementById('game') as HTMLDivElement).style.display = 'block';
+query('#settings-button').addEventListener('click', () => alert('Sorry, no settings yet!'));
+
+query('#play-button').addEventListener('click', async () => {
+    query('#menu').style.display = 'none';
+    query('#game').style.display = 'block';
+    if (renderMenuStarsRequest) {
+        cancelAnimationFrame(renderMenuStarsRequest);
+    }
     // @ts-ignore
-    let {start} = await import('./render') as typeof import('./render');
-    start();
+    import('./render');
     playing = true;
 });
 
 
 let playing = false;
 
-let ra = Math.random() * 360;
-let dec = Math.random() * 180 - 90;
+let centerRa = Math.random() * 360;
+let centerDec = Math.random() * 180 - 90;
 let raChange = Math.random() * 2 - 1;
 let decChange = Math.random() * 2 - 1;
 
-let animateMenuRequest: number | null = null;
+let renderMenuStarsRequest: number | null = null;
 
 let frames = 0;
 let fps = parseInt(localStorage['space-fps'] ?? '60');
 let prevRealTime = performance.now();
 let blurred = false;
 
-function animateMenu(): void {
-    if (playing) {
+function multiplyColor(color: string, mul: number): string {
+    const r = Math.round(parseInt(color.slice(1, 3), 16)*mul);
+    const g = Math.round(parseInt(color.slice(3, 5), 16)*mul);
+    const b = Math.round(parseInt(color.slice(5, 7), 16)*mul);
+    return "#" + r.toString(16).padStart(2, "0") + g.toString(16).padStart(2, "0") + b.toString(16).padStart(2, "0'");
+}
+
+const limit = 7.8;
+
+interface Star {
+    ra: number;
+    dec: number;
+    mag: number;
+    color: string;
+}
+
+let stars: Star[] = [];
+
+for (let star of (STARS as [number, number, number, string][]).slice(2)) {
+    stars.push({ra: star[0], dec: star[1], mag: star[2], color: star[3]});
+}
+
+export let canvas = query<HTMLCanvasElement>('#menu-stars');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+let ctx = canvas.getContext('2d');
+
+function renderMenuStars(): void {
+    if (ctx === null || playing) {
         return;
     }
     if (document.hidden || document.visibilityState === 'hidden') {
         blurred = true;
-        requestAnimationFrame(animateMenu);
+        requestAnimationFrame(renderMenuStars);
         return;
     } else if (blurred) {
         blurred = false;
@@ -68,28 +98,53 @@ function animateMenu(): void {
         prevRealTime = realTime;
         localStorage['space-fps'] = fps;
     }
-    ra = ra + raChange/fps;
-    if (ra > 360) {
-        ra = 360;
-        raChange = -Math.random();
+    centerRa = centerRa + raChange/fps;
+    if (centerRa > 360) {
+        centerRa %= 360;
     }
-    if (ra < 0) {
-        ra = 0;
-        raChange = Math.random();
+    if (centerRa < 0) {
+        centerRa += 360;
     }
-    dec += decChange/fps;
-    if (dec > 90) {
+    if (Math.random() < 0.01/fps) {
+        raChange = Math.random() * 2 - 1;
+    }
+    centerDec += decChange/fps;
+    if (centerDec > 90) {
         decChange = -Math.random();
-        dec = 90;
+        centerDec = 90;
     }
-    if (dec < -90) {
-        decChange = -Math.random();
-        dec = -90;
+    if (centerDec < -90) {
+        decChange = Math.random();
+        centerDec = -90;
     }
-    renderBgStars(ra, dec);
-    animateMenuRequest = requestAnimationFrame(animateMenu);
+    let scaleHeight = canvas.height / 2 / tan(5) / 180;
+    let scaleWidth = canvas.width / 2 / tan(5) / 180;
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    for (let {ra, dec, mag, color} of stars) {
+        if (mag > limit) {
+            continue;
+        }
+        let rho = acos((sin(centerDec)*sin(dec) + cos(centerDec)*cos(dec)*cos(ra - centerRa)));
+        let theta = atan2(cos(dec)*sin(ra - centerRa), cos(centerDec)*sin(dec) - sin(centerDec)*cos(dec)*cos(ra - centerRa));
+        let x = rho * sin(theta) * scaleWidth + canvas.width/2;
+        let y = -rho * cos(theta) * scaleHeight + canvas.height/2;
+        if (x < 0 || x > canvas.width || y < 0 || y > canvas.height) {
+            continue;
+        }
+        let mul = Math.min((limit - mag) / (limit + 1.46) * 0.75 + 0.25, 1);
+        ctx.fillStyle = multiplyColor(color, mul);
+        if (mag > limit - 3) {
+            ctx.fillRect(x, y, 1, 1);
+        } else if (mag > limit - 5) {
+            ctx.fillRect(x, y, 2, 2);
+        } else {
+            ctx.fillRect(x - 1, y - 1, 3, 3);
+        }
+    }
+    renderMenuStarsRequest = requestAnimationFrame(renderMenuStars);
 }
 
 window.addEventListener('load', () => {
-    animateMenuRequest = requestAnimationFrame(animateMenu);
+    renderMenuStarsRequest = requestAnimationFrame(renderMenuStars);
 });

@@ -1,49 +1,49 @@
 
 const {abs} = Math;
 
-export function formatLength(value: number): string {
+export function length(value: number, digits: number = 3): string {
     if (isNaN(value)) {
         return 'NaN';
     } else if (abs(value) > 946073047258080) {
-        return (value/9460730472580.8e3).toFixed(3) + ' ly';
+        return (value/9460730472580.8e3).toFixed(digits) + ' ly';
     } else if (abs(value) > 14959787070) {
-        return (value/149597870700).toFixed(3) + ' AU';
+        return (value/149597870700).toFixed(digits) + ' AU';
     } else if (abs(value) > 1000) {
-        return (value/1000).toFixed(3) + ' km';
+        return (value/1000).toFixed(digits) + ' km';
     } else {
-        return value.toFixed(3) + ' m';
+        return value.toFixed(digits) + ' m';
     }
 }
 
-export function formatTime(value: number): string {
+export function time(value: number, digits: number = 3): string {
     if (isNaN(value)) {
         return 'NaN';
     } else if (value > 31536000) {
-        return (value/31536000).toFixed(3) + ' y';
+        return (value/31536000).toFixed(digits) + ' y';
     } else if (value > 86400) {
-        return (value/86400).toFixed(3) + ' d';
+        return (value/86400).toFixed(digits) + ' d';
     } else if (value > 3600) {
-        return (value/3600).toFixed(3) + ' h';
+        return (value/3600).toFixed(digits) + ' h';
     } else if (value > 60) {
-        return (value/60).toFixed(3) + ' m';
+        return (value/60).toFixed(digits) + ' m';
     } else {
-        return value.toFixed(3) + 's';
+        return value.toFixed(digits) + ' s';
     }
 }
 
-export function formatMass(value: number): string {
+export function formatMass(value: number, digits: number = 3): string {
     if (isNaN(value)) {
         return 'NaN';
     } else if (value > 1.9891e28) {
-        return (value/1.9891e30).toFixed(3) + ' solar masses';
+        return (value/1.9891e30).toFixed(digits) + ' solar masses';
     } else if (value > 5.9722e22) {
-        return (value/5.9722e24).toFixed(3) + ' earth masses';
+        return (value/5.9722e24).toFixed(digits) + ' earth masses';
     } else {
-        return value.toFixed(3) + ' kg';
+        return value.toFixed(digits) + ' kg';
     }
 }
 
-export function formatDate(value: number): string {
+export function date(value: number): string {
     if (isNaN(value)) {
         return 'NaN';
     }
@@ -197,7 +197,7 @@ const CONSTELLATIONS: {[key: string]: [string, string, string]} = {
     vul: ['Vulpecula', 'Vulpeculae', 'Vul'],
 };
 
-export function formatObjectName(name: string, desgn: string, short?: boolean): string {
+export function objectName(name: string, desgn: string, short?: boolean): string {
     let [ns, _data] = desgn.split(':');
     let data = _data.split('/');
     if (ns === 'special' || ns === 'planet') {
