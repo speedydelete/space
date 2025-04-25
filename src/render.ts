@@ -280,10 +280,14 @@ window.addEventListener('keydown', (event: KeyboardEvent) => {
     } else if (key === '-') {
         let logZoom = Math.log10(zoom);
         let floorLogZoom = Math.floor(logZoom);
-        if (logZoom === Math.floor(logZoom)) {
-            zoom -= 10**(floorLogZoom - 1);
-        } else {
-            zoom -= 10**floorLogZoom;
+        // Prevent issue of zooming in too far (zoom <= 1e-31) and can't zoom out.
+        // Use .11 instead of .1 to compensate for floating point error
+        if (zoom >= .11) {
+            if (logZoom === Math.floor(logZoom)) {
+                zoom -= 10**(floorLogZoom - 1);
+            } else {
+                zoom -= 10**floorLogZoom;
+            }
         }
     } else if (key === '[') {
         let allObjects = world.getObjPaths('', true);
