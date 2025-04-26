@@ -1,5 +1,5 @@
 # space
-Full 1:1 scale space simulation.
+Full 1:1 scale space simulation. Check it out at https://speedydelete.com/space/.
 
 Build instructions:
 ```bash
