@@ -1,10 +1,10 @@
 
 import path from 'path';
 import fs from 'fs';
-import minify from '@minify-html/node';
+import {minify} from 'minify';
 import webpack from 'webpack';
 
-function afterWebpack(err, stats) {
+async function afterWebpack(err, stats) {
     if (err) {
         console.error(err);
         return;
@@ -12,11 +12,10 @@ function afterWebpack(err, stats) {
     console.log(stats.toString({colors: true}));
     if (!stats.hasErrors()) {
         let code = fs.readFileSync('src/index.html').toString();
-        code = code.replace('<link rel="stylesheet" href="style.css" />', '<style>' + fs.readFileSync('src/style.css') + '</style>');
-        code = minify.minify(Buffer.from(code), {
-            keep_html_and_head_opening_tags: true,
-        });
+        let css = fs.readFileSync('src/style.css').toString();
+        code = code.replace('<link rel="stylesheet" href="style.css" />', '<style>' + css + '</style>');
         fs.writeFileSync('dist/index.html', code);
+        fs.writeFileSync('dist/index.html', await minify('dist/index.html'));
         console.log('index.html compiled');
     }
     if (compiler !== undefined && !compiler.watching) {
