@@ -47,7 +47,11 @@ export function date(value: number): string {
     if (isNaN(value)) {
         return 'NaN';
     }
-    return (new Date(value*1000)).toISOString().replace('T', ' ').replace('Z', '');
+    try {
+        return (new Date(value*1000)).toISOString().replace('T', ' ').replace('Z', '');
+    } catch (e) {
+        return `Beyond +275698-03-2`;
+    }
 }
 
 
