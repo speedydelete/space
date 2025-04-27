@@ -316,12 +316,14 @@ window.addEventListener('keydown', (event: KeyboardEvent) => {
     } else if (key === 'n') {
         camera.position.y -= 100/unitSize;
     } else if (key === 'F3') {
+        event.preventDefault();
         showDebug = !showDebug;
+        query('#left-info').innerText = '';
     }
 });
 
 
-let showDebug = true;
+let showDebug = false;
 
 function updateUI(renderedObjects: number, ra: number, dec: number): void {
     query('#time').textContent = format.date(world.time);
@@ -393,9 +395,8 @@ function panelResizeMouseUp(): void {
 function toggleRightPanelButton(eltQuery: string, panelQuery: string): void {
     query(eltQuery).addEventListener('click', () => {
         rightPanelShown = !rightPanelShown;
-        let display = rightPanelShown ? 'block' : 'none';
-        rightPanel.style.display = display;
-        query(panelQuery).style.display = display;
+        rightPanel.style.display = rightPanelShown ? 'block' : 'none';
+        query(panelQuery).style.display = rightPanelShown ? 'flex' : 'none';
         resize(window.innerWidth - (rightPanelShown ? rightPanelWidth : 0));
     });
 }
@@ -407,8 +408,8 @@ numberInput('#wc-g', world.config.G, x => world.setConfig('G', x));
 numberInput('#wc-lc', world.config.lC, x => world.setConfig('lC', x));
 stringInput('#wc-initial-target', world.config.initialTarget, x => world.setConfig('initialTarget', x));
 
+toggleRightPanelButton('#edit-button', '#object-editor');
 query('#add-button').addEventListener('click', () => alert('Sorry, you can\'t add objects yet!'));
-query('#edit-button').addEventListener('click', () => alert('Sorry, you can\'t edit objects yet!'));
 
 
 console.log('Expansion Loading Complete!');

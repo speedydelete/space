@@ -92,6 +92,7 @@ canvas {
 
 #right-panel {
     padding: 10px;
+    padding-left: 20px;
     position: absolute;
     top: 0;
     bottom: 40px;
@@ -143,6 +144,12 @@ canvas {
 
 #right-panel input.invalid {
     border: 1px solid red;
+}
+
+#right-panel select {
+    background-color: black;
+    color: white;
+    border: 1px solid gray;
 }
 
 #right-panel h1 {

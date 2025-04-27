@@ -93,7 +93,13 @@
                 </div>
                 <div id="object-editor" style="display: none">
                     <h1>Edit Object</h1>
-                    <div>Type: <!-- put select thingy here --></div>
+                    <div>Type:
+                        <select id="oe-type">
+                            <button><selectedcontent></selectedcontent></button>
+                            <option value="star">Star</option>
+                            <option value="planet">Planet</option>
+                        </select>
+                    </div>
                     <div>Name: <input type="text" id="oe-name" /></div>
                     <div>Designation: <input type="text" id="oe-designation" /></div>
                     <div>X: <input type="text" id="oe-position-x" /></div>
