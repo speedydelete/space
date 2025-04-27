@@ -91,24 +91,21 @@ canvas {
 }
 
 #right-panel {
-    padding: 10px;
-    padding-left: 20px;
+    padding: 10px 10px 20px 20px;
     position: absolute;
     top: 0;
     bottom: 40px;
     right: 0;
     background-color: black;
     border-left: 1px solid #dfdfdf;
+    overflow-y: scroll;
 }
 
 #right-panel-resizer {
     position: absolute;
-    left: -15px;
-    top: calc(50% - 10px);
-    bottom: calc(50% - 10px);
+    top: calc(50% - 30px);
     height: 20px;
     width: 30px;
-    z-index: 2;
     border: 1px solid #dfdfdf;
     background-color: black;
 }
@@ -128,27 +125,52 @@ canvas {
     gap: 5px;
 }
 
-#right-panel > div > div {
+#right-panel > div > div:not(.rp-sub) {
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 1ch;
 }
 
-#right-panel input {
+.rp-sub {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+input {
     background-color: black;
     color: white;
     border: 1px solid gray;
     outline: none;
 }
 
-#right-panel input.invalid {
+input.invalid {
     border: 1px solid red;
 }
 
-#right-panel select {
+input[type=checkbox] {
+    appearance: none;
+    height: 1em;
+    width: 1em;
+}
+
+input[type=checkbox]:checked {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none' viewBox='0 0 16 16'><line x1='2' y1='9' x2='6' y2='13' stroke='white' /><line x1='6' y1='13' x2='14' y2='3' stroke='white' /></svg>");
+}
+
+select {
     background-color: black;
     color: white;
+    border: 1px solid gray;
+}
+
+#right-panel button {
+    padding: 2px 4px;
+    margin-bottom: 2px;
+    background-color: black;
+    color: white;
+    outline: none;
     border: 1px solid gray;
 }
 
@@ -156,12 +178,20 @@ canvas {
     text-align: center;
 }
 
-#wc-tps {
-    width: 7ch;
+#right-panel input:not([type]) {
+    width: 15ch;
 }
 
-#wc-c, #wc-g, #wc-lc, #wc-initial-target {
-    width: 15ch;
+#wc-tps {
+    width: 7ch !important;
+}
+
+#oe-designation {
+    width: 20ch !important;
+}
+
+#oe-texture {
+    width: 40ch !important;
 }
 
 #menu {

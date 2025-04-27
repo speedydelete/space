@@ -1,7 +1,7 @@
 
 import create, {Process, System, UserSession, FileSystem, join, Directory} from 'fake-system';
 import {sqrt, sin, cos, acos, atan2, pi} from './util';
-import {Obj, RootObj, OBJ_TYPE_MAP, ObjType, Vector3} from './obj';
+import {Obj, ObjKey, TypeOfObjKey, RootObj, OBJ_TYPE_MAP, ObjType, Vector3} from './obj';
 
 
 export interface Config {
@@ -82,6 +82,31 @@ export class World {
             this.objDir.mkdir(path, true);
         }
         this.objDir.write(objJoin(path, '.object'), JSON.stringify(data));
+    }
+
+    getObjProp<T extends ObjKey>(path: string, prop: T): TypeOfObjKey<T>;
+    getObjProp<T extends ObjKey, U extends keyof Exclude<TypeOfObjKey<T>, undefined> & string>(path: string, prop: `${T}.${U}`): Exclude<TypeOfObjKey<T>, undefined>[U];
+    getObjProp(path: string, prop: string): any {
+        let obj = this.getObj(path);
+        if (prop.includes('.')) {
+            let [a, b] = prop.split('.');
+            return obj[a][b];
+        } else {
+            return obj[prop];
+        }
+    }
+
+    setObjProp<T extends ObjKey>(path: string, prop: T, value: TypeOfObjKey<T>): void;
+    setObjProp<T extends ObjKey, U extends keyof Exclude<TypeOfObjKey<T>, undefined> & string>(path: string, prop: `${T}.${U}`, value: Exclude<TypeOfObjKey<T>, undefined>[U]): void;
+    setObjProp(path: string, prop: string, value: any): void {
+        let obj = this.getObj(path);
+        if (prop.includes('.')) {
+            let [a, b] = prop.split('.');
+            obj[a][b] = value;
+        } else {
+            obj[prop] = value;
+        }
+        this.setObj(path, obj);
     }
 
     getObjPaths(start: string, recursive: boolean = false): string[] {
@@ -168,7 +193,7 @@ export class World {
         }
     }
 
-    setPositionVelocityFromOrbit(path: string): void {
+    setPositionVelocityFromOrbit(path: string, setPosition: boolean = true, setVelocity: boolean = true): void {
         let obj = this.getObj(path);
         if (!obj.orbit) {
             throw new Error('this error should not occur');
@@ -185,6 +210,8 @@ export class World {
         }
         let per = 2 * pi * sqrt(sma ** 3 / parent.mass / this.config.G);
         mna = normalizeAngle(mna + 360 * (this.time - at) / per);
+        obj.orbit.at = this.time;
+        obj.orbit.mna = mna;
         let eca = mna;
         let delta: number;
         do {
@@ -204,12 +231,16 @@ export class World {
         let R22 = -sin(lan)*sin(aop) + cos(lan)*cos(aop)*cos(inc);
         let R31 = sin(aop)*sin(inc);
         let R32 = cos(aop)*sin(inc);
-        obj.position[0] = R11 * x + R12 * y;
-        obj.position[2] = R21 * x + R22 * y;
-        obj.position[1] = R31 * x + R32 * y;
-        obj.velocity[0] = R11 * vx + R12 * vy;
-        obj.velocity[2] = R21 * vx + R22 * vy;
-        obj.velocity[1] = R31 * vx + R32 * vy;
+        if (setPosition) {
+            obj.position[0] = R11 * x + R12 * y;
+            obj.position[2] = R21 * x + R22 * y;
+            obj.position[1] = R31 * x + R32 * y;
+        }
+        if (setVelocity) {
+            obj.velocity[0] = R11 * vx + R12 * vy;
+            obj.velocity[2] = R21 * vx + R22 * vy;
+            obj.velocity[1] = R31 * vx + R32 * vy;
+        }
         this.setObj(path, obj);
     }
 

@@ -1,4 +1,7 @@
 
+import {Obj} from './obj';
+
+
 const {abs} = Math;
 
 export function length(value: number, digits: number = 3): string {
@@ -201,16 +204,17 @@ const CONSTELLATIONS: {[key: string]: [string, string, string]} = {
     vul: ['Vulpecula', 'Vulpeculae', 'Vul'],
 };
 
-export function objectName(name: string, desgn: string, short?: boolean): string {
+export function objectName(obj: Obj, short?: boolean): string {
+    let {name, designation: desgn} = obj;
     let [ns, _data] = desgn.split(':');
     let data = _data.split('/');
-    if (ns === 'special' || ns === 'planet') {
+    if (ns === 'special' || ns === 'planet' || (ns === 'moon' && name === 'Moon')) {
         return name;
     } else if (ns === 'moon') {
         return name + '(' + data[0].toUpperCase() + ' ' + toRomanNumeral(parseInt(data[1])) + ')';
     } else if (ns === 'star') {
         let constl = CONSTELLATIONS[data[0]][short ? 2 : 1];
-        let des;
+        let des: string;
         if (data[1] in GREEK_LETTERS) {
             des = GREEK_LETTERS[data[1]][1] + ' ' + constl;
         } else {

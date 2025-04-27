@@ -76,8 +76,6 @@ class _Obj<T extends ObjType = ObjType> extends _BaseObj {
     rotation: Vector3;
     rotationChange: Vector3;
     orbit?: Orbit;
-    albedo?: number;
-    bondAlbedo?: number;
     alwaysVisible: boolean;
 
     constructor(type: T, name: string, designation: string, data: ObjParams) {
@@ -89,8 +87,6 @@ class _Obj<T extends ObjType = ObjType> extends _BaseObj {
         this.orbit = data.orbit;
         this.radius = data.radius;
         this.mass = data.mass;
-        this.albedo = data.albedo;
-        this.albedo = data.bondAlbedo;
         this.alwaysVisible = data.alwaysVisible === undefined ? false : data.alwaysVisible;
     }
 
@@ -135,6 +131,8 @@ export class Star extends _Obj<'star'> {
 
 
 export interface PlanetParams extends ObjParams {
+    albedo?: number;
+    bondAlbedo?: number;
     texture?: string;
     type?: string;
 }
@@ -144,6 +142,8 @@ export class Planet extends _Obj<'planet'> {
     type: 'planet' = 'planet';
     texture?: string;
     spectralType: string;
+    albedo?: number;
+    bondAlbedo?: number;
 
     constructor(name: string, desgn: string, data: PlanetParams) {
         super('planet', name, desgn, data);
@@ -151,6 +151,8 @@ export class Planet extends _Obj<'planet'> {
             this.texture = data.texture;
         }
         this.spectralType = data.type === undefined ? '' : data.type;
+        this.albedo = data.albedo;
+        this.bondAlbedo = data.bondAlbedo;
     }
 }
 
@@ -170,9 +172,6 @@ export interface ObjParamsMap {
     'planet': PlanetParams,
 }
 
-export function obj<T extends BaseObjType>(type: T, params: ObjParamsMap[T] & {name: string, designation: string}): Obj {
-    // @ts-ignore
-    return new (objTypeMap[type])(params.name, params.designation, params);
-}
+export type ObjKey = keyof Star | keyof Planet;
+export type TypeOfObjKey<T extends ObjKey> = T extends keyof Star ? Star[T] : (T extends keyof Planet ? Planet[T] : never);
 
-export default obj;

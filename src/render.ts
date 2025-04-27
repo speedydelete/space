@@ -2,8 +2,8 @@
 import * as three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import * as format from './format';
-import {query, sin, cos, tan, asin, atan2, stringInput, numberInput} from './util';
-import obj, {RootObj} from './obj';
+import {query, sin, cos, tan, asin, atan2, stringInput, numberInput, checkboxInput} from './util';
+import {RootObj} from './obj';
 import presets from './presets';
 
 
@@ -29,21 +29,13 @@ export const DEFAULT_SETTINGS: Settings = {
 
 
 let world = presets.default;
-Object.assign(globalThis, {
-    world,
-    system: world.system,
-    fs: world.fs,
-    objDir: world.objDir,
-    getObj: world.getObj.bind(world),
-    setObj: world.setObj.bind(world),
-});
 
 let settings = DEFAULT_SETTINGS;
 let unitSize = settings.unitSize;
 
 let objMeshes = new Map<string, three.Mesh>();
 
-let target = world.config.initialTarget;
+let target: string;
 let zoom = 1;
 
 let renderer = new three.WebGLRenderer({
@@ -82,7 +74,7 @@ for (let path of world.getObjPaths('', true)) {
         map: obj.texture ? textureLoader.load(obj.texture) : undefined,
         opacity: 1,
         transparent: true,
-        color: obj.albedo ? new three.Color(obj.albedo, obj.albedo, obj.albedo) : undefined,
+        color: 'albedo' in obj && obj.albedo ? new three.Color(obj.albedo, obj.albedo, obj.albedo) : undefined,
     });
     if (obj.type === 'star') {
         if (material.map) material.emissiveMap = material.map;
@@ -242,7 +234,7 @@ window.addEventListener('dblclick', event => {
     raycaster.setFromCamera(new three.Vector2((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1), camera);
     let intersects = raycaster.intersectObjects(Object.values(objMeshes));
     if (intersects.length > 0) {
-        target = Object.entries(objMeshes).filter((x) => x[1] === intersects[0].object)[0][0];
+        setTarget(Object.entries(objMeshes).filter((x) => x[1] === intersects[0].object)[0][0]);
         controls.target.copy(intersects[0].object.position);
     }
 });
@@ -288,14 +280,14 @@ window.addEventListener('keydown', (event: KeyboardEvent) => {
         if (index === 0) {
             index = allObjects.length;
         }
-        target = allObjects[(index - 1) % allObjects.length];
+        setTarget(allObjects[(index - 1) % allObjects.length]);
     } else if (key === ']') {
         let allObjects = world.getObjPaths('', true);
         let index = allObjects.indexOf(target);
         if (index === allObjects.length - 1) {
             index = -1;
         }
-        target = allObjects[(index + 1) % allObjects.length];
+        setTarget(allObjects[(index + 1) % allObjects.length]);
     } else if (key === 'i') {
         camera.position.x += 100/unitSize;
     } else if (key === 'k') {
@@ -321,8 +313,8 @@ let showDebug = false;
 function updateUI(renderedObjects: number, ra: number, dec: number): void {
     query('#time').textContent = format.date(world.time);
     query('#time-warp').textContent = world.timeWarp + 'x (' + format.time(world.timeWarp, 2) + '/s)';
-    query('#target').textContent = world.getObj(target).name;
-    // query('#target').textContent = format.objectName(world.getObj(target));
+    // query('#target').textContent = world.getObj(target).name;
+    query('#target').textContent = format.objectName(world.getObj(target));
     if (showDebug) {
         query('#left-info').innerText = `FPS: ${fps}
         Camera: ${format.length(camera.position.x*unitSize)} / ${format.length(camera.position.y*unitSize)} / ${format.length(camera.position.z*unitSize)}
@@ -368,15 +360,18 @@ let rightPanel = query('#right-panel');
 rightPanel.style.width = rightPanelWidth + 'px';
 let rightPanelShown = false;
 
-query('#right-panel-resizer').addEventListener('mousedown', () => {
+let rightPanelResizer = query('#right-panel-resizer');
+rightPanelResizer.style.right = rightPanelWidth - 15 + 'px';
+
+rightPanelResizer.addEventListener('mousedown', () => {
     window.addEventListener('mousemove', panelResizeMouseMove);
     window.addEventListener('mouseup', panelResizeMouseUp);
-    
 });
 
 function panelResizeMouseMove(event: MouseEvent): void {
     rightPanelWidth = window.innerWidth - event.clientX;
     rightPanel.style.width = rightPanelWidth + 'px';
+    rightPanelResizer.style.right = rightPanelWidth - 15 + 'px';
     resize(window.innerWidth - rightPanelWidth);
 }
 
@@ -388,7 +383,7 @@ function panelResizeMouseUp(): void {
 function toggleRightPanelButton(eltQuery: string, panelQuery: string): void {
     query(eltQuery).addEventListener('click', () => {
         rightPanelShown = !rightPanelShown;
-        rightPanel.style.display = rightPanelShown ? 'block' : 'none';
+        rightPanel.style.display = rightPanelResizer.style.display = rightPanelShown ? 'block' : 'none';
         query(panelQuery).style.display = rightPanelShown ? 'flex' : 'none';
         resize(window.innerWidth - (rightPanelShown ? rightPanelWidth : 0));
     });
@@ -402,7 +397,80 @@ numberInput('#wc-lc', world.config.lC, x => world.setConfig('lC', x));
 stringInput('#wc-initial-target', world.config.initialTarget, x => world.setConfig('initialTarget', x));
 
 toggleRightPanelButton('#edit-button', '#object-editor');
+
+function setTarget(newTarget: string): void {
+    target = newTarget;
+    Object.assign(globalThis, {target});
+    let obj = world.getObj(target);
+    stringInput('#oe-type', obj.type, x => {
+        world.setObj(target, Object.assign(world.getObj(target), {type: x}));
+        setTarget(target);
+    });
+    stringInput('#oe-name', obj.name, x => world.setObjProp(target, 'name', x));
+    stringInput('#oe-designation', obj.designation, x => world.setObjProp(target, 'name', x));
+    numberInput('#oe-position-x', obj.position[0], x => world.setObjProp(target, 'position.0', x));
+    numberInput('#oe-position-y', obj.position[1], x => world.setObjProp(target, 'position.1', x));
+    numberInput('#oe-position-z', obj.position[2], x => world.setObjProp(target, 'position.2', x));
+    numberInput('#oe-velocity-x', obj.velocity[0], x => world.setObjProp(target, 'velocity.0', x));
+    numberInput('#oe-velocity-y', obj.velocity[1], x => world.setObjProp(target, 'velocity.1', x));
+    numberInput('#oe-velocity-z', obj.velocity[2], x => world.setObjProp(target, 'velocity.2', x));
+    numberInput('#oe-mass', obj.mass, x => world.setObjProp(target, 'mass', x));
+    numberInput('#oe-radius', obj.radius, x => world.setObjProp(target, 'radius', x));
+    query('.oe-orbit', true).forEach(x => x.style.display = obj.orbit ? 'block' : 'none');
+    query('#oe-add-orbit-container').style.display = obj.orbit ? 'none' : 'block';
+    if (obj.orbit) {
+        world.setOrbitFromPositionVelocity(target);
+        numberInput('#oe-orbit-sma', obj.orbit.sma, x => world.setObjProp(target, 'orbit.sma', x));
+        numberInput('#oe-orbit-ecc', obj.orbit.ecc, x => world.setObjProp(target, 'orbit.ecc', x));
+        numberInput('#oe-orbit-mna', obj.orbit.mna, x => world.setObjProp(target, 'orbit.mna', x));
+        numberInput('#oe-orbit-inc', obj.orbit.inc, x => world.setObjProp(target, 'orbit.inc', x));
+        numberInput('#oe-orbit-lan', obj.orbit.lan, x => world.setObjProp(target, 'orbit.lan', x));
+        numberInput('#oe-orbit-aop', obj.orbit.aop, x => world.setObjProp(target, 'orbit.aop', x));
+    }
+    numberInput('#oe-rotation-x', obj.rotation[0], x => world.setObjProp(target, 'rotation.0', x));
+    numberInput('#oe-rotation-y', obj.rotation[1], x => world.setObjProp(target, 'rotation.1', x));
+    numberInput('#oe-rotation-z', obj.rotation[2], x => world.setObjProp(target, 'rotation.2', x));
+    numberInput('#oe-rotation-change-x', obj.rotationChange[0], x => world.setObjProp(target, 'rotationChange.0', x));
+    numberInput('#oe-rotation-change-y', obj.rotationChange[1], x => world.setObjProp(target, 'rotationChange.1', x));
+    numberInput('#oe-rotation-change-z', obj.rotationChange[2], x => world.setObjProp(target, 'rotationChange.2', x));
+    checkboxInput('#oe-always-visible', obj.alwaysVisible, x => world.setObjProp(target, 'alwaysVisible', x));
+    stringInput('#oe-texture', obj.texture, x => world.setObjProp(target, 'texture', x));
+    stringInput('#oe-spectral-type', obj.spectralType, x => world.setObjProp(target, 'spectralType', x));
+    query('#oe-star').style.display = obj.type === 'star' ? 'flex' : 'none';
+    query('#oe-planet').style.display = obj.type === 'planet' ? 'flex' : 'none';
+    if (obj.type === 'star') {
+        numberInput('#oe-magnitude', obj.magnitude, x => world.setObjProp(target, 'magnitude', x));
+    } else if (obj.type === 'planet') {
+        numberInput('#oe-albedo', obj.albedo, x => world.setObjProp(target, 'albedo', x));
+        numberInput('#oe-bond-albedo', obj.bondAlbedo, x => world.setObjProp(target, 'bondAlbedo', x));
+    }
+}
+setTarget(world.config.initialTarget);
+
+query('#oe-add-orbit').addEventListener('click', () => world.setOrbitFromPositionVelocity(target));
+query('#oe-set-position').addEventListener('click', () => world.setPositionVelocityFromOrbit(target, true, false));
+query('#oe-set-velocity').addEventListener('click', () => world.setPositionVelocityFromOrbit(target, false, true));
+query('#oe-set-orbit').addEventListener('click', () => world.setOrbitFromPositionVelocity(target));
+
 query('#add-button').addEventListener('click', () => alert('Sorry, you can\'t add objects yet!'));
 
+
+Object.assign(globalThis, {
+    world,
+    system: world.system,
+    fs: world.fs,
+    objDir: world.objDir,
+    getObj: world.getObj.bind(world),
+    setObj: world.setObj.bind(world),
+    getObjProp: world.getObjProp.bind(world),
+    setObjProp: world.setObjProp.bind(world),
+    renderer,
+    scene,
+    camera,
+    controls,
+    starRenderer,
+    starCamera,
+    objMeshes,
+});
 
 console.log('Expansion Loading Complete!');

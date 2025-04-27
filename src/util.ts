@@ -23,13 +23,15 @@ export const acos = (x: number) => Math.acos(x) * 180 / pi;
 export const atan2 = (x: number, y: number) => Math.atan2(x, y) * 180 / pi;
 
 
-export function stringInput(eltQuery: string, value: string, callback: (value: string, elt: HTMLInputElement) => void): void {
+export type InputCallback<T> = (value: T, elt: HTMLInputElement) => void;
+
+export function stringInput(eltQuery: string, value: string | undefined, callback: InputCallback<string>): void {
     let elt = query<HTMLInputElement>(eltQuery);
-    elt.value = value;
-    elt.addEventListener('input', () => callback(elt.value, elt));
+    elt.value = value ?? '';
+    elt.oninput = () => callback(elt.value, elt);
 }
 
-export function numberInput(eltQuery: string, value: number, callback: (value: number, elt: HTMLInputElement) => void): void {
+export function numberInput(eltQuery: string, value: number | undefined, callback: InputCallback<number>): void {
     stringInput(eltQuery, String(value), (_, elt) => {
         let value = parseFloat(elt.value);
         if (isNaN(value)) {
@@ -39,4 +41,10 @@ export function numberInput(eltQuery: string, value: number, callback: (value: n
             elt.classList.remove('invalid');
         }
     });
+}
+
+export function checkboxInput(eltQuery: string, value: boolean, callback: InputCallback<boolean>): void {
+    let elt = query<HTMLInputElement>(eltQuery);
+    elt.checked = value;
+    elt.oninput = () => callback(elt.checked, elt);
 }
