@@ -26,6 +26,7 @@ query('#settings-button').addEventListener('click', () => alert('Sorry, no setti
 query('#play-button').addEventListener('click', async () => {
     query('#menu').style.display = 'none';
     query('#game').style.display = 'block';
+    window.removeEventListener('resize', resize);
     if (renderMenuStarsRequest) {
         cancelAnimationFrame(renderMenuStarsRequest);
     }
@@ -128,6 +129,13 @@ function renderMenuStars(): void {
     }
     renderMenuStarsRequest = requestAnimationFrame(renderMenuStars);
 }
+
+function resize(): void {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+
+window.addEventListener('resize', resize);
 
 window.addEventListener('load', () => {
     renderMenuStarsRequest = requestAnimationFrame(renderMenuStars);
