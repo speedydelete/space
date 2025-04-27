@@ -3,7 +3,7 @@ import * as three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import * as format from './format';
 import {query, sin, cos, tan, asin, atan2, stringInput, numberInput} from './util';
-import {RootObj} from './obj';
+import obj, {RootObj} from './obj';
 import presets from './presets';
 
 
@@ -106,25 +106,18 @@ for (let path of world.getObjPaths('', true)) {
 function updateObjects(): number {
     let renderedObjects = 0;
     for (let path of world.getObjPaths('', true)) {
-        let object = world.getObj(path);
+        let obj = world.getObj(path);
         let mesh = objMeshes.get(path);
-        if (object !== undefined && mesh !== undefined && (object.alwaysVisible || mesh.position.distanceTo(camera.position) < settings.renderDistance/settings.unitSize)) {
-            let [x, y, z] = object.absolutePosition;
+        if (obj && mesh && (obj.alwaysVisible || mesh.position.distanceTo(camera.position) < settings.renderDistance/settings.unitSize)) {
+            let [x, y, z] = obj.absolutePosition;
             mesh.position.set(x/unitSize, y/unitSize, z/unitSize);
+            let [rx, ry, rz] = obj.rotation;
             mesh.rotation.set(0, 0, 0);
-            if (object.axis) {
-                mesh.rotateX(object.axis.tilt * Math.PI / 180);
-                if (object.axis.epoch !== null) {
-                    if (object.axis.period === 'sync') {
-                        console.error('period is sync for', object, 'path:', path);
-                    } else {
-                        mesh.rotateY(((world.time - object.axis.epoch)/object.axis.period % 1) * Math.PI * 2);
-                    }
-                }
-            }
-            if (object.type === 'star' && mesh.children[0] instanceof three.PointLight) {
-                mesh.children[0].power = world.config.lC / 10**(0.4 * object.magnitude) / unitSize**2 / 5000;
-
+            mesh.rotateX(rx * Math.PI / 180);
+            mesh.rotateZ(ry * Math.PI / 180);
+            mesh.rotateY(rz * Math.PI / 180);
+            if (obj.type === 'star' && mesh.children[0] instanceof three.PointLight) {
+                mesh.children[0].power = world.config.lC / 10**(0.4 * obj.magnitude) / unitSize**2 / 5000;
             }
             renderedObjects += 1;
             mesh.visible = true;
@@ -151,19 +144,19 @@ let starCamera = new three.PerspectiveCamera(
 );
 
 let starMaterials = [
-    'https://raw.githubusercontent.com/speedydelete/space/refs/heads/main/dist/data/textures/nasa/stars/px.png',
-    'https://raw.githubusercontent.com/speedydelete/space/refs/heads/main/dist/data/textures/nasa/stars/nx.png',
-    'https://raw.githubusercontent.com/speedydelete/space/refs/heads/main/dist/data/textures/nasa/stars/py.png',
-    'https://raw.githubusercontent.com/speedydelete/space/refs/heads/main/dist/data/textures/nasa/stars/ny.png',
-    'https://raw.githubusercontent.com/speedydelete/space/refs/heads/main/dist/data/textures/nasa/stars/pz.png',
-    'https://raw.githubusercontent.com/speedydelete/space/refs/heads/main/dist/data/textures/nasa/stars/nz.png',
+    'data/textures/nasa/stars/px.png',
+    'data/textures/nasa/stars/nx.png',
+    'data/textures/nasa/stars/py.png',
+    'data/textures/nasa/stars/ny.png',
+    'data/textures/nasa/stars/pz.png',
+    'data/textures/nasa/stars/nz.png',
 ].map(path => new three.MeshBasicMaterial({
     map: textureLoader.load(path),
     side: three.BackSide,
     color: new three.Color(0x6f6f6f),
 }));
 let starMesh = new three.Mesh(new three.BoxGeometry(1, 1, 1), starMaterials);
-starMesh.rotateX((world.getObj('sun/earth').axis?.tilt ?? 0) * Math.PI / 180);
+starMesh.rotateX(23.439 * Math.PI / 180);
 starScene.add(starMesh);
 
 

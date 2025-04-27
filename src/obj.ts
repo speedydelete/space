@@ -2,8 +2,7 @@
 import SPECTRAL_TYPE_COLORS from './spectral_type_colors.json';
 
 
-export type Position = [number, number, number];
-export type Velocity = [number, number, number];
+export type Vector3 = [number, number, number];
 
 export interface Orbit {
     at: number;
@@ -31,10 +30,11 @@ export type BaseObjType = 'root' | ObjType;
 export interface ObjParams {
     mass: number;
     radius: number;
-    axis?: Axis;
+    position?: Vector3;
+    velocity?: Vector3;
+    rotation?: Vector3;
+    rotationChange?: Vector3;
     orbit?: Orbit;
-    position?: Position;
-    velocity?: Velocity;
     albedo?: number;
     bondAlbedo?: number;
     alwaysVisible?: boolean;
@@ -68,25 +68,29 @@ export class RootObj extends _BaseObj<'root'> {
 
 class _Obj<T extends ObjType = ObjType> extends _BaseObj {
 
-    position: Position;
-    absolutePosition: Position = [0, 0, 0];
-    velocity: Velocity;
-    orbit?: Orbit;
-    radius: number;
     mass: number;
-    axis?: Axis;
-    albedo: number;
+    radius: number;
+    position: Vector3;
+    absolutePosition: Vector3 = [0, 0, 0];
+    velocity: Vector3;
+    rotation: Vector3;
+    rotationChange: Vector3;
+    orbit?: Orbit;
+    albedo?: number;
+    bondAlbedo?: number;
     alwaysVisible: boolean;
 
     constructor(type: T, name: string, designation: string, data: ObjParams) {
         super(type, name, designation);
         this.position = data.position ?? [0, 0, 0];
         this.velocity = data.velocity ?? [0, 0, 0];
+        this.rotation = data.rotation ?? [0, 0, 0];
+        this.rotationChange = data.rotationChange ?? [0, 0, 0];
         this.orbit = data.orbit;
         this.radius = data.radius;
         this.mass = data.mass;
-        if (data.axis !== undefined) this.axis = data.axis;
-        this.albedo = data.albedo === undefined ? 0.09 : data.albedo;
+        this.albedo = data.albedo;
+        this.albedo = data.bondAlbedo;
         this.alwaysVisible = data.alwaysVisible === undefined ? false : data.alwaysVisible;
     }
 

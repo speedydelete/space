@@ -1,7 +1,7 @@
 
 import create, {Process, System, UserSession, FileSystem, join, Directory} from 'fake-system';
 import {sqrt, sin, cos, acos, atan2, pi} from './util';
-import {Obj, RootObj, OBJ_TYPE_MAP, ObjType, Position} from './obj';
+import {Obj, RootObj, OBJ_TYPE_MAP, ObjType, Vector3} from './obj';
 
 
 export interface Config {
@@ -128,7 +128,7 @@ export class World {
         return this.time / 86400 + 2440587.5;
     }
 
-    setAbsolutePositions(start: string = '', [px, py, pz]: Position = [0, 0, 0]): void {
+    setAbsolutePositions(start: string = '', [px, py, pz]: Vector3 = [0, 0, 0]): void {
         for (let _path of this.getObjPaths(start)) {
             let path = join(start, _path);
             let obj = this.getObj(path);
@@ -156,9 +156,10 @@ export class World {
             obj.velocity[0] -= x * accel;
             obj.velocity[1] -= y * accel;
             obj.velocity[2] -= z * accel;
-            obj.position[0] += obj.velocity[0] * dt;
-            obj.position[1] += obj.velocity[1] * dt;
-            obj.position[2] += obj.velocity[2] * dt;
+            for (let i = 0; i < 3; i++) {
+                obj.position[i] += obj.velocity[i] * dt;
+                obj.rotation[i] = (obj.rotation[i] + obj.rotationChange[i] * dt) % 360;
+            }
             this.setObj(path, obj);
         }
         this.setAbsolutePositions();

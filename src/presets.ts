@@ -31,25 +31,17 @@ export default {
         this.setObj('sun', new Star('Sun', 'special:sun', {
             mass: 1.9891e30,
             radius: 6.957e8,
+            rotation: [286.13, 0, 0],
+            rotationChange: [0, 0, 360/2164230],
             magnitude: 4.83,
             type: 'G2V',
-            axis: {
-                tilt: 0,
-                period: 2164230,
-                epoch: time('2024-01-01 09:10:00'),
-                ra: 286.13,
-            },
             alwaysVisible: true,
         }));
         this.setObj('sun/mercury', new Planet('mercury', 'planet:mercury', {
             mass: 3.301e23,
             radius: 2439700,
-            axis: {
-                tilt: 0.034,
-                period: 5067360,
-                epoch: 0,
-                ra: 281.01,
-            },
+            rotation: [281.01, 0.034, 0],
+            rotationChange: [0, 0, 360/5067360],
             orbit: {
                 at: J2000,
                 sma: 0.38709893 * AU,
@@ -67,13 +59,8 @@ export default {
         this.setObj('sun/venus', new Planet('Venus', 'planet:venus', {
             mass: 4.8673e24,
             radius: 6051800,
-            axis: {
-                tilt: 177.36,
-                period: 20997360,
-                epoch: 0,
-                ra: 272.76,
-                retrograde: true,
-            },
+            rotation: [272.26, 177.36, 0],
+            rotationChange: [0, 0, 360/20997360],
             orbit: {
                 at: J2000,
                 sma: 0.72333199 * AU,
@@ -91,12 +78,8 @@ export default {
         this.setObj('sun/earth', new Planet('Earth', 'planet:earth', {
             mass: 5.9722e24,
             radius: 6371000,
-            axis: {
-                tilt: 23.439,
-                period: 86164.100352,
-                epoch: 0,
-                ra: 0,
-            },
+            rotation: [0, 23.439, 0],
+            rotationChange: [0, 0, 360/86164.100352],
             orbit: {
                 at: J2000,
                 sma: 1.00000011 * AU,
@@ -115,12 +98,8 @@ export default {
         this.setObj('sun/earth/moon', new Planet('Moon', 'moon:earth/1', {
             mass: 7.346e22,
             radius: 1737400,
-            axis: {
-                tilt: 6.68,
-                period: 2360592,
-                epoch: 0,
-                ra: 0,
-            },
+            rotation: [0, 6.68, 0],
+            rotationChange: [0, 0, 360/2360592],
             orbit: {
                 at: J2000,
                 sma: 383398000,
@@ -138,12 +117,8 @@ export default {
         this.setObj('sun/mars', new Planet('Mars', 'planet:mars', {
             mass: 6.4169e23,
             radius: 3389500,
-            axis: {
-                tilt: 25.19,
-                period: 88642.44,
-                epoch: 0,
-                ra: 317.681,
-            },
+            rotation: [317.681, 25.19, 0],
+            rotationChange: [0, 0, 360/88642.44],
             orbit: {
                 at: J2000,
                 sma: 1.52366231 * AU,
@@ -161,12 +136,8 @@ export default {
         this.setObj('sun/jupiter', new Planet('Jupiter', 'planet:jupiter', {
             mass: 1.89813e27,
             radius: 69911000,
-            axis: {
-                tilt: 3.13,
-                period: 35730,
-                epoch: 0,
-                ra: 268.057,
-            },
+            rotation: [268.057, 3.13, 0],
+            rotationChange: [0, 0, 360/35730],
             orbit: {
                 at: J2000,
                 sma: 5.20336301 * AU,
@@ -184,12 +155,8 @@ export default {
         this.setObj('sun/saturn', new Planet('Saturn', 'planet:saturn', {
             mass: 5.6832e26,
             radius: 58232000,
-            axis: {
-                tilt: 26.73,
-                period: 38361.6,
-                epoch: 0,
-                ra: 40.589,
-            },
+            rotation: [40.589, 26.73, 0],
+            rotationChange: [0, 0, 360/38361.6],
             orbit: {
                 at: J2000,
                 sma: 9.53707032 * AU,
@@ -207,12 +174,8 @@ export default {
         this.setObj('sun/uranus', new Planet('Uranus', 'planet:uranus', {
             mass: 8.6811e25,
             radius: 25362000,
-            axis: {
-                tilt: 97.77,
-                period: 62064,
-                epoch: 0,
-                ra: 257.311,
-            },
+            rotation: [257.311, 97.77, 0],
+            rotationChange: [0, 0, 360/62064],
             orbit: {
                 at: J2000,
                 sma: 19.19126393 * AU,
@@ -230,12 +193,8 @@ export default {
         this.setObj('sun/neptune', new Planet('Neptune', 'planet:neptune', {
             mass: 1.02409e26,
             radius: 24622000,
-            axis: {
-                period: 57996,
-                tilt: 28.32,
-                epoch: 0,
-                ra: 299.36,
-            },
+            rotation: [299.36, 28.32, 0],
+            rotationChange: [0, 0, 360/57996],
             orbit: {
                 at: J2000,
                 sma: 30.06896348 * AU,
