@@ -275,6 +275,9 @@ window.addEventListener('dblclick', event => {
 });
 
 window.addEventListener('keydown', (event: KeyboardEvent) => {
+    if (document.activeElement && document.activeElement instanceof HTMLInputElement) {
+        return;   
+    }
     let key = event.key;
     if (key === ',') {
         if (Math.log10(world.timeWarp) % 1 === 0) {
@@ -360,6 +363,7 @@ function updateUI(renderedObjects: number, ra: number, dec: number): void {
         Time: ${world.time ? format.date(world.time) : 'undefined'}
         Time Warp: ${world.timeWarp}x (${format.time(world.timeWarp)}/s)`;
     }
+    setTarget(target);
 }
 
 query('#play-pause-button').addEventListener('click', () => {
@@ -440,7 +444,6 @@ function setTarget(newTarget: string): void {
     let obj = world.getObj(target);
     stringInput('#oe-type', obj.type, x => {
         world.setObj(target, Object.assign(world.getObj(target), {type: x}));
-        setTarget(target);
         createObjectMesh(target);
     });
     stringInput('#oe-name', obj.name, x => world.setObjProp(target, 'name', x));
@@ -452,7 +455,10 @@ function setTarget(newTarget: string): void {
     numberInput('#oe-velocity-y', obj.velocity[1], x => world.setObjProp(target, 'velocity.1', x));
     numberInput('#oe-velocity-z', obj.velocity[2], x => world.setObjProp(target, 'velocity.2', x));
     numberInput('#oe-mass', obj.mass, x => world.setObjProp(target, 'mass', x));
-    numberInput('#oe-radius', obj.radius, x => world.setObjProp(target, 'radius', x));
+    numberInput('#oe-radius', obj.radius, x => {
+        world.setObjProp(target, 'radius', x);
+        createObjectMesh(target);
+    });
     query('#oe-orbit').style.display = obj.orbit ? 'block' : 'none';
     query('#oe-add-orbit-container').style.display = obj.orbit ? 'none' : 'block';
     if (obj.orbit) {
@@ -464,6 +470,7 @@ function setTarget(newTarget: string): void {
         numberInput('#oe-orbit-lan', obj.orbit.lan, x => world.setObjProp(target, 'orbit.lan', x));
         numberInput('#oe-orbit-aop', obj.orbit.aop, x => world.setObjProp(target, 'orbit.aop', x));
     }
+    checkboxInput('#oe-gravity', obj.gravity, x => world.setObjProp(target, 'gravity', x));
     numberInput('#oe-rotation-x', obj.rotation[0], x => world.setObjProp(target, 'rotation.0', x));
     numberInput('#oe-rotation-y', obj.rotation[1], x => world.setObjProp(target, 'rotation.1', x));
     numberInput('#oe-rotation-z', obj.rotation[2], x => world.setObjProp(target, 'rotation.2', x));
@@ -499,7 +506,7 @@ let customIndex = 0;
 query('#add-button').addEventListener('click', () => {
     customIndex++;
     let path = target + '/custom' + customIndex;
-    world.setObj(path, new Planet('', 'custom:' + customIndex, {mass: 0, radius: 0}));
+    world.setObj(path, new Planet('', 'custom:' + customIndex, {mass: 0, radius: 0, gravity: false}));
     setTarget(path);
     createObjectMesh(path);
     rightPanelShown = true;

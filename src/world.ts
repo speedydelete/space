@@ -175,12 +175,14 @@ export class World {
             if (!parent || parent.type === 'root') {
                 continue;
             }
-            let [x, y, z] = obj.position;
-            let r3 = (x*x + y*y + z*z) ** 1.5;
-            let accel = this.config.G * parent.mass / r3 * dt;
-            obj.velocity[0] -= x * accel;
-            obj.velocity[1] -= y * accel;
-            obj.velocity[2] -= z * accel;
+            if (obj.gravity) {
+                let [x, y, z] = obj.position;
+                let r3 = (x*x + y*y + z*z) ** 1.5;
+                let accel = this.config.G * parent.mass / r3 * dt;
+                obj.velocity[0] -= x * accel;
+                obj.velocity[1] -= y * accel;
+                obj.velocity[2] -= z * accel;
+            }
             for (let i = 0; i < 3; i++) {
                 obj.position[i] += obj.velocity[i] * dt;
                 obj.rotation[i] = (obj.rotation[i] + obj.rotationChange[i] * dt) % 360;

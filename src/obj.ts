@@ -35,6 +35,7 @@ export interface ObjParams {
     rotation?: Vector3;
     rotationChange?: Vector3;
     orbit?: Orbit;
+    gravity?: boolean;
     albedo?: number;
     bondAlbedo?: number;
     alwaysVisible?: boolean;
@@ -76,6 +77,7 @@ class _Obj<T extends ObjType = ObjType> extends _BaseObj {
     rotation: Vector3;
     rotationChange: Vector3;
     orbit?: Orbit;
+    gravity: boolean;
     alwaysVisible: boolean;
 
     constructor(type: T, name: string, designation: string, data: ObjParams) {
@@ -87,6 +89,7 @@ class _Obj<T extends ObjType = ObjType> extends _BaseObj {
         this.orbit = data.orbit;
         this.radius = data.radius;
         this.mass = data.mass;
+        this.gravity = data.gravity ?? true;
         this.alwaysVisible = data.alwaysVisible === undefined ? false : data.alwaysVisible;
     }
 
