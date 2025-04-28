@@ -7,13 +7,13 @@ function hideExceptMain() {
     query('#about-menu').style.display = 'none';
 }
 
-document.getElementById('about-menu-button')?.addEventListener('click', () => {
+query('#about-menu-button').addEventListener('click', () => {
     query('#main-menu').style.display = 'none';
     query('#about-menu').style.display = 'block';
 });
 
 function gotoMainMenu() {
-    query('#manu-menu').style.display = 'flex';
+    query('#main-menu').style.display = 'flex';
     hideExceptMain();
 }
 
