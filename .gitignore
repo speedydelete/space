@@ -4,4 +4,5 @@
 /dist/*.js
 /dist/*.js.map
 /dist/*.js.LICENSE.txt
+!/dist/text_encoder_decoder.js
 nohup.out

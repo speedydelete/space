@@ -268,6 +268,35 @@
                 </ul>
             </div>
         </div>
+        <script>
+
+if (!(typeof Symbol == 'function' && typeof Symbol() == 'symbol')) {
+    document.write('<script src="https://unpkg.com/core-js-bundle@3.41.0/minified.js"><' + '/script>');
+}
+
+if (!window.TextEncoder || !window.TextDecoder) {
+    document.write('<script src="text_encoder_decoder.js"><' + '/script>');
+}
+
+(function() {
+    var canvas = document.createElement('canvas');
+    if ('HTMLCanvasElement' in window && typeof canvas.getContext == 'function') {
+        var loadPolyfill = false;
+        if (canvas.getContext('webgl2')) {
+            return;
+        } else if (canvas.getContext('experimental-webgl')) {
+            var gc = HTMLCanvasElement.prototype.getContext;
+            HTMLCanvasElement.prototype.getContext = function(x, y) {
+                console.log(x, y);
+                return gc.call(this, x == 'webgl' ? 'experimental-webgl' : x, y);
+            }
+            return;
+        }
+    }
+    alert('Your browser does not support WebGL. Please upgrade to a newer browser.');
+})();
+
+        </script>
         <script src="main.js"></script>
     </body>
 </html>
