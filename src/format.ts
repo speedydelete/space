@@ -221,11 +221,19 @@ export function objectName(obj: Obj, short?: boolean): string {
             des = data[1] + ' ' + constl;
         }
         if (name !== '') {
-            return name + '(' + des + ')';
+            return name + ' (' + des + ')';
         } else {
             return des;
         }
+    } else if (ns === 'custom') {
+        if (name) {
+            return name;
+        } else {
+            return 'Custom Object #' + data[0];
+        }
+    } else if (name) {
+        return name + ' (' + desgn + ')';
     } else {
-        throw new Error(`Invalid designation: ${desgn}`);
+        return desgn;
     }
 }

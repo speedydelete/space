@@ -32,7 +32,7 @@ export function stringInput(eltQuery: string, value: string | undefined, callbac
 }
 
 export function numberInput(eltQuery: string, value: number | undefined, callback: InputCallback<number>): void {
-    stringInput(eltQuery, String(value), (_, elt) => {
+    stringInput(eltQuery, String(value ?? ''), (_, elt) => {
         let value = parseFloat(elt.value);
         if (isNaN(value)) {
             elt.classList.add('invalid');

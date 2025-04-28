@@ -3,7 +3,7 @@ import * as three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import * as format from './format';
 import {query, sin, cos, tan, asin, atan2, stringInput, numberInput, checkboxInput} from './util';
-import {RootObj} from './obj';
+import {Planet, RootObj} from './obj';
 import presets from './presets';
 
 
@@ -303,12 +303,13 @@ window.addEventListener('keydown', (event: KeyboardEvent) => {
     } else if (key === 'F3') {
         event.preventDefault();
         showDebug = !showDebug;
-        query('#left-info').innerText = '';
+        query('#left-info').innerText = 'Use [ and ] to move between objects!';
     }
 });
 
 
 let showDebug = false;
+query('#left-info').innerText = 'Use [ and ] to move between objects!';
 
 function updateUI(renderedObjects: number, ra: number, dec: number): void {
     query('#time').textContent = format.date(world.time);
@@ -416,7 +417,7 @@ function setTarget(newTarget: string): void {
     numberInput('#oe-velocity-z', obj.velocity[2], x => world.setObjProp(target, 'velocity.2', x));
     numberInput('#oe-mass', obj.mass, x => world.setObjProp(target, 'mass', x));
     numberInput('#oe-radius', obj.radius, x => world.setObjProp(target, 'radius', x));
-    query('.oe-orbit', true).forEach(x => x.style.display = obj.orbit ? 'block' : 'none');
+    query('#oe-orbit').style.display = obj.orbit ? 'block' : 'none';
     query('#oe-add-orbit-container').style.display = obj.orbit ? 'none' : 'block';
     if (obj.orbit) {
         world.setOrbitFromPositionVelocity(target);
@@ -452,7 +453,17 @@ query('#oe-set-position').addEventListener('click', () => world.setPositionVeloc
 query('#oe-set-velocity').addEventListener('click', () => world.setPositionVelocityFromOrbit(target, false, true));
 query('#oe-set-orbit').addEventListener('click', () => world.setOrbitFromPositionVelocity(target));
 
-query('#add-button').addEventListener('click', () => alert('Sorry, you can\'t add objects yet!'));
+let customIndex = 0;
+query('#add-button').addEventListener('click', () => {
+    customIndex++;
+    let path = target + '/custom' + customIndex;
+    world.setObj(path, new Planet('', 'custom:' + customIndex, {mass: 0, radius: 0}));
+    setTarget(path);
+    rightPanelShown = true;
+    rightPanel.style.display = rightPanelResizer.style.display = 'block';
+    query('#object-editor').style.display = 'flex';
+    resize(window.innerWidth - rightPanelWidth);
+});
 
 
 Object.assign(globalThis, {
