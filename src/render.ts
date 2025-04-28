@@ -33,8 +33,6 @@ let world = presets.default;
 let settings = DEFAULT_SETTINGS;
 let unitSize = settings.unitSize;
 
-let objMeshes = new Map<string, three.Mesh>();
-
 let target: string;
 let zoom = 1;
 
@@ -65,11 +63,32 @@ controls.update();
 controls.listenToKeyEvents(window);
 
 
+
+let objMeshes = new Map<string, three.Mesh>();
+
+function deleteObjectMesh(path: string): void {
+    let mesh = objMeshes.get(path);
+    if (mesh) {
+        mesh.geometry.dispose();
+        if (mesh.material instanceof Array) {
+            mesh.material.forEach(x => x.dispose());
+        } else {
+            mesh.material.dispose(); 
+        }
+        scene.remove(mesh);
+    }
+}
+
 let textureLoader = new three.TextureLoader();
 
-for (let path of world.getObjPaths('', true)) {
+function createObjectMesh(path: string): void {
+    if (objMeshes.has(path)) {
+        deleteObjectMesh(path);
+    }
     let obj = world.getObj(path);
-    if (!obj || obj instanceof RootObj) continue;
+    if (!obj || obj instanceof RootObj) {
+        return;
+    }
     let material = new three.MeshStandardMaterial({
         map: obj.texture ? textureLoader.load(obj.texture) : undefined,
         opacity: 1,
@@ -77,7 +96,9 @@ for (let path of world.getObjPaths('', true)) {
         color: 'albedo' in obj && obj.albedo ? new three.Color(obj.albedo, obj.albedo, obj.albedo) : undefined,
     });
     if (obj.type === 'star') {
-        if (material.map) material.emissiveMap = material.map;
+        if (material.map) {
+            material.emissiveMap = material.map;
+        }
         material.emissive = new three.Color(obj.color);
         material.emissiveIntensity = 10;
     }
@@ -95,6 +116,12 @@ for (let path of world.getObjPaths('', true)) {
     objMeshes.set(path, mesh);
 }
 
+for (let path of world.getObjPaths('', true)) {
+    createObjectMesh(path);
+}
+
+let changedTextures: string[] = [];
+
 function updateObjects(): number {
     let renderedObjects = 0;
     for (let path of world.getObjPaths('', true)) {
@@ -111,12 +138,20 @@ function updateObjects(): number {
             if (obj.type === 'star' && mesh.children[0] instanceof three.PointLight) {
                 mesh.children[0].power = world.config.lC / 10**(0.4 * obj.magnitude) / unitSize**2 / 5000;
             }
+            if (changedTextures.includes(path) && mesh.material instanceof three.MeshStandardMaterial && obj.texture) {
+                mesh.material.map = textureLoader.load(obj.texture);
+                if (obj.type === 'star') {
+                    mesh.material.emissiveMap = mesh.material.map;
+                    mesh.material.emissive = new three.Color(obj.color);
+                }
+            }
             renderedObjects += 1;
             mesh.visible = true;
         } else if (mesh) {
             mesh.visible = false;
         }
     }
+    changedTextures = [];
     return renderedObjects;
 }
 
@@ -406,6 +441,7 @@ function setTarget(newTarget: string): void {
     stringInput('#oe-type', obj.type, x => {
         world.setObj(target, Object.assign(world.getObj(target), {type: x}));
         setTarget(target);
+        createObjectMesh(target);
     });
     stringInput('#oe-name', obj.name, x => world.setObjProp(target, 'name', x));
     stringInput('#oe-designation', obj.designation, x => world.setObjProp(target, 'name', x));
@@ -435,8 +471,14 @@ function setTarget(newTarget: string): void {
     numberInput('#oe-rotation-change-y', obj.rotationChange[1], x => world.setObjProp(target, 'rotationChange.1', x));
     numberInput('#oe-rotation-change-z', obj.rotationChange[2], x => world.setObjProp(target, 'rotationChange.2', x));
     checkboxInput('#oe-always-visible', obj.alwaysVisible, x => world.setObjProp(target, 'alwaysVisible', x));
-    stringInput('#oe-texture', obj.texture, x => world.setObjProp(target, 'texture', x));
-    stringInput('#oe-spectral-type', obj.spectralType, x => world.setObjProp(target, 'spectralType', x));
+    stringInput('#oe-texture', obj.texture, x => {
+        world.setObjProp(target, 'texture', x);
+        changedTextures.push(target);
+    });
+    stringInput('#oe-spectral-type', obj.spectralType, x => {
+        world.setObjProp(target, 'spectralType', x);
+        changedTextures.push(target);
+    });
     query('#oe-star').style.display = obj.type === 'star' ? 'flex' : 'none';
     query('#oe-planet').style.display = obj.type === 'planet' ? 'flex' : 'none';
     if (obj.type === 'star') {
@@ -459,6 +501,7 @@ query('#add-button').addEventListener('click', () => {
     let path = target + '/custom' + customIndex;
     world.setObj(path, new Planet('', 'custom:' + customIndex, {mass: 0, radius: 0}));
     setTarget(path);
+    createObjectMesh(path);
     rightPanelShown = true;
     rightPanel.style.display = rightPanelResizer.style.display = 'block';
     query('#object-editor').style.display = 'flex';
