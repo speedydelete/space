@@ -55,27 +55,16 @@ let compiler = webpack({
         rules: [
             {
                 test: /\.[jt]s$/,
+                exclude: /node_modules/,
                 loader: 'babel-loader',
                 options: {
                     presets: ['@babel/preset-typescript', '@babel/preset-env'],
-                    plugins: [
-                        function ({types: t}) {
-                            return {
-                                visitor: {
-                                    BigIntLiteral(path) {
-                                        path.replaceWith(t.callExpression(t.identifier('BigInt'), [t.stringLiteral(path.node.value)]));
-                                    }
-                                }
-                            };
-                        }
-                    ],
                     targets: {
-                        chrome: '8',
-                        edge: '12',
-                        safari: '5.1',
-                        firefox: '4',
-                        opera: '12.1',
-                        ie: '11',
+                        chrome: '56',
+                        edge: '79',
+                        safari: '15',
+                        firefox: '54',
+                        opera: '43',
                     },
                 }
             },
