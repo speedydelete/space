@@ -225,7 +225,30 @@ select {
     width: 250px;
 }
 
-#about-menu {
+div > .main-menu-button {
+    margin-bottom: 25px;
+}
+
+#about-menu, #settings-menu {
     overflow-y: scroll;
     padding: 50px 200px;
+}
+
+#settings-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#settings-menu > div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+#settings-menu > div > div {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1ch;
 }

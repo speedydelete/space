@@ -2,38 +2,18 @@
 import * as three from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import * as format from './format';
-import {query, sin, cos, tan, asin, atan2, stringInput, numberInput, checkboxInput} from './util';
+import {query, sin, cos, tan, asin, atan2, StringInput, NumberInput, CheckboxInput} from './util';
 import {Planet, RootObj} from './obj';
 import presets from './presets';
-
-
-export interface Settings {
-    fov: number,
-    renderDistance: number,
-    unitSize: number,
-    cameraMinDistance: number,
-    cameraMaxDistance: number,
-    controlsMinDistance: number,
-    controlsMaxDistance: number,
-}
-
-export const DEFAULT_SETTINGS: Settings = {
-    fov: 70,
-    renderDistance: 150000000000,
-    unitSize: 1000000,
-    cameraMinDistance: 0.0000001,
-    cameraMaxDistance: 1000000000000,
-    controlsMinDistance: 0.00001,
-    controlsMaxDistance: Number.MAX_SAFE_INTEGER,
-}
+import settings from './settings';
 
 
 let world = presets.default;
 
-let settings = DEFAULT_SETTINGS;
 let unitSize = settings.unitSize;
 
 let target: string;
+
 let zoom = 1;
 
 let renderer = new three.WebGLRenderer({
@@ -85,7 +65,7 @@ function createObjectMesh(path: string): void {
     if (objMeshes.has(path)) {
         deleteObjectMesh(path);
     }
-    let obj = world.getObj(path);
+    let obj = world.get(path);
     if (!obj || obj instanceof RootObj) {
         return;
     }
@@ -116,7 +96,7 @@ function createObjectMesh(path: string): void {
     objMeshes.set(path, mesh);
 }
 
-for (let path of world.getObjPaths('', true)) {
+for (let path of world.getPaths('', true)) {
     createObjectMesh(path);
 }
 
@@ -124,13 +104,13 @@ let changedTextures: string[] = [];
 
 function updateObjects(): number {
     let renderedObjects = 0;
-    for (let path of world.getObjPaths('', true)) {
-        let obj = world.getObj(path);
+    for (let path of world.getPaths('', true)) {
+        let obj = world.get(path);
         let mesh = objMeshes.get(path);
         if (obj && mesh && (obj.alwaysVisible || mesh.position.distanceTo(camera.position) < settings.renderDistance/settings.unitSize)) {
-            let [x, y, z] = obj.absolutePosition;
-            mesh.position.set(x/unitSize, y/unitSize, z/unitSize);
-            let [rx, ry, rz] = obj.rotation;
+            let {x, y, z} = obj.position;
+            mesh.position.set(x/unitSize, z/unitSize, y/unitSize);
+            let {x: rx, y: ry, z: rz} = obj.rotation;
             mesh.rotation.set(0, 0, 0);
             mesh.rotateX(rx * Math.PI / 180);
             mesh.rotateZ(ry * Math.PI / 180);
@@ -156,35 +136,42 @@ function updateObjects(): number {
 }
 
 
-let starRenderer = new three.WebGLRenderer({
-    canvas: query<HTMLCanvasElement>('#bg'),
-});
-starRenderer.setSize(window.innerWidth, window.innerHeight - 40);
+let starRenderer: three.WebGLRenderer | null = null;
+let starScene: three.Scene | null = null;
+let starCamera: three.PerspectiveCamera | null = null;
+let starMesh: three.Mesh | null = null;
 
-let starScene = new three.Scene();
-
-let starCamera = new three.PerspectiveCamera(
-    settings.fov,
-    window.innerWidth/(window.innerHeight - 40),
-    settings.cameraMinDistance/unitSize,
-    settings.cameraMaxDistance/unitSize,
-);
-
-let starMaterials = [
-    'data/textures/nasa/stars/px.png',
-    'data/textures/nasa/stars/nx.png',
-    'data/textures/nasa/stars/py.png',
-    'data/textures/nasa/stars/ny.png',
-    'data/textures/nasa/stars/pz.png',
-    'data/textures/nasa/stars/nz.png',
-].map(path => new three.MeshBasicMaterial({
-    map: textureLoader.load(path),
-    side: three.BackSide,
-    color: new three.Color(0x6f6f6f),
-}));
-let starMesh = new three.Mesh(new three.BoxGeometry(1, 1, 1), starMaterials);
-starMesh.rotateX(23.439 * Math.PI / 180);
-starScene.add(starMesh);
+if (settings.backgroundStars) {
+    starRenderer = new three.WebGLRenderer({
+        canvas: query<HTMLCanvasElement>('#bg'),
+    });
+    starRenderer.setSize(window.innerWidth, window.innerHeight - 40);
+    
+    starScene = new three.Scene();
+    
+    starCamera = new three.PerspectiveCamera(
+        settings.fov,
+        window.innerWidth/(window.innerHeight - 40),
+        settings.cameraMinDistance/unitSize,
+        settings.cameraMaxDistance/unitSize,
+    );
+    
+    let starMaterials = [
+        'data/textures/nasa/stars/px.png',
+        'data/textures/nasa/stars/nx.png',
+        'data/textures/nasa/stars/py.png',
+        'data/textures/nasa/stars/ny.png',
+        'data/textures/nasa/stars/pz.png',
+        'data/textures/nasa/stars/nz.png',
+    ].map(path => new three.MeshBasicMaterial({
+        map: textureLoader.load(path),
+        side: three.BackSide,
+        color: new three.Color(0x6f6f6f),
+    }));
+    starMesh = new three.Mesh(new three.BoxGeometry(1, 1, 1), starMaterials);
+    starMesh.rotateX(23.439 * Math.PI / 180);
+    starScene.add(starMesh);
+}
 
 
 let blurred = false;
@@ -233,9 +220,11 @@ function animate(): void {
     camera.updateProjectionMatrix();
     controls.update();
     renderer.render(scene, camera);
-    starCamera.quaternion.copy(camera.quaternion);
-    starCamera.position.set(0, 0, 0);
-    starRenderer.render(starScene, starCamera);
+    if (starCamera && starRenderer && starScene) {
+        starCamera.quaternion.copy(camera.quaternion);
+        starCamera.position.set(0, 0, 0);
+        starRenderer.render(starScene, starCamera);
+    }
     if (mesh) {
         oldMeshPos = mesh.position.clone();
     }
@@ -247,7 +236,7 @@ world.start();
 requestAnimationFrame(animate);
 window.setTimeout(async () => {
     let mesh = objMeshes.get(target);
-    let obj = world.getObj(target);
+    let obj = world.get(target);
     if (mesh && obj) {
         camera.position.set(mesh.position.x + obj.radius/unitSize*10, mesh.position.y, mesh.position.z);
     }
@@ -258,7 +247,9 @@ function resize(width: number = window.innerWidth, height: number = window.inner
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     renderer.setSize(width, height);
-    starRenderer.setSize(width, height);
+    if (starRenderer) {
+        starRenderer.setSize(width, height);
+    }
 }
 
 window.addEventListener('resize', () => resize());
@@ -313,14 +304,14 @@ window.addEventListener('keydown', (event: KeyboardEvent) => {
             }
         }
     } else if (key === '[') {
-        let allObjects = world.getObjPaths('', true);
+        let allObjects = world.getPaths('', true);
         let index = allObjects.indexOf(target);
         if (index === 0) {
             index = allObjects.length;
         }
         setTarget(allObjects[(index - 1) % allObjects.length]);
     } else if (key === ']') {
-        let allObjects = world.getObjPaths('', true);
+        let allObjects = world.getPaths('', true);
         let index = allObjects.indexOf(target);
         if (index === allObjects.length - 1) {
             index = -1;
@@ -352,18 +343,18 @@ query('#left-info').innerText = 'Use [ and ] to move between objects!';
 function updateUI(renderedObjects: number, ra: number, dec: number): void {
     query('#time').textContent = format.date(world.time);
     query('#time-warp').textContent = world.timeWarp + 'x (' + format.time(world.timeWarp, 2) + '/s)';
-    // query('#target').textContent = world.getObj(target).name;
-    query('#target').textContent = format.objectName(world.getObj(target));
+    // query('#target').textContent = world.get(target).name;
+    query('#target').textContent = format.objectName(world.get(target));
     if (showDebug) {
         query('#left-info').innerText = `FPS: ${fps}
         Camera: ${format.length(camera.position.x*unitSize)} / ${format.length(camera.position.y*unitSize)} / ${format.length(camera.position.z*unitSize)}
         Telescopic Zoom: ${Math.round(zoom*10)/10}
-        Objects: ${renderedObjects}/${world.getObjPaths('', true).length}
+        Objects: ${renderedObjects}/${world.getPaths('', true).length}
         RA: ${ra.toFixed(3)}\u00b0, Dec: ${dec.toFixed(3)}\u00b0
         Time: ${world.time ? format.date(world.time) : 'undefined'}
         Time Warp: ${world.timeWarp}x (${format.time(world.timeWarp)}/s)`;
     }
-    setTarget(target);
+    updateObjectEditor();
 }
 
 query('#play-pause-button').addEventListener('click', () => {
@@ -430,72 +421,133 @@ function toggleRightPanelButton(eltQuery: string, panelQuery: string): void {
 }
 
 toggleRightPanelButton('#config-button', '#world-config');
-numberInput('#wc-tps', world.config.tps, x => world.setConfig('tps', x));
-numberInput('#wc-c', world.config.c, x => world.setConfig('c', x));
-numberInput('#wc-g', world.config.G, x => world.setConfig('G', x));
-numberInput('#wc-lc', world.config.lC, x => world.setConfig('lC', x));
-stringInput('#wc-initial-target', world.config.initialTarget, x => world.setConfig('initialTarget', x));
+new NumberInput('#wc-tps', x => world.setConfig('tps', x), world.config.tps);
+new NumberInput('#wc-c', x => world.setConfig('c', x), world.config.c);
+new NumberInput('#wc-g', x => world.setConfig('G', x), world.config.G);
+new NumberInput('#wc-lc', x => world.setConfig('lC', x), world.config.lC);
+new StringInput('#wc-initial-target', x => world.setConfig('initialTarget', x), world.config.initialTarget);
 
 toggleRightPanelButton('#edit-button', '#object-editor');
+
+
+const objectEditorInputs = {
+    type: new StringInput('#oe-type', x => {
+        world.set(target, Object.assign(world.get(target), {type: x}));
+        createObjectMesh(target);
+    }),
+    name: new StringInput('#oe-name', x => world.setProp(target, 'name', x)),
+    designation: new StringInput('#oe-designation', x => world.setProp(target, 'designation', x)),
+    position: [
+        new NumberInput('#oe-position-x', x => world.setProp(target, 'position.x', x)),
+        new NumberInput('#oe-position-y', x => world.setProp(target, 'position.y', x)),
+        new NumberInput('#oe-position-z', x => world.setProp(target, 'position.z', x)),
+    ],
+    velocity: [
+        new NumberInput('#oe-velocity-x', x => world.setProp(target, 'velocity.x', x)),
+        new NumberInput('#oe-velocity-y', x => world.setProp(target, 'velocity.y', x)),
+        new NumberInput('#oe-velocity-z', x => world.setProp(target, 'velocity.z', x)),
+    ],
+    mass: new NumberInput('#oe-mass', x => world.setProp(target, 'mass', x)),
+    radius: new NumberInput('#oe-radius', x => world.setProp(target, 'radius', x)),
+    orbit: {
+        ap: new NumberInput('#oe-orbit-ap', x => {
+            let obj = world.get(target);
+            if (obj.orbit) {
+                let pe = obj.orbit.sma * (1 - obj.orbit.ecc);
+                obj.orbit.sma = (pe + x) / 2;
+                obj.orbit.ecc = (x - pe) / (x + pe);
+            }
+            world.set(target, obj);
+        }),
+        pe: new NumberInput('#oe-orbit-pe', x => {
+            let obj = world.get(target);
+            if (obj.orbit) {
+                let ap = obj.orbit.sma * (1 + obj.orbit.ecc);
+                obj.orbit.sma = (ap + x) / 2;
+                obj.orbit.ecc = (ap - x) / (ap + x);
+            }
+            world.set(target, obj);
+        }),
+        sma: new NumberInput('#oe-orbit-sma', x => world.setProp(target, 'orbit.sma', x)),
+        ecc: new NumberInput('#oe-orbit-ecc', x => world.setProp(target, 'orbit.ecc', x)),
+        mna: new NumberInput('#oe-orbit-mna', x => world.setProp(target, 'orbit.mna', x)),
+        inc: new NumberInput('#oe-orbit-inc', x => world.setProp(target, 'orbit.inc', x)),
+        lan: new NumberInput('#oe-orbit-lan', x => world.setProp(target, 'orbit.lan', x)),
+        aop: new NumberInput('#oe-orbit-aop', x => world.setProp(target, 'orbit.aop', x)),
+    },
+    gravity: new CheckboxInput('#oe-gravity', x => world.setProp(target, 'gravity', x)),
+    useOrbitForGravity: new CheckboxInput('#oe-use-orbit-for-gravity', x => world.setProp(target, 'useOrbitForGravity', x)),
+    nbody: new CheckboxInput('#oe-nbody', x => world.setProp(target, 'nbody', x)),
+    rotation: [
+        new NumberInput('#oe-rotation-x', x => world.setProp(target, 'rotation.x', x)),
+        new NumberInput('#oe-rotation-y', x => world.setProp(target, 'rotation.y', x)),
+        new NumberInput('#oe-rotation-z', x => world.setProp(target, 'rotation.z', x)),
+    ],
+    rotationChange: [
+        new NumberInput('#oe-rotation-change-x', x => world.setProp(target, 'rotationChange.x', x)),
+        new NumberInput('#oe-rotation-change-y', x => world.setProp(target, 'rotationChange.y', x)),
+        new NumberInput('#oe-rotation-change-z', x => world.setProp(target, 'rotationChange.z', x)),
+    ],
+    alwaysVisible: new CheckboxInput('#oe-always-visible', x => world.setProp(target, 'alwaysVisible', x)),
+    texture: new StringInput('#oe-texture', x => {
+        world.setProp(target, 'texture', x);
+        changedTextures.push(target);
+    }),
+    spectralType: new StringInput('#oe-spectral-type', x => world.setProp(target, 'spectralType', x)),
+    magnitude: new NumberInput('#oe-magnitude', x => world.setProp(target, 'magnitude', x)),
+    albedo: new NumberInput('#oe-albedo', x => world.setProp(target, 'albedo', x)),
+    bondAlbedo: new NumberInput('#oe-bond-albedo', x => world.setProp(target, 'bondAlbedo', x)),
+};
+
+function updateObjectEditor(): void {
+    let obj = world.get(target);
+    objectEditorInputs.type.set(obj.type);
+    objectEditorInputs.name.set(obj.name);
+    objectEditorInputs.designation.set(obj.designation);
+    for (let i = 0; i < 3; i++) {
+        objectEditorInputs.position[i].set(obj.position[i]);
+        objectEditorInputs.velocity[i].set(obj.velocity[i]);
+        objectEditorInputs.rotation[i].set(obj.rotation[i]);
+        objectEditorInputs.rotationChange[i].set(obj.rotationChange[i]);
+    }
+    objectEditorInputs.mass.set(obj.mass);
+    objectEditorInputs.radius.set(obj.radius);
+    query('#oe-orbit').style.display = obj.orbit ? 'block' : 'none';
+    query('#oe-add-orbit-container').style.display = obj.orbit ? 'none' : 'block';
+    if (obj.orbit) {
+        objectEditorInputs.orbit.ap.set(obj.orbit.sma * (1 + obj.orbit.ecc));
+        objectEditorInputs.orbit.pe.set(obj.orbit.sma * (1 - obj.orbit.ecc));
+        objectEditorInputs.orbit.sma.set(obj.orbit.sma);
+        objectEditorInputs.orbit.ecc.set(obj.orbit.ecc);
+        objectEditorInputs.orbit.mna.set(obj.orbit.mna);
+        objectEditorInputs.orbit.inc.set(obj.orbit.inc);
+        objectEditorInputs.orbit.lan.set(obj.orbit.lan);
+        objectEditorInputs.orbit.aop.set(obj.orbit.aop);
+    }
+    objectEditorInputs.gravity.set(obj.gravity);
+    objectEditorInputs.useOrbitForGravity.set(obj.useOrbitForGravity);
+    objectEditorInputs.nbody.set(obj.nbody);
+    objectEditorInputs.alwaysVisible.set(obj.alwaysVisible);
+    objectEditorInputs.texture.set(obj.texture);
+    objectEditorInputs.spectralType.set(obj.spectralType);
+    query('#oe-star').style.display = obj.type === 'star' ? 'flex' : 'none';
+    query('#oe-planet').style.display = obj.type === 'planet' ? 'flex' : 'none';
+    if (obj.type === 'star') {
+        objectEditorInputs.magnitude.set(obj.magnitude);
+    } else if (obj.type === 'planet') {
+        objectEditorInputs.albedo.set(obj.albedo);
+        objectEditorInputs.bondAlbedo.set(obj.bondAlbedo);
+    }
+}
 
 function setTarget(newTarget: string): void {
     target = newTarget;
     Object.assign(globalThis, {target});
-    let obj = world.getObj(target);
-    stringInput('#oe-type', obj.type, x => {
-        world.setObj(target, Object.assign(world.getObj(target), {type: x}));
-        createObjectMesh(target);
-    });
-    stringInput('#oe-name', obj.name, x => world.setObjProp(target, 'name', x));
-    stringInput('#oe-designation', obj.designation, x => world.setObjProp(target, 'name', x));
-    numberInput('#oe-position-x', obj.position[0], x => world.setObjProp(target, 'position.0', x));
-    numberInput('#oe-position-y', obj.position[1], x => world.setObjProp(target, 'position.1', x));
-    numberInput('#oe-position-z', obj.position[2], x => world.setObjProp(target, 'position.2', x));
-    numberInput('#oe-velocity-x', obj.velocity[0], x => world.setObjProp(target, 'velocity.0', x));
-    numberInput('#oe-velocity-y', obj.velocity[1], x => world.setObjProp(target, 'velocity.1', x));
-    numberInput('#oe-velocity-z', obj.velocity[2], x => world.setObjProp(target, 'velocity.2', x));
-    numberInput('#oe-mass', obj.mass, x => world.setObjProp(target, 'mass', x));
-    numberInput('#oe-radius', obj.radius, x => {
-        world.setObjProp(target, 'radius', x);
-        createObjectMesh(target);
-    });
-    query('#oe-orbit').style.display = obj.orbit ? 'block' : 'none';
-    query('#oe-add-orbit-container').style.display = obj.orbit ? 'none' : 'block';
-    if (obj.orbit) {
-        world.setOrbitFromPositionVelocity(target);
-        numberInput('#oe-orbit-sma', obj.orbit.sma, x => world.setObjProp(target, 'orbit.sma', x));
-        numberInput('#oe-orbit-ecc', obj.orbit.ecc, x => world.setObjProp(target, 'orbit.ecc', x));
-        numberInput('#oe-orbit-mna', obj.orbit.mna, x => world.setObjProp(target, 'orbit.mna', x));
-        numberInput('#oe-orbit-inc', obj.orbit.inc, x => world.setObjProp(target, 'orbit.inc', x));
-        numberInput('#oe-orbit-lan', obj.orbit.lan, x => world.setObjProp(target, 'orbit.lan', x));
-        numberInput('#oe-orbit-aop', obj.orbit.aop, x => world.setObjProp(target, 'orbit.aop', x));
-    }
-    checkboxInput('#oe-gravity', obj.gravity, x => world.setObjProp(target, 'gravity', x));
-    numberInput('#oe-rotation-x', obj.rotation[0], x => world.setObjProp(target, 'rotation.0', x));
-    numberInput('#oe-rotation-y', obj.rotation[1], x => world.setObjProp(target, 'rotation.1', x));
-    numberInput('#oe-rotation-z', obj.rotation[2], x => world.setObjProp(target, 'rotation.2', x));
-    numberInput('#oe-rotation-change-x', obj.rotationChange[0], x => world.setObjProp(target, 'rotationChange.0', x));
-    numberInput('#oe-rotation-change-y', obj.rotationChange[1], x => world.setObjProp(target, 'rotationChange.1', x));
-    numberInput('#oe-rotation-change-z', obj.rotationChange[2], x => world.setObjProp(target, 'rotationChange.2', x));
-    checkboxInput('#oe-always-visible', obj.alwaysVisible, x => world.setObjProp(target, 'alwaysVisible', x));
-    stringInput('#oe-texture', obj.texture, x => {
-        world.setObjProp(target, 'texture', x);
-        changedTextures.push(target);
-    });
-    stringInput('#oe-spectral-type', obj.spectralType, x => {
-        world.setObjProp(target, 'spectralType', x);
-        changedTextures.push(target);
-    });
-    query('#oe-star').style.display = obj.type === 'star' ? 'flex' : 'none';
-    query('#oe-planet').style.display = obj.type === 'planet' ? 'flex' : 'none';
-    if (obj.type === 'star') {
-        numberInput('#oe-magnitude', obj.magnitude, x => world.setObjProp(target, 'magnitude', x));
-    } else if (obj.type === 'planet') {
-        numberInput('#oe-albedo', obj.albedo, x => world.setObjProp(target, 'albedo', x));
-        numberInput('#oe-bond-albedo', obj.bondAlbedo, x => world.setObjProp(target, 'bondAlbedo', x));
-    }
 }
+
+
 setTarget(world.config.initialTarget);
+updateObjectEditor();
 
 query('#oe-add-orbit').addEventListener('click', () => world.setOrbitFromPositionVelocity(target));
 query('#oe-set-position').addEventListener('click', () => world.setPositionVelocityFromOrbit(target, true, false));
@@ -506,7 +558,7 @@ let customIndex = 0;
 query('#add-button').addEventListener('click', () => {
     customIndex++;
     let path = target + '/custom' + customIndex;
-    world.setObj(path, new Planet('', 'custom:' + customIndex, {mass: 0, radius: 0, gravity: false}));
+    world.set(path, new Planet('', 'custom:' + customIndex, {mass: 0, radius: 0, gravity: false}));
     setTarget(path);
     createObjectMesh(path);
     rightPanelShown = true;
@@ -520,11 +572,10 @@ Object.assign(globalThis, {
     world,
     system: world.system,
     fs: world.fs,
-    objDir: world.objDir,
-    getObj: world.getObj.bind(world),
-    setObj: world.setObj.bind(world),
-    getObjProp: world.getObjProp.bind(world),
-    setObjProp: world.setObjProp.bind(world),
+    get: world.get.bind(world),
+    set: world.set.bind(world),
+    getProp: world.getProp.bind(world),
+    setProp: world.setProp.bind(world),
     renderer,
     scene,
     camera,

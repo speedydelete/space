@@ -95,43 +95,47 @@
                     <div>X: <input id="oe-position-x" /> m</div>
                     <div>Y: <input id="oe-position-y" /> m</div>
                     <div>Z: <input id="oe-position-z" /> m</div>
-                    <div>X Velocity: <input id="oe-velocity-x" /> m/s</div>
-                    <div>Y Velocity: <input id="oe-velocity-y" /> m/s</div>
-                    <div>Z Velocity: <input id="oe-velocity-z" /> m/s</div>
+                    <div>X velocity: <input id="oe-velocity-x" /> m/s</div>
+                    <div>Y velocity: <input id="oe-velocity-y" /> m/s</div>
+                    <div>Z velocity: <input id="oe-velocity-z" /> m/s</div>
                     <div>Mass: <input id="oe-mass" /> kg</div>
                     <div>Radius: <input id="oe-radius" /> m</div>
                     <div id="oe-orbit" class="rp-sub">
-                        <div>Semi-major Axis: <input id="oe-orbit-sma" /> m</div>
+                        <div>Apoapsis: <input id="oe-orbit-ap" /> m</div>
+                        <div>Periapsis: <input id="oe-orbit-pe" /> m</div>
+                        <div>Semi-major axis: <input id="oe-orbit-sma" /> m</div>
                         <div>Eccentricity: <input id="oe-orbit-ecc" /></div>
-                        <div>Mean Anomaly: <input id="oe-orbit-mna" /> °</div>
+                        <div>Mean anomaly: <input id="oe-orbit-mna" /> °</div>
                         <div>Inclination: <input id="oe-orbit-inc" /> °</div>
-                        <div>Longitude of Ascending Node: <input id="oe-orbit-lan" /> °</div>
-                        <div>Argument of Periapsis: <input id="oe-orbit-aop" /> °</div>
-                        <div><button id="oe-set-position">Set Position From Orbit</button></div>
-                        <div><button id="oe-set-velocity">Set Velocity From Orbit</button></div>
-                        <div><button id="oe-set-orbit">Set Orbit From Position/Velocity</button></div>
+                        <div>Longitude of ascending node: <input id="oe-orbit-lan" /> °</div>
+                        <div>Argument of periapsis: <input id="oe-orbit-aop" /> °</div>
+                        <div><button id="oe-set-position">Set position from orbit</button></div>
+                        <div><button id="oe-set-velocity">Set velocity from orbit</button></div>
+                        <div><button id="oe-set-orbit">Set orbit from position/velocity</button></div>
                     </div>
                     <div id="oe-add-orbit-container">
                         <button id="oe-add-orbit">Add Orbit</button>
                     </div>
                     <div>Gravity: <input type="checkbox" id="oe-gravity" /></div>
-                    <div>X Rotation: <input id="oe-rotation-x" /> °</div>
-                    <div>Y Rotation: <input id="oe-rotation-y" /> °</div>
-                    <div>Z Rotation: <input id="oe-rotation-z" /> °</div>
-                    <div>X Rotation Change: <input id="oe-rotation-change-x" /> °/s</div>
-                    <div>Y Rotation Change: <input id="oe-rotation-change-y" /> °/s</div>
-                    <div>Z Rotation Change: <input id="oe-rotation-change-z" /> °/s</div>
-                    <div>Always Visible: <input type="checkbox" id="oe-always-visible" /></div>
+                    <div>Use orbit for gravity: <input type="checkbox" id="oe-use-orbit-for-gravity" /></div>
+                    <div>N-body physics (experimental): <input type="checkbox" id="oe-nbody" /></div>
+                    <div>X rotation: <input id="oe-rotation-x" /> °</div>
+                    <div>Y rotation: <input id="oe-rotation-y" /> °</div>
+                    <div>Z rotation: <input id="oe-rotation-z" /> °</div>
+                    <div>X rotation change: <input id="oe-rotation-change-x" /> °/s</div>
+                    <div>Y rotation change: <input id="oe-rotation-change-y" /> °/s</div>
+                    <div>Z rotation change: <input id="oe-rotation-change-z" /> °/s</div>
+                    <div>Always visible: <input type="checkbox" id="oe-always-visible" /></div>
                     <div id="oe-star-planet" class="rp-sub">
                         <div>Texture: <input id="oe-texture" /></div>
-                        <div>Spectral Type: <input id="oe-spectral-type" /></div>
+                        <div>Spectral type: <input id="oe-spectral-type" /></div>
                     </div>
                     <div id="oe-star" class="rp-sub">
                         <div>Magnitude: <input id="oe-magnitude" /></div>
                     </div>
                     <div id="oe-planet" class="rp-sub">
-                        <div>Geometric Albedo: <input id="oe-albedo" /></div>
-                        <div>Bond Albedo: <input id="oe-bond-albedo" /></div>
+                        <div>Geometric albedo: <input id="oe-albedo" /></div>
+                        <div>Bond albedo: <input id="oe-bond-albedo" /></div>
                     </div>
                 </div>
             </div>
@@ -156,8 +160,8 @@
                 <button id="settings-button">Settings</button>
             </div>
             <div id="about-menu" style="display: none">
-                <button class="main-menu-button">Back</button>
                 <h1>About</h1>
+                <div><button class="main-menu-button">Back</button></div>
                 Space is an open-source space simulation game licensed under the <a href='https://www.gnu.org/licenses/gpl-3.0.en.html#license-text'>GPLv3.0</a>. Here is its <a href='https://github.com/speedydelete/space'>GitHub</a>.
                 <br />
                 <br />
@@ -280,6 +284,21 @@
                         </ul>
                     </li>
                 </ul>
+            </div>
+            <div id="settings-menu" style="display: none">
+                <div>
+                    <h1>Settings</h1>
+                    <div><button class="main-menu-button">Back</button></div>
+                    <div>FOV: <input id="setting-fov" /></div>
+                    <div>Unit size: <input id="setting-unit-size" /></div>
+                    <div>Camera min distance: <input id="setting-camera-min-distance" /></div>
+                    <div>Camera max distance: <input id="setting-camera-max-distance" /></div>
+                    <div>Background stars: <input type="checkbox" id="setting-background-stars" /></div>
+                    <div>Menu background stars: <input type="checkbox" id="setting-menu-background-stars" /></div>
+                    <div>Kepler's equation tolerance: <input type="number" id="setting-kepler-tolerance" /></div>
+                    <div>Controls min distance: <input id="setting-controls-min-distance" /></div>
+                    <div>Controls max distance: <input id="setting-controls-max-distance" /></div>
+                </div>
             </div>
         </div>
         <script src="main.js"></script>

@@ -1,7 +1,8 @@
 
-import create, {Process, System, UserSession, FileSystem, join, Directory} from 'fake-system';
-import {sqrt, sin, cos, acos, atan2, pi} from './util';
-import {Obj, ObjKey, TypeOfObjKey, RootObj, OBJ_TYPE_MAP, ObjType, Vector3} from './obj';
+import create, {Process, System, UserSession, FileSystem, join} from 'fake-system';
+import {sqrt, sin, cos, acos, atan2, pi, Vector3, Matrix3, normalizeAngle} from './util';
+import {ObjDir, Obj} from './obj';
+import settings from './settings';
 
 
 export interface Config {
@@ -22,20 +23,10 @@ export function objJoin(...paths: string[]) {
 }
 
 
-function normalizeAngle(angle: number): number {
-    angle %= 360;
-    while (angle < 0) {
-        angle += 360;
-    }
-    return angle;
-}
-
-
-export class World {
+export class World extends ObjDir {
 
     system: System;
     fs: FileSystem;
-    objDir: Directory;
     rootSession: UserSession;
     running: boolean = false;
 
@@ -43,88 +34,23 @@ export class World {
     timeWarp: number = 1;
     
     tickInterval: number | null = null;
-    firstTickComplete: boolean = false;
 
     constructor(data?: Uint8Array) {
+        super();
         this.system = create(data);
         this.fs = this.system.fs;
-        if (!this.fs.exists('/home/objects')) {
-            this.fs.mkdir('/home/objects');
+        if (this.fs.exists('/home/objects')) {
+            this.fromDir('', this.fs.getDir('/home/objects'));
+        } else {
+            this.fs.link('/home/objects', this);
         }
-        this.objDir = this.fs.getDir('/home/objects');
         this.rootSession = this.system.login('root');
-        if (!this.objDir.exists('.object')) {
-            this.objDir.write('.object', JSON.stringify(new RootObj('', 'special:root')));
-        }
         this.time = Date.now() / 1000;
         this.tick = this.tick.bind(this);
     }
 
     run(command: string): Process {
         return this.rootSession.runBash(command);
-    }
-
-    getObj(path: string): Obj {
-        let data = JSON.parse(this.objDir.read(objJoin(path, '.object')));
-        return Object.assign(Object.create(OBJ_TYPE_MAP[data.type as ObjType].prototype), data);
-    }
-
-    getParentPath(path: string): string {
-        return path.split('/').slice(0, -1).join('/');
-    }
-
-    getParent(path: string): Obj {
-        return this.getObj(this.getParentPath(path));
-    }
-    
-    setObj(path: string, data: Obj): void {
-        if (!this.objDir.exists(path)) {
-            this.objDir.mkdir(path, true);
-        }
-        this.objDir.write(objJoin(path, '.object'), JSON.stringify(data));
-    }
-
-    getObjProp<T extends ObjKey>(path: string, prop: T): TypeOfObjKey<T>;
-    getObjProp<T extends ObjKey, U extends keyof Exclude<TypeOfObjKey<T>, undefined> & string>(path: string, prop: `${T}.${U}`): Exclude<TypeOfObjKey<T>, undefined>[U];
-    getObjProp(path: string, prop: string): any {
-        let obj = this.getObj(path);
-        if (prop.includes('.')) {
-            let [a, b] = prop.split('.');
-            return obj[a][b];
-        } else {
-            return obj[prop];
-        }
-    }
-
-    setObjProp<T extends ObjKey>(path: string, prop: T, value: TypeOfObjKey<T>): void;
-    setObjProp<T extends ObjKey, U extends keyof Exclude<TypeOfObjKey<T>, undefined> & string>(path: string, prop: `${T}.${U}`, value: Exclude<TypeOfObjKey<T>, undefined>[U]): void;
-    setObjProp(path: string, prop: string, value: any): void {
-        let obj = this.getObj(path);
-        if (prop.includes('.')) {
-            let [a, b] = prop.split('.');
-            obj[a][b] = value;
-        } else {
-            obj[prop] = value;
-        }
-        this.setObj(path, obj);
-    }
-
-    getObjPaths(start: string, recursive: boolean = false): string[] {
-        if (start.startsWith('/')) {
-            start = start.slice(1);
-        }
-        let out: string[] = [];
-        for (let [name, file] of this.objDir.getDir(start).files) {
-            if (file instanceof Directory) {
-                out.push(name);
-                if (recursive) {
-                    for (let path of this.getObjPaths(objJoin(start, name), true)) {
-                        out.push(objJoin(name, path));
-                    }
-                }
-            }
-        }
-        return out;
     }
 
     get config(): Config {
@@ -153,50 +79,47 @@ export class World {
         return this.time / 86400 + 2440587.5;
     }
 
-    setAbsolutePositions(start: string = '', [px, py, pz]: Vector3 = [0, 0, 0]): void {
-        for (let _path of this.getObjPaths(start)) {
-            let path = join(start, _path);
-            let obj = this.getObj(path);
-            obj.absolutePosition[0] = obj.position[0] + px;
-            obj.absolutePosition[1] = obj.position[1] + py;
-            obj.absolutePosition[2] = obj.position[2] + pz;
-            this.setObj(path, obj);
-            this.setAbsolutePositions(path, obj.absolutePosition);
+    applyForce(obj: Obj, other: Obj, dt: number): void {
+        let d = obj.position.sub(other.position);
+        let dist = d.abs()**3;
+        if (dist === 0) {
+            return;
         }
+        let force = this.config.G * other.mass / dist * dt;
+        obj.velocity = obj.velocity.sub(d.mul(force));
     }
 
     tick(): void {
-        let dt = 1/this.config.tps * this.timeWarp;
+        let dt = 1 / this.config.tps * this.timeWarp;
         this.time += dt;
-        for (let path of this.getObjPaths('', true)) {
-            let obj = this.getObj(path);
-            let parent = this.getParent(path);
-            // @ts-ignore
-            if (!parent || parent.type === 'root') {
+        for (let [path, obj] of this.objs.entries()) {
+            if (!obj.gravity) {
                 continue;
             }
-            if (obj.gravity) {
-                let [x, y, z] = obj.position;
-                let r3 = (x*x + y*y + z*z) ** 1.5;
-                let accel = this.config.G * parent.mass / r3 * dt;
-                obj.velocity[0] -= x * accel;
-                obj.velocity[1] -= y * accel;
-                obj.velocity[2] -= z * accel;
+            if (obj.nbody) {
+                for (let other of this.objs.values()) {
+                    if (obj !== other) {
+                        this.applyForce(obj, other, dt);
+                    }
+                }
+            } else if (obj.useOrbitForGravity) {
+                this.setPositionVelocityFromOrbit(path, true, false);
+            } else {
+                let parent = this.getParent(path);
+                // @ts-ignore
+                if (parent && parent.type !== 'root') {
+                    this.applyForce(obj, parent, dt);
+                }
             }
-            for (let i = 0; i < 3; i++) {
-                obj.position[i] += obj.velocity[i] * dt;
-                obj.rotation[i] = (obj.rotation[i] + obj.rotationChange[i] * dt) % 360;
-            }
-            this.setObj(path, obj);
         }
-        this.setAbsolutePositions();
-        if (!this.firstTickComplete) {
-            this.firstTickComplete = true;
+        for (let obj of this.objs.values()) {
+            obj.position = obj.position.add(obj.velocity.mul(dt));
+            obj.rotation = obj.rotation.add(obj.rotationChange.mul(dt)).normalizeAngles();
         }
     }
 
     setPositionVelocityFromOrbit(path: string, setPosition: boolean = true, setVelocity: boolean = true): void {
-        let obj = this.getObj(path);
+        let obj = this.get(path);
         if (!obj.orbit) {
             throw new Error('this error should not occur');
         }
@@ -219,62 +142,56 @@ export class World {
         do {
             delta = (eca - ecc * sin(eca) - mna) / (1 - ecc * cos(eca));
             eca -= delta;
-        } while (Math.abs(delta) > 1e-6);
+        } while (Math.abs(delta) > settings.keplerTolerance);
         let tra = 2 * atan2(sqrt(1 + ecc) * sin(eca / 2), sqrt(1 - ecc) * cos(eca / 2));
         let dist = sma * (1 - ecc * cos(eca));
-        let x = dist * cos(tra);
-        let y = dist * sin(tra);
         let mu = this.config.G * (obj.mass + parent.mass);
-        let vx = -sin(eca) * sqrt(mu * sma) / dist;
-        let vy = sqrt(1 - ecc**2) * cos(eca) * sqrt(mu * sma) / dist;
-        let R11 = cos(lan)*cos(aop) - sin(lan)*sin(aop)*cos(inc);
-        let R12 = -cos(lan)*sin(aop) - sin(lan)*cos(aop)*cos(inc);
-        let R21 = sin(lan)*cos(aop) + cos(lan)*sin(aop)*cos(inc);
-        let R22 = -sin(lan)*sin(aop) + cos(lan)*cos(aop)*cos(inc);
-        let R31 = sin(aop)*sin(inc);
-        let R32 = cos(aop)*sin(inc);
+        let matrix = new Matrix3([
+            [cos(lan)*cos(aop) - sin(lan)*sin(aop)*cos(inc), -cos(lan)*sin(aop) - sin(lan)*cos(aop)*cos(inc), 0],
+            [sin(lan)*cos(aop) + cos(lan)*sin(aop)*cos(inc), -sin(lan)*sin(aop) + cos(lan)*cos(aop)*cos(inc), 0],
+            [sin(aop)*sin(inc), cos(aop)*sin(inc), 0],
+        ]);
         if (setPosition) {
-            obj.position[0] = R11 * x + R12 * y;
-            obj.position[2] = R21 * x + R22 * y;
-            obj.position[1] = R31 * x + R32 * y;
+            let vec = new Vector3(dist * cos(tra), dist * sin(tra));
+            obj.position = vec.mul(matrix).add(parent.position);
         }
         if (setVelocity) {
-            obj.velocity[0] = R11 * vx + R12 * vy;
-            obj.velocity[2] = R21 * vx + R22 * vy;
-            obj.velocity[1] = R31 * vx + R32 * vy;
+            let vx = -sin(eca) * sqrt(mu * sma) / dist;
+            let vy = sqrt(1 - ecc**2) * cos(eca) * sqrt(mu * sma) / dist;
+            let vec = new Vector3(vx, vy, 0);
+            obj.velocity = vec.mul(matrix).add(parent.velocity);
         }
-        this.setObj(path, obj);
     }
 
     setOrbitFromPositionVelocity(path: string): void {
-        let obj = this.getObj(path);
+        let obj = this.get(path);
         if (!obj.orbit) {
             obj.orbit = {at: this.time, sma: 0, ecc: 0, mna: 0, inc: 0, lan: 0, aop: 0};
         }
+        let orbit = obj.orbit;
         let parent = this.getParent(path);
-        let [x, y, z] = obj.position;
-        let [vx, vy, vz] = obj.velocity;
-        let r = sqrt(x**2 + y**2 + z**2);
-        let v = sqrt(vx**2 + vy**2 + vz**2);
-        let hx = y * vz - z * vy;
-        let hy = z * vx - x * vz;
-        let hz = x * vy - y * vx;
-        let h = sqrt(hx**2 + hy**2 + hz**2);
-        obj.orbit.inc = acos(hz / h);
-        let rx = x / r, ry = y / r, rz = z / r;
+        let r = obj.position.abs();
+        let v = obj.velocity.abs();
         let mu = this.config.G * (obj.mass + parent.mass);
-        let evx = (vy * hz - vz * hy) / mu - rx;
-        let evy = (vz * hx - vx * hz) / mu - ry;
-        let evz = (vx * hy - vy * hx) / mu - rz;
-        obj.orbit.ecc = sqrt(evx**2 + evy**2 + evz**2);
-        let ecc = obj.orbit.ecc;
-        obj.orbit.sma = 1 / (2 / r - v * v / mu);
-        obj.orbit.lan = atan2(hx, -hy);
-        obj.orbit.aop = atan2(-hy * evy - hx * evx, -hy * evx + hx * evy);
-        let tra = atan2(hx * (vx * ry - vy * rx) + hy * (vy * rz - vz * ry) + hz * (vz * rx - vx * rz) / (h * obj.orbit.ecc), rx * evx + ry * evy + rz * evz);
-        let eca = atan2((ecc + cos(tra)) / (1 + ecc * cos(tra)), sqrt(1 - ecc**2) * sin(tra) / (1 + ecc * cos(tra)));
-        obj.orbit.mna = eca - ecc * sin(eca);
-        this.setObj(path, obj);
+        orbit.sma = 1 / (2/r - v**2 / mu);
+        let soe = v**2 / 2 - mu / r;
+        let srae = obj.position.cross(obj.velocity);
+        let h = srae.abs();
+        orbit.ecc = sqrt(1 + 2*soe*h**2/mu**2);
+        orbit.inc = acos(srae.z / h);
+        let n = sqrt(srae.x**2 + srae.y**2);
+        orbit.lan = acos(-srae.y / n);
+        if (isNaN(orbit.lan)) {
+            orbit.lan = 0;
+        }
+        if (srae.x < 0) {
+            orbit.lan = normalizeAngle(360 - orbit.lan);
+        }
+        let ev = obj.velocity.cross(srae).div(mu);
+        orbit.aop = atan2(ev.y, ev.x);
+        let tra = acos(ev.dot(obj.position) / ev.abs() / r);
+        let eca = atan2(sqrt(1 - orbit.ecc**2) * sin(tra), orbit.ecc + cos(tra));
+        orbit.mna = eca - orbit.ecc * sin(eca);
     }
 
     start(): void {
@@ -296,7 +213,10 @@ export class World {
     }
 
     export(): Uint8Array {
-        return this.system.export();
+        this.fs.link('/home/objects', this.toDir());
+        let out = this.system.export();
+        this.fs.link('/home/objects', this);
+        return out;
     }
 
 }

@@ -1,4 +1,5 @@
 
+import {Vector3} from './util';
 import {Planet, Star} from './obj';
 import {World} from './world';
 
@@ -28,20 +29,20 @@ export default {
             lC: 3.2065e+30,
             initialTarget: 'sun/earth',
         };
-        this.setObj('sun', new Star('Sun', 'special:sun', {
+        this.set('sun', new Star('Sun', 'special:sun', {
             mass: 1.9891e30,
             radius: 6.957e8,
-            rotation: [286.13, 0, 0],
-            rotationChange: [0, 0, 360/2164230],
+            rotation: new Vector3(286.13, 0, 0),
+            rotationChange: new Vector3(0, 0, 360/2164230),
             magnitude: 4.83,
             type: 'G2V',
             alwaysVisible: true,
         }));
-        this.setObj('sun/mercury', new Planet('mercury', 'planet:mercury', {
+        this.set('sun/mercury', new Planet('Mercury', 'planet:mercury', {
             mass: 3.301e23,
             radius: 2439700,
-            rotation: [281.01, 0.034, 0],
-            rotationChange: [0, 0, 360/5067360],
+            rotation: new Vector3(281.01, 0.034, 0),
+            rotationChange: new Vector3(0, 0, 360/5067360),
             orbit: {
                 at: J2000,
                 sma: 0.38709893 * AU,
@@ -54,13 +55,14 @@ export default {
             albedo: 0.142,
             bondAlbedo: 0.068,
             type: 'M',
-            texture: 'data/textures/ssc/mercury_8k.jpg'
+            texture: 'data/textures/ssc/mercury_8k.jpg',
+            useOrbitForGravity: true,
         }));
-        this.setObj('sun/venus', new Planet('Venus', 'planet:venus', {
+        this.set('sun/venus', new Planet('Venus', 'planet:venus', {
             mass: 4.8673e24,
             radius: 6051800,
-            rotation: [272.26, 177.36, 0],
-            rotationChange: [0, 0, 360/20997360],
+            rotation: new Vector3(272.26, 177.36, 0),
+            rotationChange: new Vector3(0, 0, 360/20997360),
             orbit: {
                 at: J2000,
                 sma: 0.72333199 * AU,
@@ -74,12 +76,13 @@ export default {
             bondAlbedo: 0.77,
             type: 'C',
             texture: 'data/textures/ssc/venus_atmosphere_4k.jpg',
+            useOrbitForGravity: true,
         }));
-        this.setObj('sun/earth', new Planet('Earth', 'planet:earth', {
+        this.set('sun/earth', new Planet('Earth', 'planet:earth', {
             mass: 5.9722e24,
             radius: 6371000,
-            rotation: [0, 23.439, 0],
-            rotationChange: [0, 0, 360/86164.100352],
+            rotation: new Vector3(0, 23.439, 0),
+            rotationChange: new Vector3(0, 0, 360/86164.100352),
             orbit: {
                 at: J2000,
                 sma: 1.00000011 * AU,
@@ -94,12 +97,13 @@ export default {
             bondAlbedo: 0.294,
             type: 'V',
             texture: 'data/textures/ssc/earth_8k.jpg',
+            useOrbitForGravity: true,
         }));
-        this.setObj('sun/earth/moon', new Planet('Moon', 'moon:earth/1', {
+        this.set('sun/earth/moon', new Planet('Moon', 'moon:earth/1', {
             mass: 7.346e22,
             radius: 1737400,
-            rotation: [0, 6.68, 0],
-            rotationChange: [0, 0, 360/2360592],
+            rotation: new Vector3(0, 6.68, 0),
+            rotationChange: new Vector3(0, 0, 360/2360592),
             orbit: {
                 at: J2000,
                 sma: 383398000,
@@ -114,11 +118,11 @@ export default {
             type: 'V',
             texture: 'data/textures/ssc/moon_8k.jpg',
         }));
-        this.setObj('sun/mars', new Planet('Mars', 'planet:mars', {
+        this.set('sun/mars', new Planet('Mars', 'planet:mars', {
             mass: 6.4169e23,
             radius: 3389500,
-            rotation: [317.681, 25.19, 0],
-            rotationChange: [0, 0, 360/88642.44],
+            rotation: new Vector3(317.681, 25.19, 0),
+            rotationChange: new Vector3(0, 0, 360/88642.44),
             orbit: {
                 at: J2000,
                 sma: 1.52366231 * AU,
@@ -133,11 +137,11 @@ export default {
             type: 'S',
             texture: 'data/textures/ssc/mars_8k.jpg',
         }));
-        this.setObj('sun/jupiter', new Planet('Jupiter', 'planet:jupiter', {
+        this.set('sun/jupiter', new Planet('Jupiter', 'planet:jupiter', {
             mass: 1.89813e27,
             radius: 69911000,
-            rotation: [268.057, 3.13, 0],
-            rotationChange: [0, 0, 360/35730],
+            rotation: new Vector3(268.057, 3.13, 0),
+            rotationChange: new Vector3(0, 0, 360/35730),
             orbit: {
                 at: J2000,
                 sma: 5.20336301 * AU,
@@ -150,13 +154,14 @@ export default {
             albedo: 0.538,
             bondAlbedo: 0.343,
             type: 'D',
-            texture: 'data/textures/ssc/jupiter_8k.jpg'
+            texture: 'data/textures/ssc/jupiter_8k.jpg',
+            useOrbitForGravity: true,
         }));
-        this.setObj('sun/saturn', new Planet('Saturn', 'planet:saturn', {
+        this.set('sun/saturn', new Planet('Saturn', 'planet:saturn', {
             mass: 5.6832e26,
             radius: 58232000,
-            rotation: [40.589, 26.73, 0],
-            rotationChange: [0, 0, 360/38361.6],
+            rotation: new Vector3(40.589, 26.73, 0),
+            rotationChange: new Vector3(0, 0, 360/38361.6),
             orbit: {
                 at: J2000,
                 sma: 9.53707032 * AU,
@@ -170,12 +175,13 @@ export default {
             bondAlbedo: 0.342,
             type: 'D',
             texture: 'data/textures/ssc/saturn_8k.jpg',
+            useOrbitForGravity: true,
         }));
-        this.setObj('sun/uranus', new Planet('Uranus', 'planet:uranus', {
+        this.set('sun/uranus', new Planet('Uranus', 'planet:uranus', {
             mass: 8.6811e25,
             radius: 25362000,
-            rotation: [257.311, 97.77, 0],
-            rotationChange: [0, 0, 360/62064],
+            rotation: new Vector3(257.311, 97.77, 0),
+            rotationChange: new Vector3(0, 0, 360/62064),
             orbit: {
                 at: J2000,
                 sma: 19.19126393 * AU,
@@ -189,12 +195,13 @@ export default {
             bondAlbedo: 0.300,
             type: 'P',
             texture: 'data/textures/ssc/uranus.jpg',
+            useOrbitForGravity: true,
         }));
-        this.setObj('sun/neptune', new Planet('Neptune', 'planet:neptune', {
+        this.set('sun/neptune', new Planet('Neptune', 'planet:neptune', {
             mass: 1.02409e26,
             radius: 24622000,
-            rotation: [299.36, 28.32, 0],
-            rotationChange: [0, 0, 360/57996],
+            rotation: new Vector3(299.36, 28.32, 0),
+            rotationChange: new Vector3(0, 0, 360/57996),
             orbit: {
                 at: J2000,
                 sma: 30.06896348 * AU,
@@ -208,6 +215,7 @@ export default {
             bondAlbedo: 0.290,
             type: 'P',
             texture: 'data/textures/ssc/neptune.jpg',
+            useOrbitForGravity: true,
         }));
         this.setPositionVelocityFromOrbit('sun/mercury');
         this.setPositionVelocityFromOrbit('sun/venus');

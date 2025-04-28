@@ -1,16 +1,33 @@
 
-import {query, sin, cos, tan, acos, atan2} from './util';
+import {query, sin, cos, tan, acos, atan2, NumberInput, CheckboxInput} from './util';
 import stars from './star_data';
+import settings, {setSettingsKey} from './settings';
 
 
 function hideExceptMain() {
     query('#about-menu').style.display = 'none';
+    query('#settings-menu').style.display = 'none';
 }
 
 query('#about-menu-button').addEventListener('click', () => {
     query('#main-menu').style.display = 'none';
     query('#about-menu').style.display = 'block';
 });
+
+query('#settings-button').addEventListener('click', () => {
+    query('#main-menu').style.display = 'none';
+    query('#settings-menu').style.display = 'flex';
+});
+
+new NumberInput('#setting-fov', x => setSettingsKey('fov', x), settings.fov);
+new NumberInput('#setting-unit-size', x => setSettingsKey('unitSize', x), settings.unitSize);
+new NumberInput('#setting-camera-min-distance', x => setSettingsKey('cameraMinDistance', x), settings.cameraMinDistance);
+new NumberInput('#setting-camera-max-distance', x => setSettingsKey('cameraMaxDistance', x), settings.cameraMaxDistance);
+new NumberInput('#setting-controls-min-distance', x => setSettingsKey('controlsMinDistance', x), settings.controlsMinDistance);
+new NumberInput('#setting-controls-max-distance', x => setSettingsKey('controlsMaxDistance', x), settings.controlsMaxDistance);
+new CheckboxInput('#setting-background-stars', x => setSettingsKey('backgroundStars', x), settings.backgroundStars);
+new CheckboxInput('#setting-menu-background-stars', x => setSettingsKey('menuBackgroundStars', x), settings.menuBackgroundStars);
+new NumberInput('#setting-kepler-tolerance', x => setSettingsKey('keplerTolerance', x), settings.keplerTolerance);
 
 function gotoMainMenu() {
     query('#main-menu').style.display = 'flex';
@@ -21,14 +38,16 @@ query('.main-menu-button', true).forEach(elt => {
     elt.addEventListener('click', gotoMainMenu);
 });
 
-query('#settings-button').addEventListener('click', () => alert('Sorry, no settings yet!'));
-
 query('#play-button').addEventListener('click', async () => {
     query('#menu').style.display = 'none';
     query('#game').style.display = 'block';
     window.removeEventListener('resize', resize);
     if (renderMenuStarsRequest) {
         cancelAnimationFrame(renderMenuStarsRequest);
+    }
+    if (ctx) {
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
     // @ts-ignore
     import('./render');
@@ -109,6 +128,9 @@ function renderMenuStars(): void {
     let scaleWidth = canvas.width / 2 / tan(10) / 180;
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (!settings.menuBackgroundStars) {
+        return;
+    }
     for (let [ra, dec, mag, color] of stars) {
         let rho = acos((sin(centerDec)*sin(dec) + cos(centerDec)*cos(dec)*cos(ra - centerRa)));
         let theta = atan2(cos(dec)*sin(ra - centerRa), cos(centerDec)*sin(dec) - sin(centerDec)*cos(dec)*cos(ra - centerRa));
@@ -140,3 +162,6 @@ window.addEventListener('resize', resize);
 window.addEventListener('load', () => {
     renderMenuStarsRequest = requestAnimationFrame(renderMenuStars);
 });
+
+
+
